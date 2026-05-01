@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Promptly</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 300px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    font-size: 13px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0f0f0;
+  }
+  .logo-icon {
+    background: #c8f135;
+    color: #0e0e0e;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 7px;
+    letter-spacing: 0.04em;
+  }
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle-lbl { font-size: 11px; color: #666; }
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { display: none; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #2a2a2a; border-radius: 20px;
+    cursor: pointer; transition: background 0.2s;
+    border: 1px solid #333;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: #666; border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: all 0.2s;
+  }
+  .toggle input:checked + .slider { background: #c8f13544; border-color: #c8f135; }
+  .toggle input:checked + .slider::before { transform: translateX(16px); background: #c8f135; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  .stat {
+    background: #0f0f0f;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .stat-val { font-size: 20px; font-weight: 600; color: #c8f135; display: block; }
+  .stat-lbl { font-size: 10px; color: #555; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .section { padding: 12px 16px; border-bottom: 1px solid #1a1a1a; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin-bottom: 8px; font-weight: 600; }
+
+  .site-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    background: #141414; border-radius: 7px;
+    border: 1px solid #1e1e1e;
+    margin-bottom: 4px;
+  }
+  .site-name { font-size: 12px; color: #ccc; }
+  .site-status { font-size: 10px; color: #4ade80; }
+
+  .translator { padding: 12px 16px; }
+  textarea {
+    width: 100%; background: #141414;
+    border: 1px solid #2a2a2a; border-radius: 7px;
+    color: #e0e0e0; padding: 8px 10px;
+    font-size: 12px; font-family: inherit;
+    resize: none; height: 72px; outline: none;
+    transition: border-color 0.15s; margin-bottom: 8px;
+  }
+  textarea:focus { border-color: #c8f13555; }
+  .output {
+    background: #141414; border: 1px solid #2a2a2a;
+    border-radius: 7px; padding: 8px 10px;
+    font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #c8f135; min-height: 48px;
+    white-space: pre-wrap; word-break: break-all;
+    margin-bottom: 8px;
+  }
+  .saving {
+    display: none;
+    background: #16a34a22; border: 1px solid #16a34a44;
+    color: #4ade80; font-size: 10px; font-weight: 600;
+    padding: 3px 9px; border-radius: 20px;
+    margin-bottom: 8px; text-align: center;
+  }
+  .btn-row { display: flex; gap: 6px; }
+  button {
+    padding: 6px 12px; border-radius: 7px;
+    border: 1px solid #2a2a2a; background: transparent;
+    color: #ccc; font-size: 11px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; font-weight: 500;
+  }
+  button:hover { background: #1e1e1e; border-color: #333; }
+  .btn-main { background: #c8f13522; border-color: #c8f13555; color: #a8d420; }
+  .btn-main:hover { background: #c8f13533; }
+
+  .footer {
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer a { font-size: 10px; color: #444; text-decoration: none; cursor: pointer; }
+  .footer a:hover { color: #c8f135; }
+  .version { font-size: 10px; color: #333; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <span class="logo-icon">P→</span>
+    Promptly
+  </div>
+  <div class="toggle-wrap">
+    <span class="toggle-lbl" id="toggle-lbl">ON</span>
+    <label class="toggle">
+      <input type="checkbox" id="main-toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <span class="stat-val" id="s-saved">0</span>
+    <div class="stat-lbl">% saved</div>
+  </div>
+  <div class="stat">
+    <span class="stat-val" id="s-prompts">0</span>
+    <div class="stat-lbl">prompts</div>
+  </div>
+  <div class="stat">
+    <span class="stat-val" id="s-avg">—</span>
+    <div class="stat-lbl">avg saving</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Active on</div>
+  <div class="site-row"><span class="site-name">claude.ai</span><span class="site-status">● active</span></div>
+  <div class="site-row"><span class="site-name">chatgpt.com</span><span class="site-status">● active</span></div>
+  <div class="site-row"><span class="site-name">gemini.google.com</span><span class="site-status">● active</span></div>
+  <div class="site-row"><span class="site-name">copilot.microsoft.com</span><span class="site-status">● active</span></div>
+</div>
+
+<div class="translator">
+  <div class="section-title">Quick translator</div>
+  <textarea id="eng-in" placeholder="Type your English prompt here..."></textarea>
+  <div class="saving" id="saving-pill"></div>
+  <div class="output" id="ps-out">Promptolian output...</div>
+  <div class="btn-row">
+    <button class="btn-main" onclick="translate()">⚡ Compress</button>
+    <button onclick="copyOut()">Copy</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<div class="footer">
+  <a>promptly.so</a>
+  <span class="version">v1.0.0</span>
+</div>
+
+<script>
+const RULES = [
+  [/you are an? expert (in |on |at )?/gi,'§EXP '],
+  [/you are an? /gi,'§ROLE '],
+  [/please /gi,'§ACT '],
+  [/return only the code[^.]*\./gi,'→code'],
+  [/return as (a )?bullet list/gi,'→list'],
+  [/return as (a )?table/gi,'→table'],
+  [/return as json/gi,'→json'],
+  [/step[- ]by[- ]step/gi,'→step'],
+  [/pros and cons/gi,'→pros/cons'],
+  [/\bsummarize\b/gi,'∑'],[/\bexplain\b/gi,'?'],
+  [/\bhow does\b/gi,'?'],[/\bwhat is\b/gi,'?'],
+  [/\boptimize\b/gi,'OPT'],[/\bdebug\b/gi,'BUG'],
+  [/\bfix (the |any |a )?bug(s)?\b/gi,'BUG'],
+  [/\bfunction\b/gi,'FN'],[/\bclass\b/gi,'CLS'],
+  [/\bdatabase\b/gi,'DB'],[/\bunit test(s)?\b/gi,'TEST'],
+  [/\binclude\b/gi,'⊕'],[/\bexclude\b/gi,'⊖'],
+  [/\bwithout\b/gi,'⊖'],[/\bdo not\b/gi,'§NOT'],
+  [/\bdon't\b/gi,'§NOT'],[/\bavoid\b/gi,'§NOT'],
+  [/\balso\b/gi,'§ALSO'],[/\bbest practice(s)?\b/gi,'§BEST'],
+  [/\bcompare\b/gi,'§DIFF'],[/\bfor example\b/gi,'§EX'],
+  [/\boutput\b/gi,'→'],[/\breturn\b/gi,'→'],
+  [/\bgenerate\b/gi,'→'],[/\bimportant\b/gi,'!!'],
+  [/\bedit\b/gi,'∆'],[/\bimprove\b/gi,'∆'],
+  [/\breview\b/gi,'«'],[/\bcontinue\b/gi,'»'],
+  [/\bpython\b/gi,'py'],[/\bjavascript\b/gi,'js'],
+  [/\btypescript\b/gi,'ts'],[/\bbriefly\b/gi,'→short'],
+  [/\bconcise(ly)?\b/gi,'→short'],[/\bdetailed\b/gi,'→long'],
+  [/ +/g,' '],
+];
+
+function encode(t){let o=t.trim();for(const[p,r]of RULES)o=o.replace(p,r);return o.replace(/\. /g,'.\n').replace(/ +/g,' ').trim();}
+function tokens(t){return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length*1.3);}
+
+chrome.storage.local.get(['promptly_enabled','promptly_tokens_saved','promptly_prompts'],(res)=>{
+  const on=res.promptly_enabled!==false;
+  document.getElementById('main-toggle').checked=on;
+  document.getElementById('toggle-lbl').textContent=on?'ON':'OFF';
+  const saved=res.promptly_tokens_saved||0;
+  const prompts=res.promptly_prompts||0;
+  document.getElementById('s-saved').textContent=saved;
+  document.getElementById('s-prompts').textContent=prompts;
+  document.getElementById('s-avg').textContent=prompts>0?Math.round(saved/prompts)+'%':'—';
+});
+
+document.getElementById('main-toggle').addEventListener('change',(e)=>{
+  const on=e.target.checked;
+  chrome.storage.local.set({promptly_enabled:on});
+  document.getElementById('toggle-lbl').textContent=on?'ON':'OFF';
+});
+
+function translate(){
+  const eng=document.getElementById('eng-in').value;
+  if(!eng.trim())return;
+  const ps=encode(eng);
+  document.getElementById('ps-out').textContent=ps;
+  const et=tokens(eng),pt=tokens(ps);
+  const saved=Math.max(0,et-pt);
+  const pct=et>0?Math.round(saved/et*100):0;
+  const pill=document.getElementById('saving-pill');
+  pill.style.display='block';
+  pill.textContent=pct+'% smaller · '+saved+' tokens saved';
+  chrome.storage.local.get(['promptly_tokens_saved','promptly_prompts'],(res)=>{
+    const ns=(res.promptly_tokens_saved||0)+pct;
+    const np=(res.promptly_prompts||0)+1;
+    chrome.storage.local.set({promptly_tokens_saved:ns,promptly_prompts:np});
+    document.getElementById('s-saved').textContent=ns;
+    document.getElementById('s-prompts').textContent=np;
+    document.getElementById('s-avg').textContent=Math.round(ns/np)+'%';
+  });
+}
+
+function copyOut(){
+  const t=document.getElementById('ps-out').textContent;
+  if(t==='Promptolian output...')return;
+  navigator.clipboard.writeText(t);
+}
+
+function clearAll(){
+  document.getElementById('eng-in').value='';
+  document.getElementById('ps-out').textContent='Promptolian output...';
+  document.getElementById('saving-pill').style.display='none';
+}
+</script>
+</body>
+</html>

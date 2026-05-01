@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promptly — Your AI prompts, instantly compressed.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.6}
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:var(--soft);border-bottom:1px solid #e0dfd8;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:22px;text-decoration:none;color:var(--ink)}
+.logo-icon{width:34px;height:34px;background:var(--lime);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px}
+.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+.nav-links a{font-size:14px;color:var(--muted);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{background:var(--ink);color:var(--white)!important;padding:8px 20px;border-radius:100px;font-size:13px!important;font-weight:500}
+.hero{padding:100px 48px 80px;text-align:center;max-width:860px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--lime);color:var(--ink);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:28px}
+h1{font-family:'DM Serif Display',serif;font-size:clamp(40px,6vw,68px);line-height:1.08;margin-bottom:22px}
+h1 em{font-style:italic;color:var(--muted)}
+.hero p{font-size:18px;color:var(--muted);max-width:540px;margin:0 auto 36px;line-height:1.7}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:100px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--ink);color:var(--white)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.btn-secondary{background:var(--white);color:var(--ink);border:1px solid #ddd}
+.btn-secondary:hover{border-color:#bbb;transform:translateY(-1px)}
+.proof{display:flex;align-items:center;justify-content:center;gap:32px;padding:20px 48px;border-top:1px solid #e0dfd8;border-bottom:1px solid #e0dfd8;background:var(--white);flex-wrap:wrap}
+.proof-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.proof-item strong{color:var(--ink)}
+.dot{width:4px;height:4px;border-radius:50%;background:#ccc}
+/* Demo section */
+.demo-section{max-width:800px;margin:80px auto;padding:0 48px}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.section-title{font-family:'DM Serif Display',serif;font-size:36px;line-height:1.15;margin-bottom:8px}
+.section-sub{color:var(--muted);margin-bottom:32px}
+.demo-card{background:var(--white);border-radius:20px;padding:28px;border:1px solid #e8e7e0;margin-bottom:16px}
+.demo-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.demo-col label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+textarea{width:100%;min-height:110px;padding:12px 14px;border:1px solid #e0dfd8;border-radius:12px;background:var(--soft);font-size:14px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;transition:border-color .15s;color:var(--ink)}
+textarea:focus{border-color:#999}
+.output-box{min-height:110px;padding:12px 14px;border:1px solid #e8e7e0;border-radius:12px;background:var(--soft);font-size:13px;font-family:'Fira Code','DM Mono',monospace;color:var(--ink);white-space:pre-wrap;line-height:1.7}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.stat-box{background:var(--soft);border-radius:12px;padding:14px;text-align:center;border:1px solid #e8e7e0}
+.stat-val{font-size:22px;font-weight:500;display:block;color:var(--ink)}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.demo-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.demo-btn{padding:8px 18px;border-radius:10px;border:1px solid #e0dfd8;background:transparent;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--ink);transition:all .15s;font-weight:500}
+.demo-btn:hover{background:var(--soft)}
+.demo-btn.primary{background:var(--lime);border-color:var(--lime)}
+.savings-pill{display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+/* Features */
+.features{max-width:800px;margin:0 auto 80px;padding:0 48px}
+.features-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:32px}
+.feature{background:var(--white);border:1px solid #e8e7e0;border-radius:16px;padding:22px}
+.feature-icon{font-size:22px;margin-bottom:10px}
+.feature-title{font-weight:600;font-size:15px;margin-bottom:6px}
+.feature-desc{font-size:13px;color:var(--muted);line-height:1.6}
+/* Pricing */
+.pricing{max-width:800px;margin:0 auto 80px;padding:0 48px}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.price-card{background:var(--white);border:1.5px solid #e8e7e0;border-radius:20px;padding:26px}
+.price-card.featured{background:var(--ink);border-color:var(--ink);color:var(--white)}
+.price-tier{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+.price-card.featured .price-tier{color:var(--lime)}
+.price-amount{font-family:'DM Serif Display',serif;font-size:38px;line-height:1;margin-bottom:4px}
+.price-card.featured .price-amount{color:var(--white)}
+.price-period{font-size:12px;color:var(--muted);margin-bottom:20px}
+.price-card.featured .price-period{color:#aaa}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.price-features li{font-size:13px;color:var(--muted);display:flex;gap:8px}
+.price-card.featured .price-features li{color:#ccc}
+.check{color:#16a34a;font-weight:700;flex-shrink:0}
+.price-card.featured .check{color:var(--lime)}
+.price-btn{width:100%;padding:11px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e0dfd8;background:var(--soft);color:var(--ink);font-family:'DM Sans',sans-serif;transition:all .15s}
+.price-btn:hover{background:#eee}
+.price-card.featured .price-btn{background:var(--lime);border-color:var(--lime)}
+footer{background:var(--ink);color:#888;text-align:center;padding:28px;font-size:12px;line-height:1.8}
+footer strong{color:var(--lime);font-family:'DM Serif Display',serif;font-size:14px;font-weight:400}
+footer a{color:#666;text-decoration:none}
+footer a:hover{color:#aaa}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">
+    <div class="logo-icon">P→</div>Promptly
+  </a>
+  <ul class="nav-links">
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#" class="nav-cta">Install free →</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">⚡ Beta — free to install</div>
+  <h1>Your AI prompts,<br><em>instantly</em> compressed.</h1>
+  <p>Promptly cuts your token spend by up to 65% — automatically. Works on Claude, ChatGPT, Gemini, and Copilot.</p>
+  <div class="hero-btns">
+    <a href="#demo" class="btn btn-primary">Try the demo →</a>
+    <a href="#" class="btn btn-secondary">Install extension ↓</a>
+  </div>
+</section>
+
+<div class="proof">
+  <div class="proof-item"><strong>65%</strong> avg token reduction</div>
+  <div class="dot"></div>
+  <div class="proof-item">Works on <strong>5 AI platforms</strong></div>
+  <div class="dot"></div>
+  <div class="proof-item"><strong>One click</strong> to compress</div>
+  <div class="dot"></div>
+  <div class="proof-item"><strong>100%</strong> fact preservation</div>
+</div>
+
+<section class="demo-section" id="demo">
+  <div class="section-label">Live demo</div>
+  <div class="section-title">See Promptolian in action</div>
+  <p class="section-sub">Type any prompt and watch it compress in real time.</p>
+  <div class="demo-card">
+    <div class="demo-row">
+      <div class="demo-col">
+        <label>Your prompt (English)</label>
+        <textarea id="eng-input" placeholder="e.g. You are an expert Python developer. Write a function to sort a list. Return only the code, no explanation." oninput="liveCompress()"></textarea>
+      </div>
+      <div class="demo-col">
+        <label>Promptolian <span id="savings-pill"></span></label>
+        <div class="output-box" id="ps-output">—</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-val" id="s-eng">—</span><div class="stat-lbl">English tokens</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-ps">—</span><div class="stat-lbl">Promptolian tokens</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-pct">—</span><div class="stat-lbl">Saved</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-fpr">100%</span><div class="stat-lbl">Fact preservation</div></div>
+    </div>
+    <div class="demo-btns">
+      <button class="demo-btn primary" onclick="tryExample(0)">Expert dev example</button>
+      <button class="demo-btn" onclick="tryExample(1)">Summarize example</button>
+      <button class="demo-btn" onclick="tryExample(2)">Compare example</button>
+      <button class="demo-btn" onclick="copyOutput()">Copy Promptolian</button>
+      <button class="demo-btn" onclick="clearDemo()">Clear</button>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-label">Features</div>
+  <div class="section-title">Everything you need</div>
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">One-click compression</div>
+      <div class="feature-desc">Click Compress. Promptolian encodes your prompt. Click Restore to undo. Zero friction.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">100% fact preservation</div>
+      <div class="feature-desc">NER pre-pass protects every number, name, URL, and path before compression. Facts never lost.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🌐</div>
+      <div class="feature-title">5 AI platforms</div>
+      <div class="feature-desc">Claude, ChatGPT, Gemini, Copilot, and more. One extension, everywhere you work.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Live savings tracker</div>
+      <div class="feature-desc">See tokens saved per prompt and cumulative session totals in the popup.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">∑</div>
+      <div class="feature-title">Promptolian language</div>
+      <div class="feature-desc">30 symbols. Formal BNF grammar. 73% avg compression. Beats Chinese and English.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔑</div>
+      <div class="feature-title">Your prompts stay local</div>
+      <div class="feature-desc">Compression happens in your browser. Your prompts never leave your machine.</div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="section-label">Pricing</div>
+  <div class="section-title">Start free, scale when ready</div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-tier">Free</div>
+      <div class="price-amount">$0</div>
+      <div class="price-period">forever</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span>Rule-based compression</li>
+        <li><span class="check">✓</span>All 5 AI platforms</li>
+        <li><span class="check">✓</span>Session savings tracker</li>
+        <li><span class="check">✓</span>One-click restore</li>
+      </ul>
+      <button class="price-btn">Install free</button>
+    </div>
+    <div class="price-card featured">
+      <div class="price-tier">Pro</div>
+      <div class="price-amount">$7</div>
+      <div class="price-period">per month</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span>AI-powered compression</li>
+        <li><span class="check">✓</span>Custom dictionaries</li>
+        <li><span class="check">✓</span>Prompt history</li>
+        <li><span class="check">✓</span>Team sharing</li>
+        <li><span class="check">✓</span>Priority support</li>
+      </ul>
+      <button class="price-btn">Start Pro trial</button>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">Enterprise</div>
+      <div class="price-amount">Custom</div>
+      <div class="price-period">per month</div>
+      <ul class="price-features">
+        <li><span class="check">✓</span>API access</li>
+        <li><span class="check">✓</span>SSO &amp; admin</li>
+        <li><span class="check">✓</span>Usage reporting</li>
+        <li><span class="check">✓</span>SLA guarantee</li>
+      </ul>
+      <button class="price-btn">Contact us</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>Promptly</strong><br><br>
+  The smarter way to talk to AI.<br>
+  <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms</a> · <a href="mailto:hello@promptly.so">hello@promptly.so</a><br><br>
+  © 2026 Promptly · Built with ⚡ in Zürich
+</footer>
+
+<script>
+const RULES = [
+  [/you are an? expert (in |on |at )?/gi,'§EXP '],
+  [/you are an? /gi,'§ROLE '],
+  [/please /gi,'§ACT '],
+  [/return only (the )?code[^.]*\.?/gi,'→code'],
+  [/return as (a )?bullet[- ]?list/gi,'→list'],
+  [/return as (a )?table/gi,'→table'],
+  [/return as json/gi,'→json'],
+  [/step[- ]by[- ]step/gi,'→step'],
+  [/pros and cons/gi,'→pros/cons'],
+  [/be (very )?concise/gi,'→short'],
+  [/\bsummarize\b/gi,'∑'],
+  [/\bexplain\b/gi,'?'],
+  [/\bhow does\b/gi,'?'],
+  [/\bwhat is\b/gi,'?'],
+  [/\boptimize\b/gi,'OPT'],
+  [/\bdebug\b/gi,'BUG'],
+  [/\bfix (the |any |a )?bug(s)?\b/gi,'BUG'],
+  [/\bfunction\b/gi,'FN'],
+  [/\bunit test(s)?\b/gi,'TEST'],
+  [/\binclude\b/gi,'⊕'],
+  [/\bexclude\b/gi,'⊖'],
+  [/\bwithout\b/gi,'⊖'],
+  [/\bno explanation\b/gi,'⊖explain'],
+  [/\bdo not\b/gi,'§NOT'],
+  [/\bdon't\b/gi,'§NOT'],
+  [/\bavoid\b/gi,'§NOT'],
+  [/\bcompare\b/gi,'§DIFF'],
+  [/\bfor example\b/gi,'§EX'],
+  [/\bpython\b/gi,'py'],
+  [/\bjavascript\b/gi,'js'],
+  [/\btypescript\b/gi,'ts'],
+  [/\bbriefly\b/gi,'→short'],
+  [/\bdetailed\b/gi,'→long'],
+  [/\bimportant\b/gi,'!!'],
+  [/\breview\b/gi,'«'],
+  [/\bimprove\b/gi,'∆'],
+  [/ +/g,' '],
+];
+const EXAMPLES = [
+  "You are an expert Python developer. Write a function to sort a list. Return only the code, no explanation.",
+  "Summarize this text in 3 bullet points. Be concise.",
+  "Compare REST and GraphQL APIs. List pros and cons. Return as a table.",
+];
+function encode(t){let o=t.trim();for(const[p,r]of RULES)o=o.replace(p,r);return o.replace(/\. /g,'.\n').replace(/ +/g,' ').trim();}
+function tokens(t){return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length*1.3);}
+let debounce;
+function liveCompress(){
+  clearTimeout(debounce);
+  debounce=setTimeout(()=>{
+    const eng=document.getElementById('eng-input').value;
+    if(!eng.trim()){reset();return;}
+    const ps=encode(eng);
+    const et=tokens(eng),pt=tokens(ps);
+    const saved=Math.max(0,et-pt);
+    const pct=et>0?Math.round(saved/et*100):0;
+    document.getElementById('ps-output').textContent=ps;
+    document.getElementById('s-eng').textContent=et;
+    document.getElementById('s-ps').textContent=pt;
+    document.getElementById('s-pct').textContent=pct+'%';
+    const pill=document.getElementById('savings-pill');
+    pill.innerHTML=pct>0?`<span class="savings-pill">${pct}% smaller</span>`:'';
+  },200);
+}
+function reset(){
+  document.getElementById('ps-output').textContent='—';
+  document.getElementById('s-eng').textContent='—';
+  document.getElementById('s-ps').textContent='—';
+  document.getElementById('s-pct').textContent='—';
+  document.getElementById('savings-pill').innerHTML='';
+}
+function tryExample(i){
+  document.getElementById('eng-input').value=EXAMPLES[i];
+  liveCompress();
+}
+function copyOutput(){
+  const t=document.getElementById('ps-output').textContent;
+  if(t==='—')return;
+  navigator.clipboard.writeText(t);
+}
+function clearDemo(){
+  document.getElementById('eng-input').value='';
+  reset();
+}
+</script>
+</body>
+</html>
