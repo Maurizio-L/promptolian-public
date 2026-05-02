@@ -412,6 +412,38 @@
     return site ? site.input() : null;
   }
 
+  // ── Quota helpers (free: 10/day) ──────────────────────────────────────────
+  const FREE_LIMIT = 10;
+
+  function getTodayKey() {
+    return new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  }
+
+  function checkQuota() {
+    return new Promise(resolve => {
+      chrome.storage.local.get(['promptly_license', 'promptly_daily'], res => {
+        if (res.promptly_license) return resolve({ ok: true, pro: true });
+        const today = getTodayKey();
+        const daily = (res.promptly_daily && res.promptly_daily.date === today)
+          ? res.promptly_daily : { date: today, count: 0 };
+        resolve({ ok: daily.count < FREE_LIMIT, count: daily.count, pro: false });
+      });
+    });
+  }
+
+  function incrementQuota() {
+    return new Promise(resolve => {
+      chrome.storage.local.get(['promptly_daily'], res => {
+        const today = getTodayKey();
+        const prev = (res.promptly_daily && res.promptly_daily.date === today)
+          ? res.promptly_daily : { date: today, count: 0 };
+        const next = { date: today, count: prev.count + 1 };
+        chrome.storage.local.set({ promptly_daily: next });
+        resolve(next.count);
+      });
+    });
+  }
+
   // ── State ─────────────────────────────────────────────────────────────────
   let isCompressed = false;
   let originalText = '';
@@ -446,29 +478,39 @@
       updateTele(teleMode);
     });
 
-    document.getElementById('p-compress').addEventListener('click', () => {
+    document.getElementById('p-compress').addEventListener('click', async () => {
       const site = getSite();
       const input = getInput();
       if (!input) return;
       const text = site.getText(input);
       if (!text.trim()) return;
-      if (!isCompressed) {
-        originalText = text;
-        const compressed = psEncode(text, teleMode);
-        site.setText(input, compressed);
-        const et = countTokens(text), pt = countTokens(compressed);
-        const saved = Math.max(0, et - pt);
-        const pct = et > 0 ? Math.round(saved / et * 100) : 0;
-        sessionSaved += saved;
-        document.getElementById('p-stats').innerHTML =
-          `<span style="color:#4ade80;font-weight:600">${pct}% saved</span> · ${et}→${pt} tokens · session: ${sessionSaved}`;
-        isCompressed = true;
-        const btn = document.getElementById('p-compress');
-        btn.textContent = '✓ Compressed';
-        btn.style.opacity = '0.6';
-        document.getElementById('p-undo').style.display = 'inline-flex';
-        chrome.runtime.sendMessage({ type: 'STATS', saved: pct });
+      if (isCompressed) return;
+
+      const quota = await checkQuota();
+      if (!quota.ok) {
+        showUpgradeNotice(quota.count);
+        return;
       }
+
+      originalText = text;
+      const compressed = psEncode(text, teleMode);
+      site.setText(input, compressed);
+      const et = countTokens(text), pt = countTokens(compressed);
+      const saved = Math.max(0, et - pt);
+      const pct = et > 0 ? Math.round(saved / et * 100) : 0;
+      sessionSaved += saved;
+
+      const usedToday = await incrementQuota();
+      const remaining = quota.pro ? '∞' : `${FREE_LIMIT - usedToday} left today`;
+
+      document.getElementById('p-stats').innerHTML =
+        `<span style="color:#4ade80;font-weight:600">${pct}% saved</span> · ${et}→${pt} tokens · ${remaining}`;
+      isCompressed = true;
+      const btn = document.getElementById('p-compress');
+      btn.textContent = '✓ Compressed';
+      btn.style.opacity = '0.6';
+      document.getElementById('p-undo').style.display = 'inline-flex';
+      chrome.runtime.sendMessage({ type: 'STATS', saved: pct });
     });
 
     document.getElementById('p-tele').addEventListener('click', () => {
@@ -517,6 +559,33 @@
     btn.style.color = enabled ? '#16a34a' : 'inherit';
     const cb = document.getElementById('p-compress');
     if (cb) cb.style.display = enabled ? 'inline-flex' : 'none';
+  }
+
+  function showUpgradeNotice(count) {
+    let notice = document.getElementById('p-upgrade');
+    if (notice) { notice.style.display = 'flex'; return; }
+    notice = document.createElement('div');
+    notice.id = 'p-upgrade';
+    notice.innerHTML = `
+      <span style="font-size:11px;color:#f87171">
+        Daily limit reached (${count}/${FREE_LIMIT}) ·
+      </span>
+      <a href="https://promptly.so/#pricing" target="_blank"
+         style="font-size:11px;color:#c8f135;text-decoration:none;font-weight:600;margin-left:4px">
+        Upgrade to Pro →
+      </a>
+      <button onclick="document.getElementById('p-upgrade').style.display='none'"
+              style="background:none;border:none;color:#555;cursor:pointer;font-size:13px;padding:0 0 0 8px;line-height:1">✕</button>
+    `;
+    Object.assign(notice.style, {
+      display: 'flex', alignItems: 'center', gap: '4px',
+      position: 'fixed', bottom: '62px', right: '18px',
+      background: '#1a0a0a', border: '1px solid #7f1d1d',
+      borderRadius: '10px', padding: '8px 12px', zIndex: '999999',
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+    });
+    document.body.appendChild(notice);
   }
 
   function updateTele(on) {

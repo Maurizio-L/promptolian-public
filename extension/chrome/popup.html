@@ -162,6 +162,38 @@
   </div>
 </div>
 
+<div class="section" id="plan-section">
+  <div class="section-title">Plan</div>
+  <div id="plan-free" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;color:#aaa">Free · <span id="daily-used">0</span>/10 today</span>
+      <div style="background:#2a2a2a;border-radius:20px;height:6px;width:100px;overflow:hidden;margin:0 8px;flex:1">
+        <div id="quota-bar" style="height:100%;background:#c8f135;border-radius:20px;transition:width .3s;width:0%"></div>
+      </div>
+      <span id="daily-remaining" style="font-size:11px;color:#c8f135;font-weight:600"></span>
+    </div>
+    <div class="site-row" style="justify-content:center;cursor:pointer;background:#c8f13511;border-color:#c8f13533" onclick="openUpgrade()">
+      <span style="font-size:12px;color:#c8f135;font-weight:600">⚡ Upgrade to Pro — $7/mo</span>
+    </div>
+    <div style="margin-top:8px">
+      <input type="text" id="license-input" placeholder="Enter license key…"
+        style="width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:7px;
+               color:#e0e0e0;padding:7px 10px;font-size:11px;font-family:inherit;outline:none">
+      <button onclick="activateLicense()"
+        style="width:100%;margin-top:6px;padding:6px;border-radius:7px;border:1px solid #c8f13555;
+               background:#c8f13511;color:#a8d420;font-size:11px;cursor:pointer;font-family:inherit">
+        Activate license
+      </button>
+    </div>
+  </div>
+  <div id="plan-pro" style="display:none">
+    <div class="site-row" style="background:#16a34a11;border-color:#16a34a33">
+      <span style="font-size:12px;color:#4ade80;font-weight:600">✓ Pro — unlimited compressions</span>
+      <span style="font-size:10px;color:#555;cursor:pointer" onclick="deactivateLicense()">Change</span>
+    </div>
+  </div>
+</div>
+
 <div class="section">
   <div class="section-title">Active on</div>
   <div class="site-row"><span class="site-name">claude.ai</span><span class="site-status">● active</span></div>
@@ -500,7 +532,11 @@ function encode(t, tele=false) {
 }
 function tokens(t){return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length*1.3);}
 
-chrome.storage.local.get(['promptly_enabled','promptly_tokens_saved','promptly_prompts','promptly_tele'],(res)=>{
+const FREE_LIMIT = 10;
+
+function getTodayKey(){ return new Date().toISOString().slice(0,10); }
+
+chrome.storage.local.get(['promptly_enabled','promptly_tokens_saved','promptly_prompts','promptly_tele','promptly_license','promptly_daily'],(res)=>{
   const on=res.promptly_enabled!==false;
   document.getElementById('main-toggle').checked=on;
   document.getElementById('toggle-lbl').textContent=on?'ON':'OFF';
@@ -511,7 +547,50 @@ chrome.storage.local.get(['promptly_enabled','promptly_tokens_saved','promptly_p
   document.getElementById('s-avg').textContent=prompts>0?Math.round(saved/prompts)+'%':'—';
   teleMode=res.promptly_tele===true;
   updateTeleBtn();
+  updatePlanUI(res.promptly_license, res.promptly_daily);
 });
+
+function updatePlanUI(license, daily){
+  const today=getTodayKey();
+  const used=(daily && daily.date===today)?daily.count:0;
+  if(license){
+    document.getElementById('plan-free').style.display='none';
+    document.getElementById('plan-pro').style.display='block';
+  } else {
+    document.getElementById('plan-pro').style.display='none';
+    document.getElementById('plan-free').style.display='block';
+    document.getElementById('daily-used').textContent=used;
+    const rem=Math.max(0,FREE_LIMIT-used);
+    document.getElementById('daily-remaining').textContent=rem+' left';
+    document.getElementById('quota-bar').style.width=Math.min(100,used/FREE_LIMIT*100)+'%';
+    if(used>=FREE_LIMIT){
+      document.getElementById('quota-bar').style.background='#f87171';
+      document.getElementById('daily-remaining').style.color='#f87171';
+      document.getElementById('daily-remaining').textContent='limit reached';
+    }
+  }
+}
+
+function openUpgrade(){
+  chrome.tabs.create({url:'https://promptly.so/#pricing'});
+}
+
+function activateLicense(){
+  const key=document.getElementById('license-input').value.trim();
+  if(key.length<8){
+    document.getElementById('license-input').style.borderColor='#f87171';
+    return;
+  }
+  chrome.storage.local.set({promptly_license:key},()=>{
+    updatePlanUI(key,null);
+  });
+}
+
+function deactivateLicense(){
+  chrome.storage.local.remove('promptly_license',()=>{
+    chrome.storage.local.get(['promptly_daily'],res=>updatePlanUI(null,res.promptly_daily));
+  });
+}
 
 document.getElementById('main-toggle').addEventListener('change',(e)=>{
   const on=e.target.checked;
