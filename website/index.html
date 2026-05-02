@@ -100,7 +100,7 @@ footer a:hover{color:#aaa}
 <section class="hero">
   <div class="hero-badge">⚡ Beta — free to install</div>
   <h1>Your AI prompts,<br><em>instantly</em> compressed.</h1>
-  <p>Promptly cuts your token spend by up to 65% — automatically. Works on Claude, ChatGPT, Gemini, and Copilot.</p>
+  <p>Promptly cuts your token spend by up to 36% — automatically. Works on Claude, ChatGPT, Gemini, and Copilot.</p>
   <div class="hero-btns">
     <a href="#demo" class="btn btn-primary">Try the demo →</a>
     <a href="#" class="btn btn-secondary">Install extension ↓</a>
@@ -108,11 +108,11 @@ footer a:hover{color:#aaa}
 </section>
 
 <div class="proof">
-  <div class="proof-item"><strong>65%</strong> avg token reduction</div>
+  <div class="proof-item"><strong>18–36%</strong> avg token reduction</div>
   <div class="dot"></div>
   <div class="proof-item">Works on <strong>5 AI platforms</strong></div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>One click</strong> to compress</div>
+  <div class="proof-item"><strong>180+</strong> compression rules</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>100%</strong> fact preservation</div>
 </div>
@@ -139,10 +139,12 @@ footer a:hover{color:#aaa}
       <div class="stat-box"><span class="stat-val" id="s-fpr">100%</span><div class="stat-lbl">Fact preservation</div></div>
     </div>
     <div class="demo-btns">
-      <button class="demo-btn primary" onclick="tryExample(0)">Expert dev example</button>
-      <button class="demo-btn" onclick="tryExample(1)">Summarize example</button>
-      <button class="demo-btn" onclick="tryExample(2)">Compare example</button>
-      <button class="demo-btn" onclick="copyOutput()">Copy Promptolian</button>
+      <button class="demo-btn primary" onclick="tryExample(0)">Dev example</button>
+      <button class="demo-btn" onclick="tryExample(1)">Finance example</button>
+      <button class="demo-btn" onclick="tryExample(2)">Data science example</button>
+      <button class="demo-btn" onclick="tryExample(3)">Law example</button>
+      <button class="demo-btn" id="tele-btn" onclick="toggleTelegraphic()" title="Removes articles &amp; filler words for maximum compression">⚡ Telegraphic: OFF</button>
+      <button class="demo-btn" onclick="copyOutput()">Copy</button>
       <button class="demo-btn" onclick="clearDemo()">Clear</button>
     </div>
   </div>
@@ -175,7 +177,7 @@ footer a:hover{color:#aaa}
     <div class="feature">
       <div class="feature-icon">∑</div>
       <div class="feature-title">Promptolian language</div>
-      <div class="feature-desc">30 symbols. Formal BNF grammar. 73% avg compression. Beats Chinese and English.</div>
+      <div class="feature-desc">180+ rules. Tech, finance, law, data science &amp; social vocab. Telegraphic mode for maximum savings.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">🔑</div>
@@ -237,88 +239,385 @@ footer a:hover{color:#aaa}
 </footer>
 
 <script>
+// ── Standard rules ────────────────────────────────────────────────────────────
 const RULES = [
+  // Roles & context
   [/you are an? expert (in |on |at )?/gi,'§EXP '],
   [/you are an? /gi,'§ROLE '],
-  [/please /gi,'§ACT '],
+  [/act as (a |an )?/gi,'§ACT '],
+  [/pretend (you are|to be) (a |an )?/gi,'§ROLE '],
+  [/here is (the |some )?context[:\s]*/gi,'§CTX '],
+  [/given (this |the )?context[:\s]*/gi,'§CTX '],
+  // Filler openers
+  [/I would like you to /gi,''],
+  [/I need you to /gi,''],
+  [/can you (please )?/gi,''],
+  [/could you (please )?/gi,''],
+  [/please /gi,''],
+  // Output format
   [/return only (the )?code[^.]*\.?/gi,'→code'],
   [/return as (a )?bullet[- ]?list/gi,'→list'],
+  [/in bullet points?/gi,'→list'],
+  [/return as (a )?numbered list/gi,'→nlist'],
   [/return as (a )?table/gi,'→table'],
   [/return as json/gi,'→json'],
+  [/in json format/gi,'→json'],
+  [/return as yaml/gi,'→yaml'],
   [/step[- ]by[- ]step/gi,'→step'],
   [/pros and cons/gi,'→pros/cons'],
-  [/be (very )?concise/gi,'→short'],
-  [/\bsummarize\b/gi,'∑'],
+  [/be (very )?concise\.?/gi,'→short'],
+  [/keep it (very )?short\.?/gi,'→short'],
+  [/\bbriefly\b/gi,'→short'],
+  [/in (simple|plain|easy) (terms|language|english)/gi,'→ELI5'],
+  [/for (a )?beginner(s)?/gi,'→ELI5'],
+  [/in (great |comprehensive )?detail/gi,'→long'],
+  [/\bcomprehensive\b/gi,'→long'],
+  [/no explanation/gi,'⊖explain'],
+  [/without (any )?explanation/gi,'⊖explain'],
+  // Task verbs (long patterns first)
+  [/fix (the |any |a )?bug(s)?( in| on)?/gi,'BUG'],
+  [/write (a |an )?unit tests? for/gi,'TEST'],
+  [/write tests? for/gi,'TEST'],
+  [/write (a |an )?function (to |that )?/gi,'FN '],
+  [/create (a |an )?function (to |that )?/gi,'FN '],
+  [/write (a |an )?class\b/gi,'CLS'],
+  [/summarize (this |the |a )?/gi,'∑ '],
+  [/summary of (the |this |a )?/gi,'∑ '],
+  [/explain how\b/gi,'? how'],
+  [/difference between\b/gi,'§DIFF'],
+  [/compare\b/gi,'§DIFF'],
+  [/\bdebug\b/gi,'BUG'],
+  [/\boptimize\b/gi,'OPT'],
+  [/\brefactor\b/gi,'∆'],
+  [/\brewrite\b/gi,'∆'],
+  [/\bimprove\b/gi,'∆'],
+  [/\bupdate\b/gi,'∆'],
+  [/\bedit\b/gi,'∆'],
+  [/\banalyze\b/gi,'ANLZ'],
+  [/\banalyse\b/gi,'ANLZ'],
+  [/\bevaluate\b/gi,'EVAL'],
+  [/\bassess\b/gi,'EVAL'],
+  [/\bimplement\b/gi,'impl'],
+  [/\bgenerate\b/gi,'GEN'],
+  [/\bcreate\b/gi,'mk'],
+  [/\bbuild\b/gi,'bld'],
+  [/\btranslate\b/gi,'⇄'],
+  [/\bconvert\b/gi,'⇄'],
+  [/\bdescribe\b/gi,'?'],
   [/\bexplain\b/gi,'?'],
   [/\bhow does\b/gi,'?'],
-  [/\bwhat is\b/gi,'?'],
-  [/\boptimize\b/gi,'OPT'],
-  [/\bdebug\b/gi,'BUG'],
-  [/\bfix (the |any |a )?bug(s)?\b/gi,'BUG'],
-  [/\bfunction\b/gi,'FN'],
-  [/\bunit test(s)?\b/gi,'TEST'],
-  [/\binclude\b/gi,'⊕'],
-  [/\bexclude\b/gi,'⊖'],
-  [/\bwithout\b/gi,'⊖'],
-  [/\bno explanation\b/gi,'⊖explain'],
+  [/\bwhat (is|are)\b/gi,'?'],
+  [/\bwhy (is|are|does|do)\b/gi,'?why'],
+  [/\breview (my |this |the )?/gi,'« '],
+  [/\brevise (my |this |the )?/gi,'« '],
+  [/\bcontinue\b/gi,'»'],
+  [/\bfind\b/gi,'⊂'],
+  [/\bsearch (for )?\b/gi,'⊂'],
+  [/\bextract\b/gi,'⊂'],
+  [/\bprovide (a |an )?/gi,''],
+  [/\bgive me (a |an )?/gi,''],
+  [/\bhelp me (with )?(a |an )?/gi,''],
+  [/\bdeploy\b/gi,'dpl'],
+  [/\bconfigure\b/gi,'cfg'],
+  [/\bset up\b/gi,'cfg'],
+  [/\binstall\b/gi,'inst'],
+  [/\bdocument\b/gi,'docs'],
+  // Constraints & emphasis
+  [/make sure (to |that )?/gi,'!! '],
+  [/ensure (that )?/gi,'!! '],
   [/\bdo not\b/gi,'§NOT'],
   [/\bdon't\b/gi,'§NOT'],
   [/\bavoid\b/gi,'§NOT'],
-  [/\bcompare\b/gi,'§DIFF'],
+  [/\bnever\b/gi,'§NOT'],
+  [/\b(very )?important[:\s]+/gi,'!! '],
+  [/\bcritical[:\s]+/gi,'!! '],
+  [/\bmust\b/gi,'!!'],
+  // Logic & connectors
+  [/\balso\b/gi,'§ALSO'],
+  [/\badditionally\b/gi,'§ALSO'],
+  [/\balternative(ly)?\b/gi,'§ALT'],
+  [/\binstead\b/gi,'§ALT'],
+  [/\bbest practice(s)?\b/gi,'§BEST'],
+  [/\brecommended\b/gi,'§BEST'],
   [/\bfor example\b/gi,'§EX'],
+  [/\bfor instance\b/gi,'§EX'],
+  [/\bcontext\b/gi,'§CTX'],
+  [/\boutput\b/gi,'→'],
+  [/\bgiven\b/gi,'←'],
+  [/\binput\b/gi,'←'],
+  // Quantifiers
+  [/\ball\b/gi,'∀'],
+  [/\beach\b/gi,'∀'],
+  [/\bevery\b/gi,'∀'],
+  [/\bat least\b/gi,'min'],
+  [/\bat most\b/gi,'max'],
+  [/\bmore than\b/gi,'>'],
+  [/\bless than\b/gi,'<'],
+  [/\bapproximately\b/gi,'~'],
+  // Tech vocabulary
+  [/\bmachine learning\b/gi,'ML'],
+  [/\bartificial intelligence\b/gi,'AI'],
+  [/\blarge language model(s)?\b/gi,'LLM'],
+  [/\bnatural language processing\b/gi,'NLP'],
+  [/\bdeep learning\b/gi,'DL'],
+  [/\bneural network(s)?\b/gi,'NN'],
+  [/\bunit test(s)?\b/gi,'TEST'],
+  [/\bpull request(s)?\b/gi,'PR'],
+  [/\buser interface\b/gi,'UI'],
+  [/\buser experience\b/gi,'UX'],
+  [/\bcommand[- ]line( interface)?\b/gi,'CLI'],
+  [/\brest api\b/gi,'REST'],
+  [/\bci\/cd\b/gi,'CI/CD'],
+  [/\bcontinuous integration\b/gi,'CI'],
+  [/\bcontinuous deployment\b/gi,'CD'],
+  [/\bversion control\b/gi,'VCS'],
+  [/\bobject[- ]oriented\b/gi,'OOP'],
+  [/\bdesign pattern(s)?\b/gi,'DP'],
+  [/\bdatabase\b/gi,'DB'],
+  [/\brepository\b/gi,'repo'],
+  [/\bapplication\b/gi,'app'],
+  [/\barchitecture\b/gi,'arch'],
+  [/\binfrastructure\b/gi,'infra'],
+  [/\bdeployment\b/gi,'dpl'],
+  [/\benvironment\b/gi,'env'],
+  [/\bconfiguration\b/gi,'cfg'],
+  [/\bdependenc(y|ies)\b/gi,'dep'],
+  [/\bauthentication\b/gi,'auth'],
+  [/\bauthorization\b/gi,'authz'],
+  [/\basynchronous\b/gi,'async'],
+  [/\bsynchronous\b/gi,'sync'],
+  [/\bendpoint(s)?\b/gi,'EP'],
+  [/\bmiddleware\b/gi,'MW'],
+  [/\bframework\b/gi,'fw'],
+  [/\blibrary\b/gi,'lib'],
+  [/\bpackage\b/gi,'pkg'],
+  [/\bperformance\b/gi,'perf'],
+  [/\bscalabilit(y|ies)\b/gi,'scale'],
+  [/\blatency\b/gi,'lat'],
+  [/\bthroughput\b/gi,'tput'],
+  [/\bsecurity\b/gi,'SEC'],
+  [/\bvulnerabilit(y|ies)\b/gi,'VULN'],
+  [/\bencryption\b/gi,'ENC'],
+  [/\bvalidation\b/gi,'val'],
+  [/\bpipeline\b/gi,'pipe'],
+  [/\bmicroservice(s)?\b/gi,'µsvc'],
+  [/\bcontainer(s)?\b/gi,'ctr'],
+  [/\bfunction\b/gi,'FN'],
+  [/\bmethod\b/gi,'FN'],
+  [/\bclass\b/gi,'CLS'],
+  // Programming languages
   [/\bpython\b/gi,'py'],
   [/\bjavascript\b/gi,'js'],
   [/\btypescript\b/gi,'ts'],
-  [/\bbriefly\b/gi,'→short'],
-  [/\bdetailed\b/gi,'→long'],
-  [/\bimportant\b/gi,'!!'],
-  [/\breview\b/gi,'«'],
-  [/\bimprove\b/gi,'∆'],
+  [/\bgolang\b/gi,'go'],
+  [/\bkotlin\b/gi,'kt'],
+  [/\bc\+\+\b/gi,'cpp'],
+  [/\bruby\b/gi,'rb'],
+  [/\bbash\b/gi,'sh'],
+  [/\bshell script\b/gi,'sh'],
+  // Finance vocabulary
+  [/\bcompound annual growth rate\b/gi,'CAGR'],
+  [/\bcustomer acquisition cost\b/gi,'CAC'],
+  [/\bcustomer lifetime value\b/gi,'LTV'],
+  [/\bmonthly recurring revenue\b/gi,'MRR'],
+  [/\bannual recurring revenue\b/gi,'ARR'],
+  [/\bgross merchandise value\b/gi,'GMV'],
+  [/\baverage revenue per user\b/gi,'ARPU'],
+  [/\breturn on investment\b/gi,'ROI'],
+  [/\bnet present value\b/gi,'NPV'],
+  [/\bearnings per share\b/gi,'EPS'],
+  [/\bkey performance indicator(s)?\b/gi,'KPI'],
+  [/\bprofit and loss\b/gi,'P&L'],
+  [/\byear[- ]over[- ]year\b/gi,'YoY'],
+  [/\bquarter[- ]over[- ]quarter\b/gi,'QoQ'],
+  [/\bmonth[- ]over[- ]month\b/gi,'MoM'],
+  [/\btotal addressable market\b/gi,'TAM'],
+  [/\bnet revenue retention\b/gi,'NRR'],
+  [/\bnet promoter score\b/gi,'NPS'],
+  [/\bbasis points?\b/gi,'bps'],
+  [/\bhead ?count\b/gi,'HC'],
+  [/\bcash flow\b/gi,'CF'],
+  [/\baccounts receivable\b/gi,'AR'],
+  [/\baccounts payable\b/gi,'AP'],
+  [/\bbalance sheet\b/gi,'BS'],
+  [/\boperating expenditure\b/gi,'OpEx'],
+  [/\bcapital expenditure\b/gi,'CapEx'],
+  [/\bprofit margin\b/gi,'margin'],
+  [/\bforecast\b/gi,'fcst'],
+  [/\bquarterly\b/gi,'qtrly'],
+  [/\bannual(ly)?\b/gi,'ann'],
+  // Law vocabulary
+  [/\bnon[- ]disclosure agreement\b/gi,'NDA'],
+  [/\bterms of service\b/gi,'ToS'],
+  [/\bterms and conditions\b/gi,'T&C'],
+  [/\bintellectual property\b/gi,'IP'],
+  [/\blimited liability company\b/gi,'LLC'],
+  [/\bgeneral data protection regulation\b/gi,'GDPR'],
+  [/\bservice level agreement\b/gi,'SLA'],
+  [/\bcalifornia consumer privacy act\b/gi,'CCPA'],
+  [/\bindemnif(y|ication)\b/gi,'indem'],
+  [/\bliabilit(y|ies)\b/gi,'liab'],
+  [/\bjurisdiction\b/gi,'jxn'],
+  [/\bregulation(s)?\b/gi,'reg'],
+  [/\bcompliance\b/gi,'compl'],
+  [/\bclause\b/gi,'cl'],
+  [/\bamendment\b/gi,'amdt'],
+  [/\bdamages\b/gi,'dmg'],
+  [/\bbreach\b/gi,'brch'],
+  [/\bprivacy policy\b/gi,'PrivPol'],
+  // Data science vocabulary
+  [/\bconvolutional neural network(s)?\b/gi,'CNN'],
+  [/\brecurrent neural network(s)?\b/gi,'RNN'],
+  [/\bprincipal component analysis\b/gi,'PCA'],
+  [/\bexploratory data analysis\b/gi,'EDA'],
+  [/\bk[- ]nearest neighbor(s)?\b/gi,'KNN'],
+  [/\bsupport vector machine(s)?\b/gi,'SVM'],
+  [/\bgradient (boosting|descent)\b/gi,(_,t)=>t==='descent'?'GD':'GB'],
+  [/\bcross[- ]validation\b/gi,'CV'],
+  [/\bhyperparameter(s)?\b/gi,'HP'],
+  [/\blearning rate\b/gi,'lr'],
+  [/\barea under the curve\b/gi,'AUC'],
+  [/\broot mean square error\b/gi,'RMSE'],
+  [/\bmean absolute error\b/gi,'MAE'],
+  [/\bF1[- ]score\b/gi,'F1'],
+  [/\btime series\b/gi,'TS'],
+  [/\bdimensionality reduction\b/gi,'DR'],
+  [/\bfeature engineering\b/gi,'FE'],
+  [/\bfeature selection\b/gi,'FS'],
+  [/\bdata frame\b/gi,'df'],
+  [/\bdata warehouse\b/gi,'DWH'],
+  [/\bbusiness intelligence\b/gi,'BI'],
+  [/\bextract[,]? transform[,]? load\b/gi,'ETL'],
+  [/\boverfitting\b/gi,'overfit'],
+  [/\bunderfitting\b/gi,'underfit'],
+  [/\bone[- ]hot encoding\b/gi,'OHE'],
+  [/\bmissing values?\b/gi,'NaN'],
+  [/\btraining (data|set)\b/gi,'train_data'],
+  [/\bvalidation (data|set)\b/gi,'val_data'],
+  [/\btest (data|set)\b/gi,'test_data'],
+  // Social / marketing vocabulary
+  [/\bcall to action\b/gi,'CTA'],
+  [/\bclick[- ]through rate\b/gi,'CTR'],
+  [/\bconversion rate\b/gi,'CVR'],
+  [/\bcost per (click|acquisition)\b/gi,(_,t)=>t==='click'?'CPC':'CPA'],
+  [/\bsearch engine optimization\b/gi,'SEO'],
+  [/\bsearch engine marketing\b/gi,'SEM'],
+  [/\bpay[- ]per[- ]click\b/gi,'PPC'],
+  [/\buser[- ]generated content\b/gi,'UGC'],
+  [/\bengagement rate\b/gi,'ER'],
+  [/\bkey opinion leader(s)?\b/gi,'KOL'],
+  [/\bvalue proposition\b/gi,'VP'],
+  [/\btarget audience\b/gi,'TA'],
+  [/\bcontent calendar\b/gi,'CC'],
+  [/\bbrand awareness\b/gi,'BA'],
+  [/\bsocial media\b/gi,'SM'],
+  [/\binfluencer(s)?\b/gi,'infl'],
+  [/\bsubscriber(s)?\b/gi,'sub'],
+  [/\bfollower(s)?\b/gi,'flw'],
+  [/\bcommunity manager\b/gi,'CM'],
   [/ +/g,' '],
 ];
-const EXAMPLES = [
-  "You are an expert Python developer. Write a function to sort a list. Return only the code, no explanation.",
-  "Summarize this text in 3 bullet points. Be concise.",
-  "Compare REST and GraphQL APIs. List pros and cons. Return as a table.",
+
+// ── Telegraphic rules (opt-in) ────────────────────────────────────────────────
+const TELEGRAPHIC_RULES = [
+  [/(is|are|was|were) (a|an|the) /gi,''],
+  [/(has|have|had) (a|an|the) /gi,''],
+  [/\bthe\b /gi,''],
+  [/\ba\b /gi,''],
+  [/\ban\b /gi,''],
+  [/\bcurrently\b/gi,''],
+  [/\bactually\b/gi,''],
+  [/\bessentially\b/gi,''],
+  [/\bbasically\b/gi,''],
+  [/\bsimply\b/gi,''],
+  [/\bjust\b/gi,''],
+  [/\bthere (is|are|was|were) /gi,''],
+  [/\bit (is|was) /gi,''],
+  [/(reported|stated|noted) that\b/gi,':'],
+  [/\bwhich (is|was|are|were) /gi,''],
+  [/\bthat (is|was) /gi,''],
+  [/\bin order to\b/gi,'to'],
+  [/\bso that\b/gi,'→'],
+  [/ +/g,' '],
 ];
-function encode(t){let o=t.trim();for(const[p,r]of RULES)o=o.replace(p,r);return o.replace(/\. /g,'.\n').replace(/ +/g,' ').trim();}
-function tokens(t){return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length*1.3);}
+
+const EXAMPLES = [
+  "You are an expert Python developer. Debug the function on line 47 of main.py where the NullPointerException occurs. Return only the code, no explanation.",
+  "Analyze our Q3 2025 revenue report. Monthly recurring revenue was $2.4M, up 34% year-over-year. Forecast the annual recurring revenue for Q4. Return as a table.",
+  "You are an expert data scientist. Perform exploratory data analysis on the training dataset and identify overfitting issues. Evaluate the model using F1-score and area under the curve.",
+  "Review the non-disclosure agreement and identify any intellectual property clause that could breach our compliance with the General Data Protection Regulation. Highlight the key liabilities.",
+];
+
+let telegraphic = false;
+
+function encode(t, tele) {
+  let o = t.trim();
+  for (const [p, r] of RULES) o = o.replace(p, r);
+  if (tele) {
+    for (const [p, r] of TELEGRAPHIC_RULES) o = o.replace(p, r);
+  }
+  return o.replace(/\. /g, '.\n').replace(/  +/g, ' ').trim();
+}
+
+function tokens(t) {
+  return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length * 1.3);
+}
+
 let debounce;
-function liveCompress(){
+function liveCompress() {
   clearTimeout(debounce);
-  debounce=setTimeout(()=>{
-    const eng=document.getElementById('eng-input').value;
-    if(!eng.trim()){reset();return;}
-    const ps=encode(eng);
-    const et=tokens(eng),pt=tokens(ps);
-    const saved=Math.max(0,et-pt);
-    const pct=et>0?Math.round(saved/et*100):0;
-    document.getElementById('ps-output').textContent=ps;
-    document.getElementById('s-eng').textContent=et;
-    document.getElementById('s-ps').textContent=pt;
-    document.getElementById('s-pct').textContent=pct+'%';
-    const pill=document.getElementById('savings-pill');
-    pill.innerHTML=pct>0?`<span class="savings-pill">${pct}% smaller</span>`:'';
-  },200);
+  debounce = setTimeout(() => {
+    const eng = document.getElementById('eng-input').value;
+    if (!eng.trim()) { reset(); return; }
+    const ps = encode(eng, telegraphic);
+    const et = tokens(eng), pt = tokens(ps);
+    const saved = Math.max(0, et - pt);
+    const pct = et > 0 ? Math.round(saved / et * 100) : 0;
+    document.getElementById('ps-output').textContent = ps;
+    document.getElementById('s-eng').textContent = et;
+    document.getElementById('s-ps').textContent = pt;
+    document.getElementById('s-pct').textContent = pct + '%';
+    const pill = document.getElementById('savings-pill');
+    pill.innerHTML = pct > 0 ? `<span class="savings-pill">${pct}% smaller</span>` : '';
+  }, 200);
 }
-function reset(){
-  document.getElementById('ps-output').textContent='—';
-  document.getElementById('s-eng').textContent='—';
-  document.getElementById('s-ps').textContent='—';
-  document.getElementById('s-pct').textContent='—';
-  document.getElementById('savings-pill').innerHTML='';
+
+function reset() {
+  document.getElementById('ps-output').textContent = '—';
+  document.getElementById('s-eng').textContent = '—';
+  document.getElementById('s-ps').textContent = '—';
+  document.getElementById('s-pct').textContent = '—';
+  document.getElementById('savings-pill').innerHTML = '';
 }
-function tryExample(i){
-  document.getElementById('eng-input').value=EXAMPLES[i];
+
+function toggleTelegraphic() {
+  telegraphic = !telegraphic;
+  const btn = document.getElementById('tele-btn');
+  if (telegraphic) {
+    btn.textContent = '⚡ Telegraphic: ON';
+    btn.style.background = 'var(--lime)';
+    btn.style.borderColor = 'var(--lime)';
+  } else {
+    btn.textContent = '⚡ Telegraphic: OFF';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+  }
   liveCompress();
 }
-function copyOutput(){
-  const t=document.getElementById('ps-output').textContent;
-  if(t==='—')return;
+
+function tryExample(i) {
+  document.getElementById('eng-input').value = EXAMPLES[i];
+  liveCompress();
+}
+
+function copyOutput() {
+  const t = document.getElementById('ps-output').textContent;
+  if (t === '—') return;
   navigator.clipboard.writeText(t);
 }
-function clearDemo(){
-  document.getElementById('eng-input').value='';
+
+function clearDemo() {
+  document.getElementById('eng-input').value = '';
   reset();
 }
 </script>
