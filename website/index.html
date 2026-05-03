@@ -3,70 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Promptly — Your AI prompts, instantly compressed.</title>
+<title>Promptolian — Multi-engine AI prompt compression</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
-:root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--radius:16px}
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;
+  --white:#fff;--radius:16px;--surface:#1c1c2a;
+  --border:#e8e7e0;--red:#ef4444;--orange:#f59e0b;--blue:#60a5fa;--green:#4ade80;
+}
 *{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.6}
-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:var(--soft);border-bottom:1px solid #e0dfd8;position:sticky;top:0;z-index:100}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:var(--soft);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:22px;text-decoration:none;color:var(--ink)}
-.logo-icon{width:34px;height:34px;background:var(--lime);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px}
-.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
-.nav-links a{font-size:14px;color:var(--muted);text-decoration:none;transition:color .15s}
+.logo-icon{width:34px;height:34px;background:var(--lime);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:500;font-size:13px}
+.nav-links{display:flex;align-items:center;gap:24px;list-style:none}
+.nav-links a{font-size:13px;color:var(--muted);text-decoration:none;transition:color .15s}
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{background:var(--ink);color:var(--white)!important;padding:8px 20px;border-radius:100px;font-size:13px!important;font-weight:500}
-.hero{padding:100px 48px 80px;text-align:center;max-width:860px;margin:0 auto}
+
+/* ── HERO ── */
+.hero{padding:96px 48px 72px;text-align:center;max-width:880px;margin:0 auto}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--lime);color:var(--ink);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:28px}
-h1{font-family:'DM Serif Display',serif;font-size:clamp(40px,6vw,68px);line-height:1.08;margin-bottom:22px}
+h1{font-family:'DM Serif Display',serif;font-size:clamp(38px,6vw,66px);line-height:1.07;margin-bottom:22px}
 h1 em{font-style:italic;color:var(--muted)}
-.hero p{font-size:18px;color:var(--muted);max-width:540px;margin:0 auto 36px;line-height:1.7}
+.hero p{font-size:18px;color:var(--muted);max-width:580px;margin:0 auto 36px;line-height:1.7}
 .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:100px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:100px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none}
 .btn-primary{background:var(--ink);color:var(--white)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .btn-secondary{background:var(--white);color:var(--ink);border:1px solid #ddd}
 .btn-secondary:hover{border-color:#bbb;transform:translateY(-1px)}
-.proof{display:flex;align-items:center;justify-content:center;gap:32px;padding:20px 48px;border-top:1px solid #e0dfd8;border-bottom:1px solid #e0dfd8;background:var(--white);flex-wrap:wrap}
-.proof-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.btn-outline{background:transparent;color:var(--ink);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--white)}
+
+/* ── PROOF BAR ── */
+.proof{display:flex;align-items:center;justify-content:center;gap:28px;padding:18px 48px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);flex-wrap:wrap}
+.proof-item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
 .proof-item strong{color:var(--ink)}
 .dot{width:4px;height:4px;border-radius:50%;background:#ccc}
-/* Demo section */
-.demo-section{max-width:800px;margin:80px auto;padding:0 48px}
-.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.section-title{font-family:'DM Serif Display',serif;font-size:36px;line-height:1.15;margin-bottom:8px}
-.section-sub{color:var(--muted);margin-bottom:32px}
-.demo-card{background:var(--white);border-radius:20px;padding:28px;border:1px solid #e8e7e0;margin-bottom:16px}
+
+/* ── SHARED SECTION STYLES ── */
+.section{max-width:900px;margin:0 auto;padding:80px 48px 0}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,40px);line-height:1.15;margin-bottom:10px}
+.section-sub{color:var(--muted);margin-bottom:36px;max-width:600px}
+
+/* ── DEMO ── */
+.demo-card{background:var(--white);border-radius:20px;padding:28px;border:1px solid var(--border);margin-bottom:16px}
 .demo-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.demo-col label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
-textarea{width:100%;min-height:110px;padding:12px 14px;border:1px solid #e0dfd8;border-radius:12px;background:var(--soft);font-size:14px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;transition:border-color .15s;color:var(--ink)}
+.demo-col label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+textarea{width:100%;min-height:120px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--soft);font-size:14px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;transition:border-color .15s;color:var(--ink)}
 textarea:focus{border-color:#999}
-.output-box{min-height:110px;padding:12px 14px;border:1px solid #e8e7e0;border-radius:12px;background:var(--soft);font-size:13px;font-family:'Fira Code','DM Mono',monospace;color:var(--ink);white-space:pre-wrap;line-height:1.7}
+.output-box{min-height:120px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--soft);font-size:13px;font-family:'DM Mono',monospace;color:var(--ink);white-space:pre-wrap;line-height:1.7}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
-.stat-box{background:var(--soft);border-radius:12px;padding:14px;text-align:center;border:1px solid #e8e7e0}
+.stat-box{background:var(--soft);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border)}
 .stat-val{font-size:22px;font-weight:500;display:block;color:var(--ink)}
 .stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
-.demo-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.demo-btn{padding:8px 18px;border-radius:10px;border:1px solid #e0dfd8;background:transparent;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--ink);transition:all .15s;font-weight:500}
+.demo-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.demo-btn{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--ink);transition:all .15s;font-weight:500}
 .demo-btn:hover{background:var(--soft)}
-.demo-btn.primary{background:var(--lime);border-color:var(--lime)}
+.demo-btn.active{background:var(--lime);border-color:var(--lime)}
 .savings-pill{display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
-/* Features */
-.features{max-width:800px;margin:0 auto 80px;padding:0 48px}
-.features-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:32px}
-.feature{background:var(--white);border:1px solid #e8e7e0;border-radius:16px;padding:22px}
-.feature-icon{font-size:22px;margin-bottom:10px}
-.feature-title{font-weight:600;font-size:15px;margin-bottom:6px}
+.demo-note{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+.demo-note span{background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+
+/* ── ENGINES ── */
+.engines-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.engine-card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:26px;position:relative;overflow:hidden}
+.engine-card.featured{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.engine-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px;margin-bottom:14px}
+.engine-card:not(.featured) .engine-badge{background:var(--soft);color:var(--muted)}
+.engine-card.featured .engine-badge{background:var(--lime);color:var(--ink)}
+.engine-name{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px}
+.engine-card.featured .engine-name{color:var(--white)}
+.engine-stat{font-size:28px;font-weight:600;color:var(--lime);margin-bottom:4px}
+.engine-stat-lbl{font-size:11px;color:var(--muted);margin-bottom:14px}
+.engine-card.featured .engine-stat-lbl{color:#aaa}
+.engine-desc{font-size:13px;line-height:1.7}
+.engine-card:not(.featured) .engine-desc{color:var(--muted)}
+.engine-card.featured .engine-desc{color:#ccc}
+.engine-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.engine-tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.engine-card:not(.featured) .engine-tag{background:var(--soft);color:var(--muted);border:1px solid var(--border)}
+.engine-card.featured .engine-tag{background:#1e2030;color:#aaa;border:1px solid #2a2a40}
+.engine-warn{font-size:11px;color:var(--orange);background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:6px 10px;margin-top:12px}
+
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
+.feature{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:22px}
+.feature-icon{font-size:20px;margin-bottom:10px}
+.feature-title{font-weight:600;font-size:14px;margin-bottom:6px}
 .feature-desc{font-size:13px;color:var(--muted);line-height:1.6}
-/* Pricing */
-.pricing{max-width:900px;margin:0 auto 80px;padding:0 48px}
+
+/* ── DOMAIN PACKS ── */
+.packs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:32px}
+.pack{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 16px}
+.pack-icon{font-size:18px;margin-bottom:8px}
+.pack-name{font-weight:600;font-size:13px;margin-bottom:4px}
+.pack-count{font-size:11px;color:var(--muted)}
+.pack-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:6px}
+.pack-badge.free{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.pack-badge.pro{background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff}
+
+/* ── MULTILINGUAL ── */
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.lang-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.lang-header{display:flex;align-items:center;gap:10px}
+.lang-flag{font-size:22px}
+.lang-name{font-weight:600;font-size:14px}
+.lang-pills{display:flex;flex-wrap:wrap;gap:5px}
+.lang-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.pill-green{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.pill-blue{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.pill-yellow{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.pill-grey{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+.lang-note{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ── RESEARCH ── */
+.research-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px}
+.research-card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:26px}
+.research-card h3{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px}
+table.results-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
+table.results-table th{background:var(--soft);padding:8px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+table.results-table td{padding:8px 10px;border-bottom:1px solid var(--border)}
+table.results-table tr:last-child td{font-weight:600;background:var(--soft)}
+.metric-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.metric{text-align:center;padding:14px 10px;background:var(--soft);border-radius:12px;border:1px solid var(--border)}
+.metric-val{font-size:26px;font-weight:600;color:var(--ink);display:block}
+.metric-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+/* ── PRICING ── */
 .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
-.price-card{background:var(--white);border:1.5px solid #e8e7e0;border-radius:20px;padding:26px;display:flex;flex-direction:column}
+.price-card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:26px;display:flex;flex-direction:column}
 .price-card.featured{background:var(--ink);border-color:var(--ink);color:var(--white)}
 .price-tier{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
 .price-card.featured .price-tier{color:var(--lime)}
 .price-amount{font-family:'DM Serif Display',serif;font-size:38px;line-height:1;margin-bottom:4px}
-.price-card.featured .price-amount{color:var(--white)}
 .price-period{font-size:12px;color:var(--muted);margin-bottom:20px}
 .price-card.featured .price-period{color:#aaa}
 .price-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:22px;flex:1}
@@ -76,131 +151,453 @@ textarea:focus{border-color:#999}
 .price-card.featured .check{color:var(--lime)}
 .price-dim{color:#bbb!important;font-size:12px!important}
 .price-badge{display:inline-block;background:var(--lime);color:var(--ink);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;vertical-align:middle;margin-left:4px;letter-spacing:.04em}
-.price-btn{width:100%;padding:11px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e0dfd8;background:var(--soft);color:var(--ink);font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:auto}
+.price-btn{width:100%;padding:11px;border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--soft);color:var(--ink);font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:auto}
 .price-btn:hover{background:#eee}
 .price-card.featured .price-btn{background:var(--lime);border-color:var(--lime);color:var(--ink)}
-.price-card.featured .price-btn:hover{background:#d4f54a}
 .price-note{text-align:center;font-size:12px;color:var(--muted);margin-top:20px}
-footer{background:var(--ink);color:#888;text-align:center;padding:28px;font-size:12px;line-height:1.8}
-footer strong{color:var(--lime);font-family:'DM Serif Display',serif;font-size:14px;font-weight:400}
+
+/* ── PRODUCTION ── */
+.prod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:32px}
+.prod-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:22px}
+.prod-step{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--lime);background:var(--ink);display:inline-block;padding:2px 8px;border-radius:20px;margin-bottom:10px}
+.prod-card h3{font-weight:600;font-size:15px;margin-bottom:8px}
+.prod-card p{font-size:13px;color:var(--muted);line-height:1.6}
+.prod-card code{font-family:'DM Mono',monospace;font-size:12px;background:var(--soft);padding:2px 6px;border-radius:4px;color:var(--ink)}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);color:#888;text-align:center;padding:40px 48px;font-size:12px;line-height:1.9;margin-top:80px}
+footer strong{color:var(--lime);font-family:'DM Serif Display',serif;font-size:16px;font-weight:400}
 footer a{color:#666;text-decoration:none}
 footer a:hover{color:#aaa}
+.footer-links{display:flex;justify-content:center;gap:24px;margin:16px 0;flex-wrap:wrap}
+
+/* ── UTILS ── */
+.mb-80{margin-bottom:80px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--soft);color:var(--muted);border:1px solid var(--border)}
+.divider{border:none;border-top:1px solid var(--border);margin:0}
+@media(max-width:680px){
+  nav{padding:14px 20px}.nav-links{display:none}
+  .hero{padding:60px 20px 48px}.section{padding:60px 20px 0}
+  .demo-row,.engines-grid,.features-grid,.packs-grid,.lang-grid,
+  .research-row,.pricing-grid,.prod-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <a class="logo" href="/">
-    <div class="logo-icon">P→</div>Promptly
+    <div class="logo-icon">∑→</div>Promptolian
   </a>
   <ul class="nav-links">
     <li><a href="#demo">Demo</a></li>
+    <li><a href="#engines">Engines</a></li>
     <li><a href="#features">Features</a></li>
+    <li><a href="#multilingual">Languages</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#research">Research</a></li>
     <li><a href="#pricing">Pricing</a></li>
-    <li><a href="docs.html">API Docs</a></li>
+    <li><a href="docs.html">API</a></li>
     <li><a href="#" class="nav-cta">Install free →</a></li>
   </ul>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">⚡ Free tier available — no credit card needed</div>
-  <h1>Your AI prompts,<br><em>instantly</em> compressed.</h1>
-  <p>Promptly cuts your token spend by up to 36% — automatically. Works on Claude, ChatGPT, Gemini, and Copilot.</p>
+  <div class="hero-badge">⚡ 3 compression engines — Free tier, no credit card</div>
+  <h1>Your AI prompts,<br><em>scientifically</em> compressed.</h1>
+  <p>Promptolian cuts token spend by up to 36% using symbol substitution, NLP grammar stripping, and MLM predictability scoring. Works on Claude, ChatGPT, Gemini, Copilot — in 6 languages.</p>
   <div class="hero-btns">
-    <a href="#demo" class="btn btn-primary">Try the demo →</a>
-    <a href="#" class="btn btn-secondary">Install extension ↓</a>
+    <a href="#demo" class="btn btn-primary">Try live demo →</a>
+    <a href="#engines" class="btn btn-secondary">See how it works</a>
+    <a href="docs.html" class="btn btn-outline">API docs</a>
   </div>
 </section>
 
+<!-- PROOF BAR -->
 <div class="proof">
   <div class="proof-item"><strong>18–36%</strong> avg token reduction</div>
   <div class="dot"></div>
-  <div class="proof-item">Works on <strong>5 AI platforms</strong></div>
+  <div class="proof-item"><strong>3</strong> compression engines</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>180+</strong> compression rules</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>100%</strong> fact preservation</div>
+  <div class="proof-item"><strong>98.4%</strong> fact preservation (100 prompts)</div>
+  <div class="dot"></div>
+  <div class="proof-item"><strong>6</strong> languages supported</div>
+  <div class="dot"></div>
+  <div class="proof-item">Works on <strong>5 AI platforms</strong></div>
 </div>
 
-<section class="demo-section" id="demo">
+<!-- DEMO -->
+<section class="section" id="demo">
   <div class="section-label">Live demo</div>
   <div class="section-title">See Promptolian in action</div>
-  <p class="section-sub">Type any prompt and watch it compress in real time. Works in English, Italian, French, German, Dutch, Chinese and more.</p>
+  <p class="section-sub">Type any prompt and watch it compress. Toggle telegraphic mode for maximum savings. Language is detected automatically.</p>
   <div class="demo-card">
     <div class="demo-row">
       <div class="demo-col">
-        <label style="display:flex;align-items:center;gap:8px">
+        <label>
           Your prompt
-          <span id="lang-badge" style="display:none;font-size:11px;font-weight:600;
-            background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;
-            padding:2px 8px;border-radius:20px"></span>
+          <span id="lang-badge" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px"></span>
         </label>
-        <textarea id="eng-input" placeholder="e.g. You are an expert Python developer. Write a function to sort a list. Return only the code, no explanation." oninput="liveCompress()"></textarea>
+        <textarea id="eng-input" placeholder="e.g. You are an expert Python developer. Write a function to sort a list by multiple criteria. Return only the code, no explanation." oninput="liveCompress()"></textarea>
       </div>
       <div class="demo-col">
-        <label>Promptolian <span id="savings-pill"></span></label>
+        <label>Promptolian output <span id="savings-pill"></span></label>
         <div class="output-box" id="ps-output">—</div>
       </div>
     </div>
     <div class="stats-row">
       <div class="stat-box"><span class="stat-val" id="s-eng">—</span><div class="stat-lbl">Original tokens</div></div>
-      <div class="stat-box"><span class="stat-val" id="s-ps">—</span><div class="stat-lbl">Promptolian tokens</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-ps">—</span><div class="stat-lbl">Compressed tokens</div></div>
       <div class="stat-box"><span class="stat-val" id="s-pct">—</span><div class="stat-lbl">Saved</div></div>
-      <div class="stat-box"><span class="stat-val" id="s-fpr">100%</span><div class="stat-lbl">Fact preservation</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-fpr">≥98%</span><div class="stat-lbl">Fact preservation</div></div>
     </div>
     <div class="demo-btns">
-      <button class="demo-btn primary" onclick="tryExample(0)">Dev example</button>
-      <button class="demo-btn" onclick="tryExample(1)">Finance example</button>
-      <button class="demo-btn" onclick="tryExample(2)">Data science example</button>
-      <button class="demo-btn" onclick="tryExample(3)">Law example</button>
-      <button class="demo-btn" id="tele-btn" onclick="toggleTelegraphic()" title="Removes articles &amp; filler words for maximum compression">⚡ Telegraphic: OFF</button>
+      <button class="demo-btn" onclick="tryExample(0)">Dev</button>
+      <button class="demo-btn" onclick="tryExample(1)">Finance</button>
+      <button class="demo-btn" onclick="tryExample(2)">Data science</button>
+      <button class="demo-btn" onclick="tryExample(3)">Law</button>
+      <button class="demo-btn" onclick="tryExample(4)">Spanish</button>
+      <button class="demo-btn" onclick="tryExample(5)">Chinese</button>
+      <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+      <button class="demo-btn" id="tele-btn" onclick="toggleTelegraphic()">⚡ Telegraphic: OFF</button>
       <button class="demo-btn" onclick="copyOutput()">Copy</button>
       <button class="demo-btn" onclick="clearDemo()">Clear</button>
+    </div>
+    <div class="demo-note">
+      <span>Note</span>
+      This demo runs the <strong>Standard engine</strong> (symbol substitution + optional telegraphic stripping) entirely in-browser.
+      NLP and MLM engines require the server — available via the <a href="http://localhost:5000" style="color:var(--ink);font-weight:500">Research Dashboard</a> or <a href="docs.html" style="color:var(--ink);font-weight:500">REST API</a>.
     </div>
   </div>
 </section>
 
-<section class="features" id="features">
+<!-- ENGINES -->
+<section class="section" id="engines" style="padding-top:72px">
+  <div class="section-label">Architecture</div>
+  <div class="section-title">Three compression engines</div>
+  <p class="section-sub">Each engine targets a different trade-off between speed, compression depth, and language support.</p>
+  <div class="engines-grid">
+
+    <div class="engine-card featured">
+      <div class="engine-badge">Default · In-browser</div>
+      <div class="engine-name">Standard</div>
+      <div class="engine-stat">18–36%</div>
+      <div class="engine-stat-lbl">compression rate</div>
+      <div class="engine-desc">Symbol substitution using 180+ hand-crafted rules across 8 domains. UUID-based fact protection ensures numbers, URLs, paths, and tech names survive compression. PTR-guided adaptive mode auto-selects standard vs telegraphic.</div>
+      <div class="engine-tags">
+        <span class="engine-tag">180+ rules</span>
+        <span class="engine-tag">Instant (&lt;1ms)</span>
+        <span class="engine-tag">EN + ES + ZH</span>
+        <span class="engine-tag">No dependencies</span>
+      </div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge">Server · spaCy</div>
+      <div class="engine-name">NLP</div>
+      <div class="engine-stat">10–22%</div>
+      <div class="engine-stat-lbl">compression rate</div>
+      <div class="engine-desc">spaCy-based grammar stripping. Removes stop words, articles, auxiliary verbs, and filler adverbs using POS tagging. Language-specific models for EN, IT, FR, DE, ES. Multilingual fallback via <code style="font-size:12px;background:#f5f4ef;padding:1px 4px;border-radius:3px">xx_ent_wiki_sm</code>.</div>
+      <div class="engine-tags">
+        <span class="engine-tag">EN/IT/FR/DE/ES</span>
+        <span class="engine-tag">~0.1s per prompt</span>
+        <span class="engine-tag">Semantic-safe</span>
+        <span class="engine-tag">Requires server</span>
+      </div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge">Server · Transformer</div>
+      <div class="engine-name">MLM</div>
+      <div class="engine-stat">20–30%</div>
+      <div class="engine-stat-lbl">compression rate</div>
+      <div class="engine-desc">RoBERTa / DistilBERT masks each token and scores predictability. Removes top-k most redundant tokens that the model can infer from context. Chinese: <code style="font-size:12px;background:#f5f4ef;padding:1px 4px;border-radius:3px">bert-base-chinese</code> with character-level masking.</div>
+      <div class="engine-tags">
+        <span class="engine-tag">Best compression</span>
+        <span class="engine-tag">1–5s per prompt</span>
+        <span class="engine-tag">GPU recommended</span>
+        <span class="engine-tag">Requires server</span>
+      </div>
+      <div class="engine-warn">⚠ Chinese MLM works. Chinese + Spanish symbol rules now implemented; NLP grammar stripping for ZH pending.</div>
+    </div>
+
+  </div>
+
+  <!-- PTR explanation -->
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px 28px;margin-top:16px;display:grid;grid-template-columns:1fr 2fr;gap:24px;align-items:center">
+    <div>
+      <div class="section-label" style="margin-bottom:6px">PTR-Guided Adaptive Mode</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;line-height:1.2">Auto-selects the right compression depth</div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--ink)">PTR (Protected Token Ratio)</strong> = protected_facts / total_tokens.
+      When PTR &gt; 0.65, the prompt is fact-dense — applying telegraphic grammar stripping would risk breaking meaning. Promptolian stays in <strong style="color:var(--ink)">standard mode</strong>. When PTR ≤ 0.65, the prompt has enough "filler" for aggressive stripping and <strong style="color:var(--ink)">telegraphic mode</strong> is applied automatically.
+      Experiment result: telegraphic mode improved compression by <strong style="color:var(--ink)">+5 pp</strong> across all 4 domains (17.3% vs 12.3% avg CR).
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features" style="padding-top:72px">
   <div class="section-label">Features</div>
-  <div class="section-title">Everything you need</div>
+  <div class="section-title">Everything built in</div>
   <div class="features-grid">
     <div class="feature">
       <div class="feature-icon">⚡</div>
       <div class="feature-title">One-click compression</div>
-      <div class="feature-desc">Click Compress. Promptolian encodes your prompt. Click Restore to undo. Zero friction.</div>
+      <div class="feature-desc">Click Compress in the browser toolbar. Promptolian encodes your prompt and injects it. One click to restore. Zero friction.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">🔒</div>
-      <div class="feature-title">100% fact preservation</div>
-      <div class="feature-desc">NER pre-pass protects every number, name, URL, and path before compression. Facts never lost.</div>
+      <div class="feature-title">Fact preservation (UUID guard)</div>
+      <div class="feature-desc">Before any rule runs, a pre-pass replaces facts (numbers, URLs, paths, versions, tech names) with UUID tokens. They are restored exactly after compression. 98.4% FPR measured across 100 prompts.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">🌐</div>
       <div class="feature-title">5 AI platforms</div>
-      <div class="feature-desc">Claude, ChatGPT, Gemini, Copilot, and more. One extension, everywhere you work.</div>
+      <div class="feature-desc">Chrome and Firefox extensions inject the toolbar on Claude.ai, ChatGPT, Gemini, Microsoft Copilot, and Perplexity. SPA-aware with MutationObserver re-injection.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">📊</div>
-      <div class="feature-title">Live savings tracker</div>
-      <div class="feature-desc">See tokens saved per prompt and cumulative session totals in the popup.</div>
+      <div class="feature-title">Session analytics</div>
+      <div class="feature-desc">Pro: tokens saved over time, per-site breakdown, 7-day chart in the popup. Session history capped at 500 entries, stored locally.</div>
     </div>
     <div class="feature">
-      <div class="feature-icon">∑</div>
-      <div class="feature-title">Promptolian language</div>
-      <div class="feature-desc">180+ rules. Tech, finance, law, data science &amp; social vocab. Telegraphic mode for maximum savings.</div>
+      <div class="feature-icon">🔧</div>
+      <div class="feature-title">Custom vocabulary rules</div>
+      <div class="feature-desc">Pro: define your own phrase → abbreviation rules. Company jargon, internal project names, domain-specific terms. Applied before built-in rules.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">↩</div>
+      <div class="feature-title">Auto-compress on send</div>
+      <div class="feature-desc">Pro: intercepts Enter key (not Shift+Enter), compresses silently, sends. Synchronous quota check from cache ensures no delay.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">🔑</div>
-      <div class="feature-title">Your prompts stay local</div>
-      <div class="feature-desc">Compression happens in your browser. Your prompts never leave your machine.</div>
+      <div class="feature-title">100% local — no tracking</div>
+      <div class="feature-desc">Standard compression runs entirely in your browser. Your prompts never leave your machine. No telemetry, no logs.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔌</div>
+      <div class="feature-title">REST API</div>
+      <div class="feature-desc">Developer tier: <code style="font-size:12px;background:var(--soft);padding:1px 5px;border-radius:3px">POST /v1/compress</code> with engine, domain, and language params. Batch endpoint. Python & JS SDK.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📈</div>
+      <div class="feature-title">Research dashboard</div>
+      <div class="feature-desc">Localhost Flask dashboard with live compression comparison (Standard vs NLP vs MLM), Groq LLM quality scoring, and domain experiment visualisations.</div>
     </div>
   </div>
 </section>
 
-<section class="pricing" id="pricing">
+<!-- DOMAIN PACKS -->
+<section class="section" style="padding-top:64px">
+  <div class="section-label">Vocabulary</div>
+  <div class="section-title">8 domain packs</div>
+  <p class="section-sub">Each domain pack adds specialist abbreviations. Free packs are on by default. Pro packs are opt-in.</p>
+  <div class="packs-grid">
+    <div class="pack">
+      <div class="pack-icon">💻</div>
+      <div class="pack-name">Tech & General</div>
+      <div class="pack-count">~90 rules</div>
+      <span class="pack-badge free">Free</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">💰</div>
+      <div class="pack-name">Finance</div>
+      <div class="pack-count">28 rules — MRR, ARR, CAGR, ROI…</div>
+      <span class="pack-badge free">Free</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">⚖️</div>
+      <div class="pack-name">Law</div>
+      <div class="pack-count">18 rules — NDA, GDPR, SLA…</div>
+      <span class="pack-badge free">Free</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">📊</div>
+      <div class="pack-name">Data Science</div>
+      <div class="pack-count">31 rules — RMSE, PCA, EDA…</div>
+      <span class="pack-badge free">Free</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">📣</div>
+      <div class="pack-name">Social & Marketing</div>
+      <div class="pack-count">20 rules — CTR, CPC, SEO…</div>
+      <span class="pack-badge free">Free</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">🏥</div>
+      <div class="pack-name">Medical</div>
+      <div class="pack-count">39 rules — HTN, MI, ECG…</div>
+      <span class="pack-badge pro">Pro</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">🎓</div>
+      <div class="pack-name">Academic</div>
+      <div class="pack-count">33 rules — RCT, CI, meta-analysis…</div>
+      <span class="pack-badge pro">Pro</span>
+    </div>
+    <div class="pack">
+      <div class="pack-icon">🏛️</div>
+      <div class="pack-name">Legal Pro</div>
+      <div class="pack-count">25 rules — MSJ, pltf, deft…</div>
+      <span class="pack-badge pro">Pro</span>
+    </div>
+  </div>
+</section>
+
+<!-- MULTILINGUAL -->
+<section class="section" id="multilingual" style="padding-top:64px">
+  <div class="section-label">Language support</div>
+  <div class="section-title">Compress in 6 languages</div>
+  <p class="section-sub">Language is detected automatically. Symbol rules are now available for English, Spanish, and Chinese. NLP grammar stripping covers EN, IT, FR, DE, ES.</p>
+  <div class="lang-grid">
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇬🇧</div><div class="lang-name">English</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-green">Standard ✓</span>
+        <span class="lang-pill pill-green">NLP ✓</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-green">Telegraphic ✓</span>
+      </div>
+      <div class="lang-note">Full support. 180+ symbol rules, en_core_web_sm NLP, RoBERTa MLM. Data-driven rule learning in progress.</div>
+    </div>
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇪🇸</div><div class="lang-name">Spanish</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-green">Standard ✓</span>
+        <span class="lang-pill pill-green">NLP ✓</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-blue">Telegraphic ✓</span>
+      </div>
+      <div class="lang-note">60+ Spanish symbol rules (§EXP, ANLZ, GEN…). es_core_news_sm for NLP. DistilBERT multilingual for MLM.</div>
+    </div>
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇨🇳</div><div class="lang-name">Chinese</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-green">Standard ✓</span>
+        <span class="lang-pill pill-yellow">NLP partial</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-grey">Telegraphic —</span>
+      </div>
+      <div class="lang-note">50+ Chinese symbol rules (你是一个专业的 → §EXP, 分析 → ANLZ…). MLM via bert-base-chinese (char-level). Grammar stripping roadmap item.</div>
+    </div>
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇮🇹</div><div class="lang-name">Italian</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-grey">Standard —</span>
+        <span class="lang-pill pill-green">NLP ✓</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-blue">Telegraphic ✓</span>
+      </div>
+      <div class="lang-note">it_core_news_sm. Articles (il/la/le/un), auxiliaries and fillers stripped. Symbol rules roadmap item.</div>
+    </div>
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇫🇷</div><div class="lang-name">French</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-grey">Standard —</span>
+        <span class="lang-pill pill-green">NLP ✓</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-blue">Telegraphic ✓</span>
+      </div>
+      <div class="lang-note">fr_core_news_sm. Removes le/la/les/un/une, auxiliaries, fillers.</div>
+    </div>
+    <div class="lang-card">
+      <div class="lang-header"><div class="lang-flag">🇩🇪</div><div class="lang-name">German</div></div>
+      <div class="lang-pills">
+        <span class="lang-pill pill-grey">Standard —</span>
+        <span class="lang-pill pill-green">NLP ✓</span>
+        <span class="lang-pill pill-green">MLM ✓</span>
+        <span class="lang-pill pill-blue">Telegraphic ✓</span>
+      </div>
+      <div class="lang-note">de_core_news_sm. Compound noun preservation — only function words and fillers removed.</div>
+    </div>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section class="section" id="research" style="padding-top:64px">
+  <div class="section-label">Experimental results</div>
+  <div class="section-title">Validated on 100 real prompts</div>
+  <p class="section-sub">100-prompt experiment across 4 professional domains using Groq / llama-3.3-70b-versatile. Response quality measured with ROUGE-1 and 3-gram cosine similarity.</p>
+  <div class="research-row">
+    <div class="research-card">
+      <h3>Results by domain</h3>
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Domain</th><th>CR std</th><th>CR tele</th><th>FPR</th><th>ROUGE-1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Finance</td><td>14.1%</td><td>19.0%</td><td>97.7%</td><td>0.691</td></tr>
+          <tr><td>Social</td><td>13.5%</td><td>17.5%</td><td>99.2%</td><td>0.699</td></tr>
+          <tr><td>Data Science</td><td>12.7%</td><td>17.8%</td><td>100%</td><td>0.715</td></tr>
+          <tr><td>Law</td><td>8.9%</td><td>15.0%</td><td>96.7%</td><td>0.710</td></tr>
+          <tr><td><strong>Overall</strong></td><td><strong>12.3%</strong></td><td><strong>17.3%</strong></td><td><strong>98.4%</strong></td><td><strong>0.708</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="research-card">
+      <h3>Key metrics</h3>
+      <div class="metric-row">
+        <div class="metric"><span class="metric-val">17.3%</span><div class="metric-lbl">Avg compression</div></div>
+        <div class="metric"><span class="metric-val">98.4%</span><div class="metric-lbl">Fact preservation</div></div>
+        <div class="metric"><span class="metric-val">0.71</span><div class="metric-lbl">Avg ROUGE-1</div></div>
+      </div>
+      <div style="margin-top:18px;font-size:13px;color:var(--muted);line-height:1.8">
+        <strong style="color:var(--ink)">Telegraphic mode</strong> consistently outperforms standard (+5 pp CR) with negligible quality loss (ROUGE-1 delta &lt;0.02).<br><br>
+        <strong style="color:var(--ink)">Law domain</strong> has the lowest CR (8.9% std) due to high PTR — legal prompts are fact-dense, limiting safe compression.
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/research/papers/promptolian_paper.pdf" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Read full paper →</a>
+        <a href="http://localhost:5000" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Research dashboard →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="section" id="roadmap" style="padding-top:64px">
+  <div class="section-label">What's next</div>
+  <div class="section-title">Development roadmap</div>
+  <p class="section-sub">Three active research priorities being implemented now.</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px">
+
+    <div style="background:var(--white);border:1.5px solid var(--lime);border-radius:16px;padding:22px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#16a34a;margin-bottom:10px">Priority 1 · In progress</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:8px">Symbol rules for all high-value languages</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">Spanish (60+ rules) and Chinese (50+ rules) symbol compression now live. Italian, French, German symbol rules next — data-driven learning will accelerate coverage via <code style="font-size:11px;background:var(--soft);padding:1px 4px;border-radius:3px">rule_learner.py</code>.</div>
+    </div>
+
+    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Priority 2 · In progress</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:8px">Data-driven rule learning</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <code style="font-size:11px;background:var(--soft);padding:1px 4px;border-radius:3px">rule_learner.py</code> discovers high-frequency n-grams in your prompt corpus and proposes new abbreviation rules ranked by compression gain. Plugs directly into <code style="font-size:11px;background:var(--soft);padding:1px 4px;border-radius:3px">engine_v3.py</code>.</div>
+    </div>
+
+    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Priority 3 · In progress</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:8px">LLM quality gate</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        <code style="font-size:11px;background:var(--soft);padding:1px 4px;border-radius:3px">quality_gate.py</code> uses Groq / llama-3.3-70b-versatile to score semantic equivalence (1–10) of original vs compressed. Score &lt; 7 blocks compression or triggers a warning. Free-tier Groq, no cost overhead.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing" style="padding-top:64px">
   <div class="section-label">Pricing</div>
   <div class="section-title">Start free, scale when ready</div>
-  <p class="section-sub">No credit card required. Upgrade or cancel anytime.</p>
+  <p class="section-sub">No credit card required. Cancel anytime.</p>
   <div class="pricing-grid">
 
     <div class="price-card">
@@ -209,30 +606,31 @@ footer a:hover{color:#aaa}
       <div class="price-period">forever</div>
       <ul class="price-features">
         <li><span class="check">✓</span>10 compressions / day</li>
-        <li><span class="check">✓</span>180+ compression rules</li>
+        <li><span class="check">✓</span>180+ rules (5 free domain packs)</li>
         <li><span class="check">✓</span>Claude, ChatGPT, Gemini, Copilot</li>
+        <li><span class="check">✓</span>Language auto-detection</li>
         <li><span class="check">✓</span>One-click restore</li>
-        <li><span class="check">✓</span>Session savings tracker</li>
         <li><span class="price-dim">✗ Custom vocabulary</span></li>
         <li><span class="price-dim">✗ Telegraphic mode</span></li>
+        <li><span class="price-dim">✗ Pro domain packs</span></li>
         <li><span class="price-dim">✗ API access</span></li>
       </ul>
       <button class="price-btn">Install free</button>
     </div>
 
     <div class="price-card featured">
-      <div class="price-tier">Pro <span class="price-badge">Most popular</span></div>
+      <div class="price-tier">Pro <span class="price-badge">Popular</span></div>
       <div class="price-amount">$7</div>
-      <div class="price-period">per month · billed monthly</div>
+      <div class="price-period">per month</div>
       <ul class="price-features">
         <li><span class="check">✓</span>Unlimited compressions</li>
-        <li><span class="check">✓</span>180+ rules + telegraphic mode</li>
-        <li><span class="check">✓</span>Custom vocabulary (your own rules)</li>
-        <li><span class="check">✓</span>Full prompt history &amp; analytics</li>
-        <li><span class="check">✓</span>All 5 AI platforms</li>
+        <li><span class="check">✓</span>All 8 domain packs (incl. Medical, Academic, Legal Pro)</li>
+        <li><span class="check">✓</span>Telegraphic + PTR adaptive mode</li>
+        <li><span class="check">✓</span>Custom vocabulary rules</li>
+        <li><span class="check">✓</span>Session analytics (7-day chart)</li>
         <li><span class="check">✓</span>Auto-compress on send</li>
+        <li><span class="check">✓</span>All 5 AI platforms</li>
         <li><span class="check">✓</span>Priority support</li>
-        <li><span class="price-dim">✗ REST API access</span></li>
       </ul>
       <button class="price-btn">Start 7-day free trial</button>
     </div>
@@ -240,48 +638,81 @@ footer a:hover{color:#aaa}
     <div class="price-card">
       <div class="price-tier">Developer API</div>
       <div class="price-amount">$19</div>
-      <div class="price-period">per month · billed monthly</div>
+      <div class="price-period">per month</div>
       <ul class="price-features">
         <li><span class="check">✓</span>Everything in Pro</li>
-        <li><span class="check">✓</span>REST API — POST /compress</li>
+        <li><span class="check">✓</span>REST API — all 3 engines</li>
+        <li><span class="check">✓</span>Language + domain params</li>
         <li><span class="check">✓</span>1 M tokens / day</li>
-        <li><span class="check">✓</span>Python &amp; JS SDK</li>
-        <li><span class="check">✓</span>Usage dashboard &amp; logs</li>
-        <li><span class="check">✓</span>Webhook on quota events</li>
-        <li><span class="check">✓</span>Team license (up to 5 seats)</li>
+        <li><span class="check">✓</span>Python & JS SDK</li>
+        <li><span class="check">✓</span>Usage dashboard & webhook</li>
+        <li><span class="check">✓</span>Team license (5 seats)</li>
         <li><span class="check">✓</span>SLA + dedicated support</li>
       </ul>
       <button class="price-btn">Get API access</button>
     </div>
 
   </div>
-  <p class="price-note">All plans include Chrome &amp; Firefox extensions. Need more than 1 M tokens/day? <a href="mailto:hello@promptly.so" style="color:var(--ink);font-weight:500">Talk to us →</a></p>
+  <p class="price-note">Chrome &amp; Firefox extensions included in all plans. Need &gt;1 M tokens/day? <a href="mailto:hello@promptolian.com" style="color:var(--ink);font-weight:500">Contact us →</a></p>
 </section>
 
+<!-- PRODUCTION / NEXT STEPS -->
+<section class="section" id="production" style="padding-top:64px">
+  <div class="section-label">Go live</div>
+  <div class="section-title">Deploy to production</div>
+  <p class="section-sub">Four steps to take Promptolian from localhost to a real product.</p>
+  <div class="prod-grid">
+    <div class="prod-card">
+      <div class="prod-step">Step 1</div>
+      <h3>Deploy API + Dashboard → Railway</h3>
+      <p>Connect your GitHub repo to Railway. Add a PostgreSQL plugin (free tier: 500 MB). Set env vars: <code>DATABASE_URL</code>, <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, <code>GROQ_API_KEY</code>. Railway auto-deploys on push from <code>public/</code>. Cost: ~$5/mo for starter.</p>
+    </div>
+    <div class="prod-card">
+      <div class="prod-step">Step 2</div>
+      <h3>Host website → Vercel or Cloudflare Pages</h3>
+      <p>Drag-and-drop <code>public/website/</code> to Vercel, or push to GitHub and connect Cloudflare Pages. Both are free. Buy domain at Namecheap or Cloudflare Registrar (~$10/yr for .com). Point DNS to Vercel/Cloudflare.</p>
+    </div>
+    <div class="prod-card">
+      <div class="prod-step">Step 3</div>
+      <h3>Publish extensions → Chrome & Firefox stores</h3>
+      <p>Chrome Web Store: $5 one-time dev fee. Zip <code>public/extension/chrome/</code>, upload, fill store listing. Review takes 1–3 days. Firefox Add-ons: free, zip <code>public/extension/firefox/</code>, submit. Both require a privacy policy URL.</p>
+    </div>
+    <div class="prod-card">
+      <div class="prod-step">Step 4</div>
+      <h3>Set up payments → Stripe</h3>
+      <p>Create Stripe account. Add <code>STRIPE_SECRET_KEY</code> + <code>STRIPE_WEBHOOK_SECRET</code> to Railway. Create two Price objects (Pro $7/mo, Dev $19/mo). Update <code>api_server.py</code> with the Price IDs. Test with Stripe CLI: <code>stripe listen --forward-to localhost:3001/webhook</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer>
-  <strong>Promptly</strong><br><br>
-  The smarter way to talk to AI.<br>
-  <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms</a> · <a href="mailto:hello@promptly.so">hello@promptly.so</a><br><br>
-  © 2026 Promptly · Built with ⚡ in Zürich
+  <strong>Promptolian</strong><br>
+  The scientific way to talk to AI.
+  <div class="footer-links">
+    <a href="docs.html">API Docs</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms</a>
+    <a href="http://localhost:5000">Research Dashboard</a>
+    <a href="mailto:hello@promptolian.com">hello@promptolian.com</a>
+  </div>
+  © 2026 Promptolian · Built with ⚡ in Zürich
 </footer>
 
 <script>
-// ── Standard rules ────────────────────────────────────────────────────────────
+// ── Rules ──────────────────────────────────────────────────────────────────
 const RULES = [
-  // Roles & context
   [/you are an? expert (in |on |at )?/gi,'§EXP '],
   [/you are an? /gi,'§ROLE '],
   [/act as (a |an )?/gi,'§ACT '],
   [/pretend (you are|to be) (a |an )?/gi,'§ROLE '],
   [/here is (the |some )?context[:\s]*/gi,'§CTX '],
   [/given (this |the )?context[:\s]*/gi,'§CTX '],
-  // Filler openers
   [/I would like you to /gi,''],
   [/I need you to /gi,''],
   [/can you (please )?/gi,''],
   [/could you (please )?/gi,''],
   [/please /gi,''],
-  // Output format
   [/return only (the )?code[^.]*\.?/gi,'→code'],
   [/return as (a )?bullet[- ]?list/gi,'→list'],
   [/in bullet points?/gi,'→list'],
@@ -301,7 +732,6 @@ const RULES = [
   [/\bcomprehensive\b/gi,'→long'],
   [/no explanation/gi,'⊖explain'],
   [/without (any )?explanation/gi,'⊖explain'],
-  // Task verbs (long patterns first)
   [/fix (the |any |a )?bug(s)?( in| on)?/gi,'BUG'],
   [/write (a |an )?unit tests? for/gi,'TEST'],
   [/write tests? for/gi,'TEST'],
@@ -349,7 +779,6 @@ const RULES = [
   [/\bset up\b/gi,'cfg'],
   [/\binstall\b/gi,'inst'],
   [/\bdocument\b/gi,'docs'],
-  // Constraints & emphasis
   [/make sure (to |that )?/gi,'!! '],
   [/ensure (that )?/gi,'!! '],
   [/\bdo not\b/gi,'§NOT'],
@@ -359,7 +788,6 @@ const RULES = [
   [/\b(very )?important[:\s]+/gi,'!! '],
   [/\bcritical[:\s]+/gi,'!! '],
   [/\bmust\b/gi,'!!'],
-  // Logic & connectors
   [/\balso\b/gi,'§ALSO'],
   [/\badditionally\b/gi,'§ALSO'],
   [/\balternative(ly)?\b/gi,'§ALT'],
@@ -372,7 +800,6 @@ const RULES = [
   [/\boutput\b/gi,'→'],
   [/\bgiven\b/gi,'←'],
   [/\binput\b/gi,'←'],
-  // Quantifiers
   [/\ball\b/gi,'∀'],
   [/\beach\b/gi,'∀'],
   [/\bevery\b/gi,'∀'],
@@ -381,7 +808,6 @@ const RULES = [
   [/\bmore than\b/gi,'>'],
   [/\bless than\b/gi,'<'],
   [/\bapproximately\b/gi,'~'],
-  // Tech vocabulary
   [/\bmachine learning\b/gi,'ML'],
   [/\bartificial intelligence\b/gi,'AI'],
   [/\blarge language model(s)?\b/gi,'LLM'],
@@ -432,7 +858,6 @@ const RULES = [
   [/\bfunction\b/gi,'FN'],
   [/\bmethod\b/gi,'FN'],
   [/\bclass\b/gi,'CLS'],
-  // Programming languages
   [/\bpython\b/gi,'py'],
   [/\bjavascript\b/gi,'js'],
   [/\btypescript\b/gi,'ts'],
@@ -442,7 +867,7 @@ const RULES = [
   [/\bruby\b/gi,'rb'],
   [/\bbash\b/gi,'sh'],
   [/\bshell script\b/gi,'sh'],
-  // Finance vocabulary
+  // Finance
   [/\bcompound annual growth rate\b/gi,'CAGR'],
   [/\bcustomer acquisition cost\b/gi,'CAC'],
   [/\bcustomer lifetime value\b/gi,'LTV'],
@@ -473,7 +898,7 @@ const RULES = [
   [/\bforecast\b/gi,'fcst'],
   [/\bquarterly\b/gi,'qtrly'],
   [/\bannual(ly)?\b/gi,'ann'],
-  // Law vocabulary
+  // Law
   [/\bnon[- ]disclosure agreement\b/gi,'NDA'],
   [/\bterms of service\b/gi,'ToS'],
   [/\bterms and conditions\b/gi,'T&C'],
@@ -492,7 +917,7 @@ const RULES = [
   [/\bdamages\b/gi,'dmg'],
   [/\bbreach\b/gi,'brch'],
   [/\bprivacy policy\b/gi,'PrivPol'],
-  // Data science vocabulary
+  // Data Science
   [/\bconvolutional neural network(s)?\b/gi,'CNN'],
   [/\brecurrent neural network(s)?\b/gi,'RNN'],
   [/\bprincipal component analysis\b/gi,'PCA'],
@@ -522,7 +947,7 @@ const RULES = [
   [/\btraining (data|set)\b/gi,'train_data'],
   [/\bvalidation (data|set)\b/gi,'val_data'],
   [/\btest (data|set)\b/gi,'test_data'],
-  // Social / marketing vocabulary
+  // Social
   [/\bcall to action\b/gi,'CTA'],
   [/\bclick[- ]through rate\b/gi,'CTR'],
   [/\bconversion rate\b/gi,'CVR'],
@@ -545,7 +970,6 @@ const RULES = [
   [/ +/g,' '],
 ];
 
-// ── Telegraphic rules (opt-in) ────────────────────────────────────────────────
 const TELEGRAPHIC_RULES = [
   [/(is|are|was|were) (a|an|the) /gi,''],
   [/(has|have|had) (a|an|the) /gi,''],
@@ -573,41 +997,52 @@ const EXAMPLES = [
   "Analyze our Q3 2025 revenue report. Monthly recurring revenue was $2.4M, up 34% year-over-year. Forecast the annual recurring revenue for Q4. Return as a table.",
   "You are an expert data scientist. Perform exploratory data analysis on the training dataset and identify overfitting issues. Evaluate the model using F1-score and area under the curve.",
   "Review the non-disclosure agreement and identify any intellectual property clause that could breach our compliance with the General Data Protection Regulation. Highlight the key liabilities.",
+  "Eres un experto en marketing digital. Analiza la tasa de conversión de nuestra campaña y genera recomendaciones para optimizar el rendimiento. Devuelve como tabla.",
+  "你是一个专业的Python开发者。分析代码并优化性能，修复第47行的错误。只返回代码，不需要解释。",
 ];
 
 let telegraphic = false;
 
-// ── Client-side language detection ──────────────────────────────────────────
-const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle']);
-const _FR_W = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui']);
-const _DE_W = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine']);
-const _NL_W = new Set(['de','het','een','van','dat','zijn','niet','voor','met','die','maar']);
-const LANG_LABELS = {en:'🇬🇧 EN',it:'🇮🇹 IT',fr:'🇫🇷 FR',de:'🇩🇪 DE',nl:'🇳🇱 NL',zh:'🇨🇳 ZH',ja:'🇯🇵 JA'};
+// ── Language detection ─────────────────────────────────────────────────────
+const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle','il','lo','la','le','di','da','in','su','ho','ha','ci','si','mi','ti','vi','ma','se','io','tu','lui','lei','noi','voi','loro']);
+const _FR_W = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par','cette','nous','vous','ils','elles','mais','mon','ton','son','mes','tes','ses','au','aux','du','ce','je','tu','il','elle','on','en','et','le','la']);
+const _DE_W = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch','sich','dem','den','des','bei','nach','aus','an','am','im','zu','es','er','sie','wir','ich','du','ihr','was','wie','wo','wer']);
+const _ES_W = new Set(['que','los','las','del','con','para','por','como','pero','esto','esta','son','ser','tiene','hay','cuando','puede','debe','hacer','quiero','necesito','eres','analiza','genera','crea','optimiza']);
+const LANG_LABELS = {en:'🇬🇧 English',it:'🇮🇹 Italian',fr:'🇫🇷 French',de:'🇩🇪 German',es:'🇪🇸 Spanish',zh:'🇨🇳 Chinese',ja:'🇯🇵 Japanese'};
+const LANG_COLORS = {
+  en:{bg:'#eff6ff',border:'#bfdbfe',color:'#1d4ed8'},
+  it:{bg:'#f0fdf4',border:'#bbf7d0',color:'#16a34a'},
+  fr:{bg:'#fefce8',border:'#fef08a',color:'#b45309'},
+  de:{bg:'#faf5ff',border:'#e9d5ff',color:'#7c3aed'},
+  es:{bg:'#fff7ed',border:'#fed7aa',color:'#c2410c'},
+  zh:{bg:'#fff1f2',border:'#fecdd3',color:'#be123c'},
+  ja:{bg:'#fdf4ff',border:'#f0abfc',color:'#86198f'},
+};
 
 function detectLang(text) {
+  if (text.length < 4) return 'en';
   if (/[一-鿿]/.test(text) && !/[ぁ-ヿ]/.test(text)) return 'zh';
   if (/[ぁ-ヿ]/.test(text)) return 'ja';
   const ws = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
-  let it=0,fr=0,de=0,nl=0;
+  let it=0,fr=0,de=0,es=0;
   for (const w of ws) {
     if (_IT_W.has(w)) it++; if (_FR_W.has(w)) fr++;
-    if (_DE_W.has(w)) de++; if (_NL_W.has(w)) nl++;
+    if (_DE_W.has(w)) de++; if (_ES_W.has(w)) es++;
   }
-  const mx = Math.max(it,fr,de,nl);
-  if (mx < 2) return 'en';
-  return mx===it?'it':mx===fr?'fr':mx===de?'de':'nl';
+  const mx = Math.max(it,fr,de,es);
+  if (mx < 1) return 'en';
+  return mx===it?'it':mx===fr?'fr':mx===de?'de':'es';
 }
 
 function encode(t, tele, lang='en') {
   let o = t.trim();
-  // RULES are English symbol compression — skip for other languages
   if (lang === 'en') {
     for (const [p, r] of RULES) o = o.replace(p, r);
   }
   if (tele) {
     for (const [p, r] of TELEGRAPHIC_RULES) o = o.replace(p, r);
   }
-  return o.replace(/\. /g, '.\n').replace(/  +/g, ' ').trim();
+  return o.replace(/\. /g,'.\n').replace(/  +/g,' ').trim();
 }
 
 function tokens(t) {
@@ -622,12 +1057,9 @@ function liveCompress() {
     if (!eng.trim()) { reset(); return; }
     const lang = detectLang(eng);
     const badge = document.getElementById('lang-badge');
-    if (lang !== 'en') {
-      badge.textContent = LANG_LABELS[lang] || lang.toUpperCase();
-      badge.style.display = 'inline';
-    } else {
-      badge.style.display = 'none';
-    }
+    const lc = LANG_COLORS[lang] || LANG_COLORS.en;
+    badge.textContent = LANG_LABELS[lang] || lang.toUpperCase();
+    badge.style.cssText = `display:inline;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${lc.bg};border:1px solid ${lc.border};color:${lc.color}`;
     const ps = encode(eng, telegraphic, lang);
     const et = tokens(eng), pt = tokens(ps);
     const saved = Math.max(0, et - pt);
@@ -638,29 +1070,21 @@ function liveCompress() {
     document.getElementById('s-pct').textContent = pct + '%';
     const pill = document.getElementById('savings-pill');
     pill.innerHTML = pct > 0 ? `<span class="savings-pill">${pct}% smaller</span>` : '';
-  }, 200);
+  }, 180);
 }
 
 function reset() {
   document.getElementById('ps-output').textContent = '—';
-  document.getElementById('s-eng').textContent = '—';
-  document.getElementById('s-ps').textContent = '—';
-  document.getElementById('s-pct').textContent = '—';
+  ['s-eng','s-ps','s-pct'].forEach(id => document.getElementById(id).textContent = '—');
   document.getElementById('savings-pill').innerHTML = '';
+  document.getElementById('lang-badge').style.display = 'none';
 }
 
 function toggleTelegraphic() {
   telegraphic = !telegraphic;
   const btn = document.getElementById('tele-btn');
-  if (telegraphic) {
-    btn.textContent = '⚡ Telegraphic: ON';
-    btn.style.background = 'var(--lime)';
-    btn.style.borderColor = 'var(--lime)';
-  } else {
-    btn.textContent = '⚡ Telegraphic: OFF';
-    btn.style.background = '';
-    btn.style.borderColor = '';
-  }
+  btn.textContent = `⚡ Telegraphic: ${telegraphic ? 'ON' : 'OFF'}`;
+  btn.classList.toggle('active', telegraphic);
   liveCompress();
 }
 
@@ -672,7 +1096,11 @@ function tryExample(i) {
 function copyOutput() {
   const t = document.getElementById('ps-output').textContent;
   if (t === '—') return;
-  navigator.clipboard.writeText(t);
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
 }
 
 function clearDemo() {

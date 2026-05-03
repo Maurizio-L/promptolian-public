@@ -1,1 +1,8 @@
-node_modules/\n.env\n*.key\n.DS_Store
+node_modules/
+.env
+*.key
+.DS_Store
+__pycache__/
+*.pyc
+*.db
+private/

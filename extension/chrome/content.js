@@ -460,33 +460,122 @@
   const _IT = new Set(['che','non','per','con','una','gli','sono','questo','della','nella','delle']);
   const _FR = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par']);
   const _DE = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch']);
-  const _NL = new Set(['de','het','een','van','dat','zijn','niet','voor','met','die','maar','wordt']);
+  const _ES = new Set(['que','una','los','las','del','con','para','por','como','pero','más','esto','esta','estas','estos','está','son','ser','tiene','hay','cuando','donde','puede','debe','hacer','quiero','necesito']);
   const _ZH = /[一-鿿]/;
   const _JA = /[぀-ヿ]/;
 
-  const LANG_FLAGS = { en:'🇬🇧', it:'🇮🇹', fr:'🇫🇷', de:'🇩🇪', nl:'🇳🇱', zh:'🇨🇳', ja:'🇯🇵' };
+  const LANG_FLAGS = { en:'🇬🇧', it:'🇮🇹', fr:'🇫🇷', de:'🇩🇪', es:'🇪🇸', zh:'🇨🇳', ja:'🇯🇵' };
 
   function detectLang(text) {
     if (_ZH.test(text) && !_JA.test(text)) return 'zh';
     if (_JA.test(text)) return 'ja';
     const words = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
-    let it = 0, fr = 0, de = 0, nl = 0;
+    let it = 0, fr = 0, de = 0, es = 0;
     for (const w of words) {
       if (_IT.has(w)) it++;
       if (_FR.has(w)) fr++;
       if (_DE.has(w)) de++;
-      if (_NL.has(w)) nl++;
+      if (_ES.has(w)) es++;
     }
-    const max = Math.max(it, fr, de, nl);
+    const max = Math.max(it, fr, de, es);
     if (max < 2) return 'en';
-    return max === it ? 'it' : max === fr ? 'fr' : max === de ? 'de' : 'nl';
+    return max === it ? 'it' : max === fr ? 'fr' : max === de ? 'de' : 'es';
   }
+
+  const ES_RULES = [
+    [/eres un[ao]? expert[ao] en /gi, '§EXP '],
+    [/eres un[ao]? /gi, '§ROLE '],
+    [/actúa como (un[ao]? )?/gi, '§ACT '],
+    [/actua como (un[ao]? )?/gi, '§ACT '],
+    [/por favor /gi, ''],
+    [/necesito que /gi, ''],
+    [/quiero que /gi, ''],
+    [/devuelve (solo )?el código[^.]*\.?/gi, '→code'],
+    [/en formato json/gi, '→json'],
+    [/como (una )?tabla/gi, '→table'],
+    [/paso a paso/gi, '→step'],
+    [/sin explicaci[oó]n(es)?/gi, '⊖explain'],
+    [/\banaliza\b/gi, 'ANLZ'],
+    [/\beval[uú]a\b/gi, 'EVAL'],
+    [/\bimplementa\b/gi, 'impl'],
+    [/\bgenera\b/gi, 'GEN'],
+    [/\bcrea\b/gi, 'mk'],
+    [/\bconstruye\b/gi, 'bld'],
+    [/\btraduce\b/gi, '⇄'],
+    [/\bconvierte\b/gi, '⇄'],
+    [/\bdescribe\b/gi, '?'],
+    [/\bexplica\b/gi, '?'],
+    [/\bresume\b/gi, '∑ '],
+    [/\boptimiza\b/gi, 'OPT'],
+    [/\brefactoriza\b/gi, '∆'],
+    [/\bmejora\b/gi, '∆'],
+    [/\bcorrige\b/gi, 'BUG'],
+    [/\bdepura\b/gi, 'BUG'],
+    [/\bcompara\b/gi, '§DIFF'],
+    [/aseg[uú]rate de (que )?/gi, '!! '],
+    [/aprendizaje autom[aá]tico\b/gi, 'ML'],
+    [/inteligencia artificial\b/gi, 'IA'],
+    [/red neuronal\b/gi, 'NN'],
+    [/procesamiento de lenguaje natural\b/gi, 'NLP'],
+    [/base de datos\b/gi, 'BD'],
+    [/repositorio\b/gi, 'repo'],
+    [/aplicaci[oó]n\b/gi, 'app'],
+    [/configuraci[oó]n\b/gi, 'cfg'],
+    [/documentaci[oó]n\b/gi, 'docs'],
+    [/rendimiento\b/gi, 'perf'],
+    [/seguridad\b/gi, 'SEC'],
+    [/ +/g, ' '],
+  ];
+
+  const ZH_RULES = [
+    [/你是一?个?专业(的)?/g, '§EXP '],
+    [/你是一?个?/g, '§ROLE '],
+    [/扮演一?个?/g, '§ACT '],
+    [/作为一?个?/g, '§ACT '],
+    [/请帮(我|助)?/g, ''],
+    [/请(你|您)?/g, ''],
+    [/我(需要|想要)你/g, ''],
+    [/只(返回|输出)(代码|code)[^\n]*/g, '→code'],
+    [/(以|用)JSON格式(返回|输出)?/g, '→json'],
+    [/(以|用)表格(形式|格式)(返回|输出)?/g, '→table'],
+    [/(分步骤|逐步|一步一步)/g, '→step'],
+    [/(简洁|简短|简要)回答/g, '→short'],
+    [/不(需要|用)(解释|说明)/g, '⊖explain'],
+    [/无需(解释|说明)/g, '⊖explain'],
+    [/(分析|解析)/g, 'ANLZ'],
+    [/(评估|评价)/g, 'EVAL'],
+    [/(实现|实施)/g, 'impl'],
+    [/(生成|创建)/g, 'GEN'],
+    [/(构建|搭建)/g, 'bld'],
+    [/(翻译|转换)/g, '⇄'],
+    [/(总结|摘要)/g, '∑ '],
+    [/(优化|提升性能)/g, 'OPT'],
+    [/(重构|改写)/g, '∆'],
+    [/(修复|调试)/g, 'BUG'],
+    [/(比较|对比)/g, '§DIFF'],
+    [/机器学习/g, 'ML'],
+    [/人工智能/g, 'AI'],
+    [/深度学习/g, 'DL'],
+    [/神经网络/g, 'NN'],
+    [/自然语言处理/g, 'NLP'],
+    [/数据库/g, 'DB'],
+    [/用户界面/g, 'UI'],
+    [/用户体验/g, 'UX'],
+    [/应用(程序)?/g, 'app'],
+    [/配置/g, 'cfg'],
+    [/文档/g, 'docs'],
+    [/性能/g, 'perf'],
+    [/安全(性)?/g, 'SEC'],
+  ];
 
   function psEncode(text, telegraphic = false, packs = [], custom = [], lang = 'en') {
     let out = text.trim();
-    // PS_RULES contain English-specific symbols — skip for non-English
     if (lang === 'en') {
       for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
+    } else if (lang === 'es') {
+      for (const [pat, rep] of ES_RULES) out = out.replace(pat, rep);
+    } else if (lang === 'zh') {
+      for (const [pat, rep] of ZH_RULES) out = out.replace(pat, rep);
     }
     for (const pack of packs) {
       for (const rule of (DOMAIN_PACKS[pack] || [])) out = out.replace(rule[0], rule[1]);
