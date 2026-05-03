@@ -218,11 +218,11 @@ footer a:hover{color:#aaa}
 
 <!-- PROOF BAR -->
 <div class="proof">
-  <div class="proof-item"><strong>18–36%</strong> avg token reduction</div>
+  <div class="proof-item"><strong>25–55%</strong> token reduction</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>3</strong> compression engines</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>180+</strong> compression rules</div>
+  <div class="proof-item"><strong>5-stage</strong> pipeline (v4)</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>98.4%</strong> fact preservation (100 prompts)</div>
   <div class="dot"></div>
@@ -286,11 +286,11 @@ footer a:hover{color:#aaa}
     <div class="engine-card featured">
       <div class="engine-badge">Default · In-browser</div>
       <div class="engine-name">Standard</div>
-      <div class="engine-stat">18–36%</div>
+      <div class="engine-stat">25–55%</div>
       <div class="engine-stat-lbl">compression rate</div>
-      <div class="engine-desc">Symbol substitution using 180+ hand-crafted rules across 8 domains. UUID-based fact protection ensures numbers, URLs, paths, and tech names survive compression. PTR-guided adaptive mode auto-selects standard vs telegraphic.</div>
+      <div class="engine-desc">Five-stage pipeline: phrase simplification → symbol substitution → grammar stripping → word-level lean pass → smart abbreviation. Lean pass removes articles, auxiliary verbs, intensifiers, and weak pronouns. Long prompts (&gt;30 words) get slang-style shortening for long words. Fact-safe via UUID guard.</div>
       <div class="engine-tags">
-        <span class="engine-tag">180+ rules</span>
+        <span class="engine-tag">5-stage pipeline</span>
         <span class="engine-tag">Instant (&lt;1ms)</span>
         <span class="engine-tag">EN + ES + ZH</span>
         <span class="engine-tag">No dependencies</span>
@@ -376,6 +376,16 @@ footer a:hover{color:#aaa}
       <div class="feature-icon">↩</div>
       <div class="feature-title">Auto-compress on send</div>
       <div class="feature-desc">Pro: intercepts Enter key (not Shift+Enter), compresses silently, sends. Synchronous quota check from cache ensures no delay.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">✂️</div>
+      <div class="feature-title">Lean pass — word-level pruning</div>
+      <div class="feature-desc">Articles (a, an, the), auxiliary verbs (is, are, was), intensifiers (very, extremely, quite), and weak pronouns are removed contextually. Negation, passive voice, and critical prepositions are always preserved.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Smart abbreviation</div>
+      <div class="feature-desc">For long prompts (&gt;30 words), words over 8 characters are shortened using a slang-style lookup table (configuration → cfg, initialization → init, parameters → params) plus suffix-drop rules for unknown long words.</div>
     </div>
     <div class="feature">
       <div class="feature-icon">🔑</div>

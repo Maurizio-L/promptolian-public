@@ -282,6 +282,156 @@
     [/ +/g, ' '],
   ];
 
+  // ── Phrase simplification (always-on, runs before PS_RULES) ──────────────────
+  // Replaces verbose multi-word constructions with concise equivalents.
+  const SIMPLIFY_RULES = [
+    [/\bdue to the fact that\b/gi,         'because'],
+    [/\bin the event that\b/gi,            'if'],
+    [/\bfor the purpose of\b/gi,           'to'],
+    [/\bwith respect to\b/gi,              're:'],
+    [/\bwith regard to\b/gi,              're:'],
+    [/\bat this point in time\b/gi,        'now'],
+    [/\bin the near future\b/gi,           'soon'],
+    [/\bfirst and foremost\b/gi,           'first'],
+    [/\beach and every\b/gi,              'every'],
+    [/\ba large number of\b/gi,            'many'],
+    [/\bon a regular basis\b/gi,           'regularly'],
+    [/\bin a timely manner\b/gi,           'quickly'],
+    [/\bprior to\b/gi,                     'before'],
+    [/\bsubsequent to\b/gi,               'after'],
+    [/\bin spite of\b/gi,                  'despite'],
+    [/\bin order to\b/gi,                  'to'],
+    [/\bfor example[,\s]/gi,              'e.g. '],
+    [/\bfor instance[,\s]/gi,             'e.g. '],
+    [/\bsuch as\b/gi,                      'like'],
+    [/\bhowever\b/gi,                      'but'],
+    [/\btherefore\b/gi,                    'so'],
+    [/\bfurthermore\b/gi,                  'also'],
+    [/\bnevertheless\b/gi,                 'still'],
+    [/\bconsequently\b/gi,                 'so'],
+    [/\bmoreover\b/gi,                     'also'],
+    [/\bhence\b/gi,                        'so'],
+    [/\butilize\b/gi,                      'use'],
+    [/\butilise\b/gi,                      'use'],
+    [/\bcommence\b/gi,                     'start'],
+    [/\bterminate\b/gi,                    'stop'],
+    [/\bacquire\b/gi,                      'get'],
+    [/\bobtain\b/gi,                       'get'],
+    [/\bpurchase\b/gi,                     'buy'],
+    [/\brequire\b/gi,                      'need'],
+    [/\bnecessary\b/gi,                    'needed'],
+    [/\bsufficient\b/gi,                   'enough'],
+    [/\badditional\b/gi,                   'more'],
+    [/\bnumerous\b/gi,                     'many'],
+    [/\bdemonstrate\b/gi,                  'show'],
+    [/\bindicate\b/gi,                     'show'],
+    [/\bassist\b/gi,                       'help'],
+    [/\bmodify\b/gi,                       'change'],
+    [/\bpermit\b/gi,                       'allow'],
+    [/\bpossibly\b/gi,                     'maybe'],
+    [/\bperhaps\b/gi,                      'maybe'],
+    [/\bfrequently\b/gi,                   'often'],
+    [/\binitially\b/gi,                    'first'],
+    [/\bultimately\b/gi,                   'finally'],
+    [/\bprimarily\b/gi,                    'mainly'],
+    [/\bsignificant\b/gi,                  'major'],
+    [/\bsignificantly\b/gi,               'greatly'],
+    [/\bsubstantially\b/gi,               'greatly'],
+    [/\binadequate\b/gi,                   'poor'],
+    [/\bexcessive\b/gi,                    'too much'],
+    [/\binsufficient\b/gi,                'not enough'],
+    [/\bprovide\b/gi,                      'give'],
+    [/\brespond\b/gi,                      'reply'],
+    [/\binform\b/gi,                       'tell'],
+  ];
+
+  // ── Lean rules (always-on, run after PS_RULES) ────────────────────────────────
+  // Word-level semantic pruning: removes intensifiers and safe weak words.
+  // Uses negative lookahead to preserve negation and passive voice.
+  const LEAN_RULES = [
+    // Pure intensifiers — always safe to drop
+    [/\b(very|quite|rather|somewhat|really|extremely|highly|absolutely|totally|completely|utterly)\b /gi, ''],
+    // Aux verbs not before negation or past participle (safe to drop)
+    [/\b(do|does|did)\b (?!not\b|n't\b)/gi, ''],
+    [/\b(have|has|had)\b (?!not\b|n't\b|to\b)/gi, ''],
+    // Weak pronouns not at sentence start — "it is/was" filler
+    [/\bit (is|was|has|had) (?!not\b|n't\b)/gi, (_, v) => v + ' '],
+    [/\bit's (?!not\b)/gi, ''],
+    // Articles — standalone (not part of "the" in named entities; safe standalone)
+    [/ \ba\b (?=[a-z])/g, ' '],
+    [/ \ban\b (?=[aeiou])/g, ' '],
+    // "of the" → "of" (or just remove "the" after "of")
+    [/\bof the\b (?=[a-z])/g, 'of '],
+    // Collapse extra spaces
+    [/ {2,}/g, ' '],
+  ];
+
+  // ── Smart abbreviation table (fires for prompts > 30 words) ──────────────────
+  const _ABBREV_MAP = {
+    'information':'info','configuration':'cfg','implementation':'impl',
+    'development':'dev','performance':'perf','authentication':'auth',
+    'authorization':'authz','documentation':'docs','administration':'admin',
+    'management':'mgmt','organization':'org','infrastructure':'infra',
+    'architecture':'arch','integration':'integr','optimization':'optim',
+    'notification':'notif','verification':'verif','visualization':'viz',
+    'middleware':'mdlwr','programming':'prog','debugging':'dbg',
+    'deployment':'dpl','production':'prod','connection':'conn',
+    'transaction':'txn','calculation':'calc','parameters':'params',
+    'parameter':'param','credentials':'creds','certificate':'cert',
+    'algorithm':'algo','algorithms':'algos','formatting':'fmt',
+    'something':'smth','probably':'prob','currently':'curr',
+    'available':'avail','important':'impt','difference':'diff',
+    'following':'flwg','previous':'prev','instance':'inst',
+    'possible':'poss','because':'bc','without':'w/o','between':'btwn',
+    'through':'thru','although':'tho','specifically':'spec',
+    'especially':'esp','processing':'proc','automatically':'auto',
+    'password':'pwd','username':'uname','directory':'dir',
+    'variable':'var','variables':'vars','constant':'const',
+    'structure':'struct','component':'comp','interface':'intf',
+    'libraries':'libs','packages':'pkgs','dependencies':'deps',
+    'exception':'exc','condition':'cond','definition':'def',
+    'reference':'ref','response':'resp','responses':'resps',
+    'initialization':'init','execution':'exec','requirement':'req',
+    'requirements':'reqs','repository':'repo','application':'app',
+    'environments':'envs','environment':'env','validation':'val',
+    'contribution':'contrib','specification':'spec',
+  };
+
+  // Suffix-drop rules for words not in the lookup table
+  const _ABBREV_SUFFIXES = [
+    ['ization','izn'],['ification','if'],['mentation','mnt'],
+    ['eration','ern'],['ulation','uln'],['ication','icn'],
+    ['ation','atn'],['tion','tn'],['ment','mt'],['ness','ns'],
+  ];
+
+  function _shortenWord(w) {
+    const low = w.toLowerCase();
+    if (_ABBREV_MAP[low]) {
+      const s = _ABBREV_MAP[low];
+      return w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase()
+        ? s[0].toUpperCase() + s.slice(1) : s;
+    }
+    if (w.length <= 8) return w;
+    for (const [sfx, rep] of _ABBREV_SUFFIXES) {
+      if (low.endsWith(sfx) && low.length - sfx.length >= 3)
+        return w.slice(0, w.length - sfx.length) + rep;
+    }
+    return w;
+  }
+
+  function smartAbbrev(text) {
+    // Skip protection tokens (PROT + 8 hex) and symbol tokens
+    return text.split(' ').map(tok => {
+      if (/^PROT[0-9A-F]{8}$/.test(tok)) return tok;
+      if (/[§→⊕⊖∑∆«»⇄⊂∀~]/.test(tok)) return tok;
+      if (tok.length >= 2 && tok === tok.toUpperCase() && /^[A-Z]+$/.test(tok)) return tok;
+      const core = tok.replace(/^[.,;:!?()\[\]{}"']+|[.,;:!?()\[\]{}"']+$/g, '');
+      if (core.length > 8 && /^[a-zA-Z']+$/.test(core))
+        return tok.replace(core, _shortenWord(core));
+      return tok;
+    }).join(' ');
+  }
+
   // ── Telegraphic rules (opt-in — applied on top of standard) ─────────────────
   // Removes grammatical glue: articles, copulas, common filler.
   // Only activated when caller passes telegraphic=true.
@@ -569,7 +719,15 @@
   ];
 
   function psEncode(text, telegraphic = false, packs = [], custom = [], lang = 'en') {
+    const wordCount = text.trim().split(/\s+/).length;
     let out = text.trim();
+
+    // A — phrase simplification (EN only, before symbol rules)
+    if (lang === 'en') {
+      for (const [pat, rep] of SIMPLIFY_RULES) out = out.replace(pat, rep);
+    }
+
+    // B — symbol substitution
     if (lang === 'en') {
       for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
     } else if (lang === 'es') {
@@ -577,13 +735,28 @@
     } else if (lang === 'zh') {
       for (const [pat, rep] of ZH_RULES) out = out.replace(pat, rep);
     }
+
+    // C — domain packs + custom rules
     for (const pack of packs) {
       for (const rule of (DOMAIN_PACKS[pack] || [])) out = out.replace(rule[0], rule[1]);
     }
     for (const [pat, rep] of custom) out = out.replace(pat, rep);
+
+    // D — lean pass: word-level pruning (EN only)
+    if (lang === 'en') {
+      for (const [pat, rep] of LEAN_RULES) out = out.replace(pat, rep);
+    }
+
+    // E — telegraphic (opt-in, max compression)
     if (telegraphic) {
       for (const [pat, rep] of TELEGRAPHIC_RULES) out = out.replace(pat, rep);
     }
+
+    // F — smart abbreviation (long prompts only)
+    if (lang === 'en' && wordCount > 30) {
+      out = smartAbbrev(out);
+    }
+
     return out.replace(/\. /g, '.\n').replace(/  +/g, ' ').trim();
   }
 
