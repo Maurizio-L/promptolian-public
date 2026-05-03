@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promptly API — Developer Documentation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--dark:#0f0f0f;--dark2:#141414;--dark3:#1a1a1a;--border:#2a2a2a;--radius:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#e0e0e0;font-size:14px;line-height:1.6}
+a{color:var(--lime);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:var(--dark);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:20px;color:#f0f0f0;text-decoration:none}
+.logo-icon{background:var(--lime);color:var(--ink);font-weight:700;font-size:12px;padding:4px 8px;border-radius:7px;font-family:'DM Sans',sans-serif}
+.nav-links{display:flex;align-items:center;gap:24px;list-style:none}
+.nav-links a{font-size:13px;color:#888}
+.nav-links a:hover{color:#e0e0e0;text-decoration:none}
+.nav-cta{background:var(--lime);color:var(--ink)!important;padding:7px 18px;border-radius:100px;font-size:12px;font-weight:600}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px)}
+
+/* Sidebar */
+.sidebar{background:var(--dark2);border-right:1px solid var(--border);padding:28px 0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
+.sidebar-group{margin-bottom:28px}
+.sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555;padding:0 20px;margin-bottom:8px}
+.sidebar a{display:block;padding:7px 20px;font-size:13px;color:#888;transition:all .15s}
+.sidebar a:hover{color:#e0e0e0;background:#1e1e1e;text-decoration:none}
+.sidebar a.active{color:var(--lime);background:#c8f13511;border-right:2px solid var(--lime)}
+
+/* Main content */
+.main{padding:48px 56px;max-width:900px}
+.main h1{font-family:'DM Serif Display',serif;font-size:40px;color:#f0f0f0;margin-bottom:12px}
+.main h2{font-family:'DM Serif Display',serif;font-size:26px;color:#f0f0f0;margin:48px 0 16px;padding-top:16px;border-top:1px solid var(--border)}
+.main h3{font-size:16px;font-weight:600;color:#e0e0e0;margin:28px 0 10px}
+.main p{color:#aaa;margin-bottom:14px;line-height:1.75}
+.main ul{color:#aaa;padding-left:20px;margin-bottom:14px}
+.main ul li{margin-bottom:6px}
+
+/* Lead */
+.lead{font-size:17px;color:#888;margin-bottom:36px;line-height:1.7}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#c8f13511;border:1px solid #c8f13533;color:var(--lime);font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;margin-bottom:28px}
+
+/* Endpoint pill */
+.endpoint{display:flex;align-items:center;gap:12px;background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin:16px 0 24px;font-family:'Fira Code','SF Mono',monospace;font-size:13px}
+.method{background:#c8f13522;color:var(--lime);padding:3px 10px;border-radius:6px;font-weight:700;font-size:12px;letter-spacing:.04em}
+.path{color:#e0e0e0}
+
+/* Code blocks */
+.code-tabs{margin:16px 0}
+.code-tab-bar{display:flex;gap:2px;background:var(--dark3);border-radius:var(--radius) var(--radius) 0 0;padding:8px 8px 0;border:1px solid var(--border);border-bottom:none}
+.code-tab-btn{padding:6px 16px;border-radius:8px 8px 0 0;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#666;font-family:'DM Sans',sans-serif;transition:all .15s}
+.code-tab-btn.active{background:var(--dark2);color:#e0e0e0}
+.code-pane{display:none;background:var(--dark2);border:1px solid var(--border);border-radius:0 var(--radius) var(--radius) var(--radius);overflow:hidden}
+.code-pane.active{display:block}
+pre{padding:20px 22px;overflow-x:auto;margin:0}
+code{font-family:'Fira Code','SF Mono',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4}
+.kw{color:#c8f135}
+.str{color:#ce9178}
+.cmt{color:#6a9955}
+.fn{color:#dcdcaa}
+.num{color:#b5cea8}
+.type{color:#4ec9b0}
+.var{color:#9cdcfe}
+
+/* Inline code */
+code.inline{background:var(--dark3);border:1px solid var(--border);padding:2px 7px;border-radius:5px;font-size:12px;color:#e0e0e0}
+
+/* Param table */
+.param-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:13px}
+.param-table th{text-align:left;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--border)}
+.param-table td{padding:10px 12px;border-bottom:1px solid #1e1e1e;color:#ccc;vertical-align:top}
+.param-table td:first-child{font-family:'Fira Code',monospace;font-size:12px;color:var(--lime)}
+.param-table td:nth-child(2){color:#888;font-size:12px}
+.required{color:#f87171;font-size:10px;font-weight:700;vertical-align:super;margin-left:3px}
+.optional{color:#555;font-size:10px;vertical-align:super;margin-left:3px}
+
+/* Response block */
+.resp-block{background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin:16px 0 24px;font-family:'Fira Code',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4;overflow-x:auto}
+
+/* Alert boxes */
+.alert{padding:14px 16px;border-radius:var(--radius);margin:20px 0;font-size:13px;line-height:1.6}
+.alert-info{background:#1e3a5f22;border:1px solid #3b82f633;color:#93c5fd}
+.alert-warn{background:#f59e0b11;border:1px solid #f59e0b33;color:#fbbf24}
+
+/* Status codes */
+.status-table{width:100%;border-collapse:collapse;margin:12px 0 24px;font-size:13px}
+.status-table td{padding:9px 12px;border-bottom:1px solid #1e1e1e}
+.status-table td:first-child{font-family:'Fira Code',monospace;font-size:12px;width:80px}
+.status-ok{color:#4ade80}
+.status-err{color:#f87171}
+.status-warn{color:#fbbf24}
+
+/* Section anchors */
+h2,h3{scroll-margin-top:80px}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">
+    <span class="logo-icon">P→</span> Promptly
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#pricing">Pricing</a></li>
+    <li><a href="/docs.html" style="color:#e0e0e0">Docs</a></li>
+    <li><a href="/#pricing" class="nav-cta">Get API access →</a></li>
+  </ul>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-group">
+      <div class="sidebar-label">Getting started</div>
+      <a href="#overview" class="active">Overview</a>
+      <a href="#auth">Authentication</a>
+      <a href="#quickstart">Quickstart</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">Endpoints</div>
+      <a href="#compress">POST /v1/compress</a>
+      <a href="#batch">POST /v1/compress/batch</a>
+      <a href="#health">GET /v1/health</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">Reference</div>
+      <a href="#modes">Compression modes</a>
+      <a href="#domains">Domain packs</a>
+      <a href="#errors">Errors</a>
+      <a href="#limits">Rate limits</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-label">SDKs</div>
+      <a href="#sdk-python">Python</a>
+      <a href="#sdk-js">JavaScript / Node</a>
+      <a href="#sdk-rust">Rust</a>
+      <a href="#sdk-cpp">C++</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <div class="badge">Developer API · v1</div>
+    <h1>Promptly API</h1>
+    <p class="lead">
+      Compress AI prompts programmatically. Plug Promptly into your pipeline to cut token costs
+      before every LLM call — with 180+ compression rules, domain-specific vocabulary packs, and
+      provable fact preservation.
+    </p>
+
+    <!-- ── Overview ── -->
+    <h2 id="overview">Overview</h2>
+    <p>The Promptly REST API exposes the same compression engine used in the browser extension. You send plain English text; you get back Promptolian-compressed text and metrics.</p>
+    <p><strong>Base URL:</strong> <code class="inline">https://api.promptly.so</code></p>
+    <p>All requests and responses use JSON. All endpoints require a Bearer token in the <code class="inline">Authorization</code> header.</p>
+
+    <div class="alert alert-info">
+      The Developer API plan ($19/mo) includes 1&thinsp;M tokens/day. Need more? <a href="mailto:hello@promptly.so">Contact us</a> for volume pricing.
+    </div>
+
+    <!-- ── Auth ── -->
+    <h2 id="auth">Authentication</h2>
+    <p>Pass your API key in the <code class="inline">Authorization</code> header as a Bearer token:</p>
+
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchCodeTab(this,'auth','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','python')">Python</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','rust')">Rust</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','cpp')">C++</button>
+      </div>
+      <div class="code-pane active" id="auth-curl">
+<pre><code><span class="fn">curl</span> https://api.promptly.so/v1/health \
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span></code></pre>
+      </div>
+      <div class="code-pane" id="auth-python">
+<pre><code><span class="kw">import</span> promptly
+
+client = promptly.<span class="type">Client</span>(api_key=<span class="str">"YOUR_API_KEY"</span>)
+<span class="cmt"># or: client = promptly.Client()  — reads PROMPTLY_API_KEY env var</span></code></pre>
+      </div>
+      <div class="code-pane" id="auth-rust">
+<pre><code><span class="kw">use</span> promptly::Client;
+
+<span class="kw">let</span> client = Client::new(<span class="str">"YOUR_API_KEY"</span>);
+<span class="cmt">// or: Client::from_env()  — reads PROMPTLY_API_KEY</span></code></pre>
+      </div>
+      <div class="code-pane" id="auth-cpp">
+<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
+
+Promptly::Client client(<span class="str">"YOUR_API_KEY"</span>);
+<span class="cmt">// or: Promptly::Client::from_env()</span></code></pre>
+      </div>
+    </div>
+
+    <!-- ── Quickstart ── -->
+    <h2 id="quickstart">Quickstart</h2>
+    <p>Compress a prompt in one call:</p>
+
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchCodeTab(this,'qs','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','python')">Python</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','rust')">Rust</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','cpp')">C++</button>
+      </div>
+      <div class="code-pane active" id="qs-curl">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress \
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "text": "You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation.",
+    "mode": "standard"
+  }'</span></code></pre>
+      </div>
+      <div class="code-pane" id="qs-python">
+<pre><code><span class="kw">import</span> promptly
+
+client = promptly.<span class="type">Client</span>(api_key=<span class="str">"YOUR_API_KEY"</span>)
+
+result = client.compress(
+    text=<span class="str">"You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation."</span>,
+    mode=<span class="str">"standard"</span>,
+)
+
+<span class="fn">print</span>(result.compressed)      <span class="cmt"># §EXP py developer. FN sort list →code ⊖explain.</span>
+<span class="fn">print</span>(result.compression_rate)  <span class="cmt"># 0.28  (28% tokens saved)</span></code></pre>
+      </div>
+      <div class="code-pane" id="qs-rust">
+<pre><code><span class="kw">use</span> promptly::{Client, CompressRequest};
+
+<span class="kw">let</span> client = Client::new(<span class="str">"YOUR_API_KEY"</span>);
+
+<span class="kw">let</span> res = client
+    .compress(CompressRequest {
+        text: <span class="str">"You are an expert Python developer. Please write a function to sort a list."</span>.into(),
+        mode: <span class="str">"standard"</span>.into(),
+        ..Default::default()
+    })
+    .await?;
+
+<span class="fn">println!</span>(<span class="str">"{}"</span>, res.compressed);
+<span class="fn">println!</span>(<span class="str">"CR: {:.1}%"</span>, res.compression_rate * <span class="num">100.0</span>);</code></pre>
+      </div>
+      <div class="code-pane" id="qs-cpp">
+<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
+<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
+
+Promptly::Client client(<span class="str">"YOUR_API_KEY"</span>);
+
+<span class="kw">auto</span> req = Promptly::CompressRequest{};
+req.text = <span class="str">"You are an expert Python developer. Write a function to sort a list."</span>;
+req.mode = <span class="str">"standard"</span>;
+
+<span class="kw">auto</span> res = client.compress(req);
+std::cout &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;
+std::cout &lt;&lt; <span class="str">"CR: "</span> &lt;&lt; res.compression_rate * <span class="num">100</span> &lt;&lt; <span class="str">"%\n"</span>;</code></pre>
+      </div>
+    </div>
+
+    <h3>Response</h3>
+    <div class="resp-block"><span class="kw">{</span>
+  <span class="str">"compressed"</span>:        <span class="str">"§EXP py developer. FN sort list →code ⊖explain."</span>,
+  <span class="str">"original_tokens"</span>:   <span class="num">24</span>,
+  <span class="str">"compressed_tokens"</span>: <span class="num">17</span>,
+  <span class="str">"compression_rate"</span>:  <span class="num">0.29</span>,
+  <span class="str">"mode"</span>:              <span class="str">"standard"</span>,
+  <span class="str">"domain"</span>:            <span class="kw">null</span>,
+  <span class="str">"processing_ms"</span>:     <span class="num">3</span>
+<span class="kw">}</span></div>
+
+    <!-- ── POST /v1/compress ── -->
+    <h2 id="compress">POST /v1/compress</h2>
+    <p>Compress a single prompt. Returns the compressed text plus token metrics.</p>
+
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/compress</span>
+    </div>
+
+    <h3>Request body</h3>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>text<span class="required">*</span></td><td>string</td><td>The prompt text to compress. Max 32,000 characters.</td></tr>
+        <tr><td>mode<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">telegraphic</code>, or <code class="inline">adaptive</code>. Telegraphic strips articles and copulas for maximum compression. Adaptive auto-selects based on Protected Token Ratio.</td></tr>
+        <tr><td>domain<span class="optional">opt</span></td><td>string</td><td>Apply a domain vocabulary pack on top of standard rules: <code class="inline">medical</code>, <code class="inline">academic</code>, <code class="inline">legal_pro</code>, <code class="inline">finance</code>, <code class="inline">data_science</code>, <code class="inline">social</code>.</td></tr>
+        <tr><td>custom_rules<span class="optional">opt</span></td><td>array</td><td>Array of <code class="inline">[pattern, replacement]</code> string pairs. Pattern is treated as a word-boundary regex.</td></tr>
+        <tr><td>preserve_facts<span class="optional">opt</span></td><td>bool</td><td>Default <code class="inline">true</code>. Pre-pass protects proper nouns, numbers, URLs, emails, and file paths from compression.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Full example with all options</h3>
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchCodeTab(this,'full','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','python')">Python</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','rust')">Rust</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','cpp')">C++</button>
+      </div>
+      <div class="code-pane active" id="full-curl">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress \
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "text": "Analyze this patient case. The patient has hypertension and type 2 diabetes. Calculate the glomerular filtration rate and provide a comprehensive metabolic panel interpretation.",
+    "mode": "telegraphic",
+    "domain": "medical",
+    "custom_rules": [["patient case", "pt case"]],
+    "preserve_facts": true
+  }'</span></code></pre>
+      </div>
+      <div class="code-pane" id="full-python">
+<pre><code>result = client.compress(
+    text=<span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes. "</span>
+         <span class="str">"Calculate the glomerular filtration rate and provide a comprehensive metabolic panel interpretation."</span>,
+    mode=<span class="str">"telegraphic"</span>,
+    domain=<span class="str">"medical"</span>,
+    custom_rules=[[<span class="str">"patient case"</span>, <span class="str">"pt case"</span>]],
+    preserve_facts=<span class="kw">True</span>,
+)
+
+<span class="fn">print</span>(result.compressed)
+<span class="cmt"># ANLZ pt case. pt HTN T2DM. calc GFR →long CMP interpretation.</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"{result.compression_rate:.0%} compression"</span>)  <span class="cmt"># 38% compression</span></code></pre>
+      </div>
+      <div class="code-pane" id="full-rust">
+<pre><code><span class="kw">let</span> res = client.compress(CompressRequest {
+    text: <span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes."</span>.into(),
+    mode: <span class="str">"telegraphic"</span>.into(),
+    domain: <span class="type">Some</span>(<span class="str">"medical"</span>.into()),
+    custom_rules: <span class="type">Some</span>(<span class="fn">vec!</span>[(<span class="str">"patient case"</span>.into(), <span class="str">"pt case"</span>.into())]),
+    preserve_facts: <span class="type">Some</span>(<span class="kw">true</span>),
+}).await?;
+
+<span class="fn">println!</span>(<span class="str">"{}"</span>, res.compressed);</code></pre>
+      </div>
+      <div class="code-pane" id="full-cpp">
+<pre><code><span class="kw">auto</span> req = Promptly::CompressRequest{};
+req.text = <span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes."</span>;
+req.mode = <span class="str">"telegraphic"</span>;
+req.domain = <span class="str">"medical"</span>;
+req.custom_rules = {{<span class="str">"patient case"</span>, <span class="str">"pt case"</span>}};
+req.preserve_facts = <span class="kw">true</span>;
+
+<span class="kw">auto</span> res = client.compress(req);
+std::cout &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;</code></pre>
+      </div>
+    </div>
+
+    <!-- ── POST /v1/compress/batch ── -->
+    <h2 id="batch">POST /v1/compress/batch</h2>
+    <p>Compress up to 100 prompts in a single request. Each item can specify its own mode and domain.</p>
+
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/compress/batch</span>
+    </div>
+
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchCodeTab(this,'batch','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','python')">Python</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','rust')">Rust</button>
+        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','cpp')">C++</button>
+      </div>
+      <div class="code-pane active" id="batch-curl">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress/batch \
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "items": [
+      { "id": "p1", "text": "You are an expert Python developer. Write a unit test for a sorting function.", "mode": "standard" },
+      { "id": "p2", "text": "Analyze the patient blood pressure and heart rate. Check for atrial fibrillation.", "mode": "telegraphic", "domain": "medical" }
+    ]
+  }'</span></code></pre>
+      </div>
+      <div class="code-pane" id="batch-python">
+<pre><code>results = client.compress_batch([
+    {<span class="str">"id"</span>: <span class="str">"p1"</span>, <span class="str">"text"</span>: <span class="str">"You are an expert Python developer. Write a unit test for a sorting function."</span>, <span class="str">"mode"</span>: <span class="str">"standard"</span>},
+    {<span class="str">"id"</span>: <span class="str">"p2"</span>, <span class="str">"text"</span>: <span class="str">"Analyze the patient blood pressure and heart rate."</span>, <span class="str">"mode"</span>: <span class="str">"telegraphic"</span>, <span class="str">"domain"</span>: <span class="str">"medical"</span>},
+])
+
+<span class="kw">for</span> r <span class="kw">in</span> results:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{r.id}: {r.compressed}"</span>)</code></pre>
+      </div>
+      <div class="code-pane" id="batch-rust">
+<pre><code><span class="kw">let</span> results = client.compress_batch(<span class="fn">vec!</span>[
+    BatchItem { id: <span class="str">"p1"</span>.into(), text: <span class="str">"You are an expert Python developer..."</span>.into(), mode: <span class="str">"standard"</span>.into(), ..Default::default() },
+    BatchItem { id: <span class="str">"p2"</span>.into(), text: <span class="str">"Analyze patient blood pressure..."</span>.into(), mode: <span class="str">"telegraphic"</span>.into(), domain: <span class="type">Some</span>(<span class="str">"medical"</span>.into()), ..Default::default() },
+]).await?;</code></pre>
+      </div>
+      <div class="code-pane" id="batch-cpp">
+<pre><code>std::vector&lt;Promptly::BatchItem&gt; items = {
+    {<span class="str">"p1"</span>, <span class="str">"You are an expert Python developer..."</span>, <span class="str">"standard"</span>, <span class="str">""</span>},
+    {<span class="str">"p2"</span>, <span class="str">"Analyze patient blood pressure..."</span>,  <span class="str">"telegraphic"</span>, <span class="str">"medical"</span>},
+};
+<span class="kw">auto</span> results = client.compress_batch(items);</code></pre>
+      </div>
+    </div>
+
+    <h3>Batch response</h3>
+    <div class="resp-block"><span class="kw">{</span>
+  <span class="str">"results"</span>: [
+    <span class="kw">{</span>
+      <span class="str">"id"</span>:               <span class="str">"p1"</span>,
+      <span class="str">"compressed"</span>:       <span class="str">"§EXP py developer. TEST sort FN."</span>,
+      <span class="str">"original_tokens"</span>:  <span class="num">14</span>,
+      <span class="str">"compressed_tokens"</span>: <span class="num">9</span>,
+      <span class="str">"compression_rate"</span>: <span class="num">0.36</span>
+    <span class="kw">}</span>,
+    <span class="kw">{</span>
+      <span class="str">"id"</span>:               <span class="str">"p2"</span>,
+      <span class="str">"compressed"</span>:       <span class="str">"ANLZ pt BP HR. check AFib."</span>,
+      <span class="str">"original_tokens"</span>:  <span class="num">10</span>,
+      <span class="str">"compressed_tokens"</span>: <span class="num">6</span>,
+      <span class="str">"compression_rate"</span>: <span class="num">0.40</span>
+    <span class="kw">}</span>
+  ],
+  <span class="str">"total_original_tokens"</span>:   <span class="num">24</span>,
+  <span class="str">"total_compressed_tokens"</span>: <span class="num">15</span>,
+  <span class="str">"avg_compression_rate"</span>:    <span class="num">0.38</span>,
+  <span class="str">"processing_ms"</span>:           <span class="num">7</span>
+<span class="kw">}</span></div>
+
+    <!-- ── GET /v1/health ── -->
+    <h2 id="health">GET /v1/health</h2>
+    <p>Returns server status and your plan quota. No body required.</p>
+
+    <div class="endpoint">
+      <span class="method" style="background:#3b82f622;color:#60a5fa">GET</span>
+      <span class="path">/v1/health</span>
+    </div>
+
+    <div class="resp-block"><span class="kw">{</span>
+  <span class="str">"status"</span>:       <span class="str">"ok"</span>,
+  <span class="str">"plan"</span>:         <span class="str">"developer"</span>,
+  <span class="str">"tokens_today"</span>: <span class="num">42310</span>,
+  <span class="str">"tokens_limit"</span>: <span class="num">1000000</span>,
+  <span class="str">"reset_at"</span>:     <span class="str">"2026-05-03T00:00:00Z"</span>
+<span class="kw">}</span></div>
+
+    <!-- ── Modes ── -->
+    <h2 id="modes">Compression modes</h2>
+    <table class="param-table">
+      <thead><tr><th>Mode</th><th>What it does</th><th>Typical CR</th></tr></thead>
+      <tbody>
+        <tr><td>standard</td><td>Applies all 180+ symbol substitution and grammar rules. Protects facts (numbers, names, URLs). Best balance of compression and readability.</td><td>12–22%</td></tr>
+        <tr><td>telegraphic</td><td>Standard rules + strips articles (the/a/an), copulas (is/are/was), and filler adverbs. Maximum compression; output may read like abbreviated notes.</td><td>17–36%</td></tr>
+        <tr><td>adaptive</td><td>Computes Protected Token Ratio (PTR = protected tokens / total). Uses <code class="inline">telegraphic</code> when PTR &gt; 0.65, otherwise <code class="inline">standard</code>.</td><td>12–36%</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ── Domains ── -->
+    <h2 id="domains">Domain packs</h2>
+    <p>Domain packs add vocabulary rules on top of the standard set. Active when the <code class="inline">domain</code> field is set.</p>
+    <table class="param-table">
+      <thead><tr><th>Pack</th><th>Rules added</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>medical</td><td>39 rules</td><td>hypertension→HTN, myocardial infarction→MI, complete blood count→CBC, diagnosis→Dx</td></tr>
+        <tr><td>academic</td><td>33 rules</td><td>randomized controlled trial→RCT, confidence interval→CI, null hypothesis→H₀, peer-reviewed→peer-rev</td></tr>
+        <tr><td>legal_pro</td><td>25 rules</td><td>plaintiff→pltf, motion for summary judgment→MSJ, statute of limitations→SOL, deposition→depo</td></tr>
+        <tr><td>finance</td><td>28 rules</td><td>monthly recurring revenue→MRR, compound annual growth rate→CAGR, year-over-year→YoY</td></tr>
+        <tr><td>data_science</td><td>31 rules</td><td>convolutional neural network→CNN, exploratory data analysis→EDA, cross-validation→CV</td></tr>
+        <tr><td>social</td><td>20 rules</td><td>click-through rate→CTR, search engine optimization→SEO, call to action→CTA</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ── Errors ── -->
+    <h2 id="errors">Errors</h2>
+    <p>All errors return a JSON body with <code class="inline">error.code</code> and <code class="inline">error.message</code>.</p>
+    <table class="status-table">
+      <tbody>
+        <tr><td class="status-ok">200</td><td>Success</td></tr>
+        <tr><td class="status-warn">400</td><td><code class="inline">invalid_request</code> — missing or malformed fields</td></tr>
+        <tr><td class="status-err">401</td><td><code class="inline">unauthorized</code> — missing or invalid API key</td></tr>
+        <tr><td class="status-warn">413</td><td><code class="inline">text_too_long</code> — input exceeds 32,000 characters</td></tr>
+        <tr><td class="status-warn">422</td><td><code class="inline">invalid_domain</code> — unrecognised domain pack name</td></tr>
+        <tr><td class="status-err">429</td><td><code class="inline">quota_exceeded</code> — daily token limit reached. Resets at midnight UTC.</td></tr>
+        <tr><td class="status-err">500</td><td><code class="inline">internal_error</code> — something went wrong on our end</td></tr>
+      </tbody>
+    </table>
+
+    <div class="resp-block"><span class="cmt">// 429 example</span>
+<span class="kw">{</span>
+  <span class="str">"error"</span>: <span class="kw">{</span>
+    <span class="str">"code"</span>:    <span class="str">"quota_exceeded"</span>,
+    <span class="str">"message"</span>: <span class="str">"Daily token limit of 1,000,000 reached. Resets 2026-05-03T00:00:00Z."</span>,
+    <span class="str">"docs"</span>:    <span class="str">"https://promptly.so/docs#limits"</span>
+  <span class="kw">}</span>
+<span class="kw">}</span></div>
+
+    <!-- ── Limits ── -->
+    <h2 id="limits">Rate limits</h2>
+    <table class="param-table">
+      <thead><tr><th>Plan</th><th>Tokens / day</th><th>Requests / min</th><th>Batch size</th></tr></thead>
+      <tbody>
+        <tr><td>Developer ($19/mo)</td><td>1,000,000</td><td>120</td><td>100</td></tr>
+        <tr><td>Volume (custom)</td><td>Unlimited</td><td>Custom</td><td>1,000</td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-warn">
+      Token counts use a word-boundary approximation: <code class="inline">⌈words × 1.3⌉</code>. Both original and compressed token counts are measured so you can verify savings independently.
+    </div>
+
+    <!-- ── SDK Python ── -->
+    <h2 id="sdk-python">Python SDK</h2>
+
+    <h3>Install</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="fn">pip</span> install promptly-sdk</code></pre>
+    </div>
+
+    <h3>Usage</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="kw">import</span> promptly
+<span class="kw">import</span> os
+
+client = promptly.<span class="type">Client</span>(api_key=os.environ[<span class="str">"PROMPTLY_API_KEY"</span>])
+
+<span class="cmt"># Single compress</span>
+res = client.compress(<span class="str">"You are an expert data scientist. Analyze this dataset and return the results as a JSON object."</span>, mode=<span class="str">"standard"</span>, domain=<span class="str">"data_science"</span>)
+<span class="fn">print</span>(res.compressed)   <span class="cmt"># §EXP data scientist. ANLZ dataset →json.</span>
+
+<span class="cmt"># Pipeline integration — compress before every OpenAI call</span>
+<span class="kw">import</span> openai
+
+<span class="kw">def</span> <span class="fn">chat</span>(prompt: str) -> str:
+    compressed = client.compress(prompt).compressed
+    <span class="kw">return</span> openai.chat.completions.create(
+        model=<span class="str">"gpt-4o"</span>,
+        messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: compressed}],
+    ).choices[<span class="num">0</span>].message.content</code></pre>
+    </div>
+
+    <!-- ── SDK JS ── -->
+    <h2 id="sdk-js">JavaScript / Node SDK</h2>
+
+    <h3>Install</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="fn">npm</span> install promptly-sdk
+<span class="cmt"># or: npx promptly compress "your prompt here"  (CLI mode)</span></code></pre>
+    </div>
+
+    <h3>Usage</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="kw">import</span> { <span class="type">Promptly</span> } <span class="kw">from</span> <span class="str">'promptly-sdk'</span>;
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="type">Promptly</span>({ apiKey: process.env.<span class="var">PROMPTLY_API_KEY</span> });
+
+<span class="cmt">// Single call</span>
+<span class="kw">const</span> { compressed, compressionRate } = <span class="kw">await</span> client.<span class="fn">compress</span>({
+  text: <span class="str">'You are an expert React developer. Refactor this component to use hooks.'</span>,
+  mode: <span class="str">'standard'</span>,
+});
+console.<span class="fn">log</span>(compressed);        <span class="cmt">// §EXP React developer. ∆ component → hooks.</span>
+console.<span class="fn">log</span>(compressionRate);   <span class="cmt">// 0.31</span>
+
+<span class="cmt">// CLI usage:</span>
+<span class="cmt">// $ npx promptly compress "You are an expert..." --mode telegraphic</span>
+<span class="cmt">// $ npx promptly compress --file prompt.txt --domain medical</span></code></pre>
+    </div>
+
+    <!-- ── SDK Rust ── -->
+    <h2 id="sdk-rust">Rust SDK</h2>
+
+    <h3>Cargo.toml</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code>[dependencies]
+promptly = <span class="str">"0.1"</span>
+tokio    = { version = <span class="str">"1"</span>, features = [<span class="str">"full"</span>] }</code></pre>
+    </div>
+
+    <h3>Usage</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="kw">use</span> promptly::{Client, CompressRequest, Mode};
+
+<span class="kw">#[tokio::main]</span>
+<span class="kw">async fn</span> <span class="fn">main</span>() -> <span class="type">Result</span>&lt;(), promptly::<span class="type">Error</span>&gt; {
+    <span class="kw">let</span> client = Client::from_env()?;  <span class="cmt">// reads PROMPTLY_API_KEY</span>
+
+    <span class="kw">let</span> res = client.compress(CompressRequest {
+        text:   <span class="str">"Analyze this legal contract for indemnification clauses and jurisdiction."</span>.into(),
+        mode:   Mode::Telegraphic,
+        domain: <span class="type">Some</span>(<span class="str">"legal_pro"</span>.into()),
+        ..Default::default()
+    }).await?;
+
+    <span class="fn">println!</span>(<span class="str">"Compressed: {}"</span>, res.compressed);
+    <span class="fn">println!</span>(<span class="str">"Saved {:.0}% of tokens"</span>, res.compression_rate * <span class="num">100.0</span>);
+    <span class="type">Ok</span>(())
+}</code></pre>
+    </div>
+
+    <!-- ── SDK C++ ── -->
+    <h2 id="sdk-cpp">C++ SDK</h2>
+    <p>The C++ SDK uses <code class="inline">libcurl</code> and <code class="inline">nlohmann/json</code>. Header-only, C++17.</p>
+
+    <h3>Install (CMake)</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="fn">FetchContent_Declare</span>(promptly
+  GIT_REPOSITORY https://github.com/promptly-so/promptly-cpp
+  GIT_TAG        v0.1.0
+)
+<span class="fn">FetchContent_MakeAvailable</span>(promptly)
+<span class="fn">target_link_libraries</span>(my_target PRIVATE promptly::promptly)</code></pre>
+    </div>
+
+    <h3>Usage</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
+<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
+<span class="kw">#include</span> <span class="str">&lt;cstdlib&gt;</span>
+<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    Promptly::Client client(std::<span class="fn">getenv</span>(<span class="str">"PROMPTLY_API_KEY"</span>));
+
+    <span class="kw">auto</span> req = Promptly::CompressRequest{};
+    req.text   = <span class="str">"You are an expert at machine learning. Evaluate the model overfitting using cross-validation."</span>;
+    req.mode   = Promptly::Mode::Telegraphic;
+    req.domain = <span class="str">"data_science"</span>;
+
+    <span class="kw">try</span> {
+        <span class="kw">auto</span> res = client.compress(req);
+        std::cout &lt;&lt; <span class="str">"Compressed: "</span> &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;
+        std::cout &lt;&lt; <span class="str">"CR: "</span>         &lt;&lt; res.compression_rate * <span class="num">100</span> &lt;&lt; <span class="str">"%\n"</span>;
+    } <span class="kw">catch</span> (<span class="kw">const</span> Promptly::QuotaExceeded&amp; e) {
+        std::cerr &lt;&lt; <span class="str">"Quota exceeded: "</span> &lt;&lt; e.<span class="fn">what</span>() &lt;&lt; <span class="str">"\n"</span>;
+    }
+}</code></pre>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function switchCodeTab(btn, group, lang) {
+  // hide all panes in this group
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  // deactivate all buttons in this tab bar
+  btn.closest('.code-tab-bar').querySelectorAll('.code-tab-btn').forEach(b => b.classList.remove('active'));
+  // activate
+  document.getElementById(`${group}-${lang}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Sidebar active state on scroll
+const headings = document.querySelectorAll('h2[id]');
+const links    = document.querySelectorAll('.sidebar a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const match = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+headings.forEach(h => observer.observe(h));
+</script>
+</body>
+</html>

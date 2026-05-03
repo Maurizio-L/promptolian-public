@@ -313,9 +313,156 @@
     [/ +/g, ' '],
   ];
 
-  function psEncode(text, telegraphic = false) {
+  // ── Domain packs (Pro — opt-in vocabulary sets) ───────────────────────────
+  const DOMAIN_PACKS = {
+    medical: [
+      [/\bblood pressure\b/gi, 'BP'],
+      [/\bheart rate\b/gi, 'HR'],
+      [/\belectrocardiogram\b/gi, 'ECG'],
+      [/\bmagnetic resonance imaging\b/gi, 'MRI'],
+      [/\bcomputed tomography\b/gi, 'CT'],
+      [/\bemergency (department|room)\b/gi, (_, r) => r === 'room' ? 'ER' : 'ED'],
+      [/\bintensive care unit\b/gi, 'ICU'],
+      [/\bmyocardial infarction\b/gi, 'MI'],
+      [/\bdiabetes mellitus\b/gi, 'DM'],
+      [/\bhypertension\b/gi, 'HTN'],
+      [/\bchronic obstructive pulmonary disease\b/gi, 'COPD'],
+      [/\bcongestive heart failure\b/gi, 'CHF'],
+      [/\batrial fibrillation\b/gi, 'AFib'],
+      [/\bdeep vein thrombosis\b/gi, 'DVT'],
+      [/\bpulmonary embolism\b/gi, 'PE'],
+      [/\burinary tract infection\b/gi, 'UTI'],
+      [/\bnon[- ]steroidal anti[- ]inflammatory drug(s)?\b/gi, 'NSAID'],
+      [/\bphysical therapy\b/gi, 'PT'],
+      [/\boccupational therapy\b/gi, 'OT'],
+      [/\bactivities of daily living\b/gi, 'ADL'],
+      [/\brange of motion\b/gi, 'ROM'],
+      [/\bdiagnosis\b/gi, 'Dx'],
+      [/\btreatment\b/gi, 'Tx'],
+      [/\bprescription\b/gi, 'Rx'],
+      [/\bchief complaint\b/gi, 'CC'],
+      [/\bpast medical history\b/gi, 'PMH'],
+      [/\bhistory of present illness\b/gi, 'HPI'],
+      [/\bcomplete blood count\b/gi, 'CBC'],
+      [/\bcomprehensive metabolic panel\b/gi, 'CMP'],
+      [/\bbasic metabolic panel\b/gi, 'BMP'],
+      [/\bwhite blood cells?\b/gi, 'WBC'],
+      [/\bred blood cells?\b/gi, 'RBC'],
+      [/\bglomerular filtration rate\b/gi, 'GFR'],
+      [/\bblood urea nitrogen\b/gi, 'BUN'],
+      [/\btype 2 diabetes\b/gi, 'T2DM'],
+      [/\btype 1 diabetes\b/gi, 'T1DM'],
+      [/\bcardiovascular disease\b/gi, 'CVD'],
+      [/\bbody mass index\b/gi, 'BMI'],
+      [/\bcentral nervous system\b/gi, 'CNS'],
+    ],
+    academic: [
+      [/\brandomized controlled trial(s)?\b/gi, 'RCT'],
+      [/\bsystematic review\b/gi, 'sys rev'],
+      [/\bliterature review\b/gi, 'lit rev'],
+      [/\bconfidence interval\b/gi, 'CI'],
+      [/\bstandard deviation\b/gi, 'SD'],
+      [/\bstandard error\b/gi, 'SE'],
+      [/\bstatistical(ly)? significant\b/gi, 'sig.'],
+      [/\bindependent variable\b/gi, 'IV'],
+      [/\bdependent variable\b/gi, 'DV'],
+      [/\bnull hypothesis\b/gi, 'H₀'],
+      [/\balternative hypothesis\b/gi, 'H₁'],
+      [/\bqualitative\b/gi, 'qual'],
+      [/\bquantitative\b/gi, 'quant'],
+      [/\bresearch question\b/gi, 'RQ'],
+      [/\btheoretical framework\b/gi, 'theory fw'],
+      [/\bthematic analysis\b/gi, 'TA'],
+      [/\bsemi[- ]structured interview\b/gi, 'SSI'],
+      [/\bfocus group(s)?\b/gi, 'FG'],
+      [/\binformed consent\b/gi, 'IC'],
+      [/\bpeer[- ]reviewed\b/gi, 'peer-rev'],
+      [/\bopen[- ]access\b/gi, 'OA'],
+      [/\bsample size\b/gi, 'n'],
+      [/\beffect size\b/gi, 'ES'],
+      [/\banalysis of variance\b/gi, 'ANOVA'],
+      [/\bmultivariate analysis\b/gi, 'MVA'],
+      [/\bregression analysis\b/gi, 'reg'],
+      [/\bdouble[- ]blind\b/gi, 'DB'],
+      [/\bplacebo[- ]controlled\b/gi, 'PC'],
+      [/\bethics (committee|board)\b/gi, 'IRB'],
+      [/\bcase study\b/gi, 'CS'],
+      [/\bgrounded theory\b/gi, 'GT'],
+      [/\bethnograph(y|ic)\b/gi, 'ethnog'],
+      [/\binter[- ]rater reliability\b/gi, 'IRR'],
+      [/\bcoefficient of variation\b/gi, 'CV'],
+      [/\bdegrees of freedom\b/gi, 'df'],
+    ],
+    legal_pro: [
+      [/\bplaintiff\b/gi, 'pltf'],
+      [/\bdefendant\b/gi, 'def'],
+      [/\battorney\b/gi, 'atty'],
+      [/\bdeposition\b/gi, 'depo'],
+      [/\bmotion for summary judgment\b/gi, 'MSJ'],
+      [/\bpreliminary injunction\b/gi, 'PI'],
+      [/\btemporary restraining order\b/gi, 'TRO'],
+      [/\bstatute of limitations\b/gi, 'SOL'],
+      [/\bdue diligence\b/gi, 'DD'],
+      [/\bforce majeure\b/gi, 'FM'],
+      [/\bliquidated damages\b/gi, 'LD'],
+      [/\bnon[- ]compete agreement\b/gi, 'NCA'],
+      [/\barbitration\b/gi, 'arb'],
+      [/\bmediation\b/gi, 'med'],
+      [/\baffidavit\b/gi, 'aff'],
+      [/\bsubpoena\b/gi, 'subp'],
+      [/\bdiscovery\b/gi, 'discov'],
+      [/\binterrogator(y|ies)\b/gi, 'interrog'],
+      [/\bclass action\b/gi, 'CA'],
+      [/\bsettlement agreement\b/gi, 'SA'],
+      [/\bindemnification\b/gi, 'indem'],
+      [/\brepresentations and warranties\b/gi, 'R&W'],
+      [/\bclosing conditions\b/gi, 'CC'],
+      [/\bmaterial adverse change\b/gi, 'MAC'],
+      [/\bearn[- ]out\b/gi, 'earnout'],
+    ],
+  };
+
+  // ── Pro settings state ────────────────────────────────────────────────────
+  let activePacks = [];
+  let customRules = [];
+  let autoCompress = false;
+  let _quotaCache = { ok: true, pro: false, count: 0 };
+
+  function loadProSettings() {
+    chrome.storage.local.get(
+      ['promptly_license', 'promptly_packs', 'promptly_custom_rules', 'promptly_auto', 'promptly_daily'],
+      res => {
+        if (!res.promptly_license) return;
+        activePacks = res.promptly_packs || [];
+        customRules = (res.promptly_custom_rules || []).map(r => {
+          try { return [new RegExp('\\b' + r.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), r.replacement]; }
+          catch (_) { return null; }
+        }).filter(Boolean);
+        autoCompress = res.promptly_auto === true;
+        // Refresh quota cache
+        const today = getTodayKey();
+        const daily = (res.promptly_daily && res.promptly_daily.date === today) ? res.promptly_daily : { date: today, count: 0 };
+        _quotaCache = { ok: res.promptly_license ? true : daily.count < FREE_LIMIT, pro: !!res.promptly_license, count: daily.count };
+      }
+    );
+  }
+
+  function trackCompression(et, pt, site) {
+    const entry = { ts: Date.now(), site, et, pt, pct: et > 0 ? Math.round((et - pt) / et * 100) : 0 };
+    chrome.storage.local.get(['promptly_history'], res => {
+      const hist = (res.promptly_history || []);
+      hist.unshift(entry);
+      chrome.storage.local.set({ promptly_history: hist.slice(0, 500) });
+    });
+  }
+
+  function psEncode(text, telegraphic = false, packs = [], custom = []) {
     let out = text.trim();
     for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
+    for (const pack of packs) {
+      for (const rule of (DOMAIN_PACKS[pack] || [])) out = out.replace(rule[0], rule[1]);
+    }
+    for (const [pat, rep] of custom) out = out.replace(pat, rep);
     if (telegraphic) {
       for (const [pat, rep] of TELEGRAPHIC_RULES) out = out.replace(pat, rep);
     }
@@ -493,7 +640,7 @@
       }
 
       originalText = text;
-      const compressed = psEncode(text, teleMode);
+      const compressed = psEncode(text, teleMode, activePacks, customRules);
       site.setText(input, compressed);
       const et = countTokens(text), pt = countTokens(compressed);
       const saved = Math.max(0, et - pt);
@@ -501,7 +648,11 @@
       sessionSaved += saved;
 
       const usedToday = await incrementQuota();
+      _quotaCache.count = usedToday;
+      if (!quota.pro && usedToday >= FREE_LIMIT) _quotaCache.ok = false;
       const remaining = quota.pro ? '∞' : `${FREE_LIMIT - usedToday} left today`;
+
+      trackCompression(et, pt, location.hostname);
 
       document.getElementById('p-stats').innerHTML =
         `<span style="color:#4ade80;font-weight:600">${pct}% saved</span> · ${et}→${pt} tokens · ${remaining}`;
@@ -596,6 +747,31 @@
     btn.style.color = on ? '#a8d420' : '#888';
     btn.style.borderColor = on ? '#c8f13555' : '#333';
   }
+
+  // ── Auto-compress on send (Pro) ───────────────────────────────────────────
+  function setupAutoCompress() {
+    document.addEventListener('keydown', (e) => {
+      if (!autoCompress || e.key !== 'Enter' || e.shiftKey || isCompressed) return;
+      const input = getInput();
+      if (!input || e.target !== input) return;
+      const site = getSite();
+      const text = site.getText(input);
+      if (!text.trim()) return;
+      if (!_quotaCache.ok) { showUpgradeNotice(_quotaCache.count); return; }
+      originalText = text;
+      const compressed = psEncode(text, teleMode, activePacks, customRules);
+      site.setText(input, compressed);
+      isCompressed = true;
+      incrementQuota().then(n => {
+        _quotaCache.count = n;
+        if (!_quotaCache.pro && n >= FREE_LIMIT) _quotaCache.ok = false;
+      });
+      trackCompression(countTokens(text), countTokens(compressed), location.hostname);
+    }, true);
+  }
+
+  loadProSettings();
+  setupAutoCompress();
 
   let _obsTimer = null;
   const obs = new MutationObserver(() => {

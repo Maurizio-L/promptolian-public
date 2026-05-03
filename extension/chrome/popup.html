@@ -4,647 +4,464 @@
 <meta charset="utf-8">
 <title>Promptly</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    width: 300px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f0f0f;
-    color: #e0e0e0;
-    font-size: 13px;
-  }
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid #1e1e1e;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #f0f0f0;
-  }
-  .logo-icon {
-    background: #c8f135;
-    color: #0e0e0e;
-    font-weight: 700;
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 7px;
-    letter-spacing: 0.04em;
-  }
-  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
-  .toggle-lbl { font-size: 11px; color: #666; }
-  .toggle { position: relative; width: 36px; height: 20px; }
-  .toggle input { display: none; }
-  .slider {
-    position: absolute; inset: 0;
-    background: #2a2a2a; border-radius: 20px;
-    cursor: pointer; transition: background 0.2s;
-    border: 1px solid #333;
-  }
-  .slider::before {
-    content: '';
-    position: absolute;
-    width: 14px; height: 14px;
-    background: #666; border-radius: 50%;
-    top: 2px; left: 2px;
-    transition: all 0.2s;
-  }
-  .toggle input:checked + .slider { background: #c8f13544; border-color: #c8f135; }
-  .toggle input:checked + .slider::before { transform: translateX(16px); background: #c8f135; }
-
-  .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1px;
-    background: #1a1a1a;
-    border-bottom: 1px solid #1e1e1e;
-  }
-  .stat {
-    background: #0f0f0f;
-    padding: 14px 10px;
-    text-align: center;
-  }
-  .stat-val { font-size: 20px; font-weight: 600; color: #c8f135; display: block; }
-  .stat-lbl { font-size: 10px; color: #555; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
-
-  .section { padding: 12px 16px; border-bottom: 1px solid #1a1a1a; }
-  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin-bottom: 8px; font-weight: 600; }
-
-  .site-row {
-    display: flex; align-items: center;
-    justify-content: space-between;
-    padding: 5px 8px;
-    background: #141414; border-radius: 7px;
-    border: 1px solid #1e1e1e;
-    margin-bottom: 4px;
-  }
-  .site-name { font-size: 12px; color: #ccc; }
-  .site-status { font-size: 10px; color: #4ade80; }
-
-  .translator { padding: 12px 16px; }
-  textarea {
-    width: 100%; background: #141414;
-    border: 1px solid #2a2a2a; border-radius: 7px;
-    color: #e0e0e0; padding: 8px 10px;
-    font-size: 12px; font-family: inherit;
-    resize: none; height: 72px; outline: none;
-    transition: border-color 0.15s; margin-bottom: 8px;
-  }
-  textarea:focus { border-color: #c8f13555; }
-  .output {
-    background: #141414; border: 1px solid #2a2a2a;
-    border-radius: 7px; padding: 8px 10px;
-    font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
-    color: #c8f135; min-height: 48px;
-    white-space: pre-wrap; word-break: break-all;
-    margin-bottom: 8px;
-  }
-  .saving {
-    display: none;
-    background: #16a34a22; border: 1px solid #16a34a44;
-    color: #4ade80; font-size: 10px; font-weight: 600;
-    padding: 3px 9px; border-radius: 20px;
-    margin-bottom: 8px; text-align: center;
-  }
-  .btn-row { display: flex; gap: 6px; }
-  button {
-    padding: 6px 12px; border-radius: 7px;
-    border: 1px solid #2a2a2a; background: transparent;
-    color: #ccc; font-size: 11px; cursor: pointer;
-    font-family: inherit; transition: all 0.15s; font-weight: 500;
-  }
-  button:hover { background: #1e1e1e; border-color: #333; }
-  .btn-main { background: #c8f13522; border-color: #c8f13555; color: #a8d420; }
-  .btn-main:hover { background: #c8f13533; }
-
-  .footer {
-    padding: 10px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .footer a { font-size: 10px; color: #444; text-decoration: none; cursor: pointer; }
-  .footer a:hover { color: #c8f135; }
-  .version { font-size: 10px; color: #333; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:340px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f0f;color:#e0e0e0;font-size:13px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #1e1e1e}
+.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#f0f0f0}
+.logo-icon{background:#c8f135;color:#0e0e0e;font-weight:700;font-size:12px;padding:4px 8px;border-radius:7px}
+.toggle-wrap{display:flex;align-items:center;gap:8px}
+.toggle-lbl{font-size:11px;color:#666}
+.toggle{position:relative;width:36px;height:20px}
+.toggle input{display:none}
+.slider{position:absolute;inset:0;background:#2a2a2a;border-radius:20px;cursor:pointer;transition:background .2s;border:1px solid #333}
+.slider::before{content:\'\';position:absolute;width:14px;height:14px;background:#666;border-radius:50%;top:2px;left:2px;transition:all .2s}
+.toggle input:checked+.slider{background:#c8f13544;border-color:#c8f135}
+.toggle input:checked+.slider::before{transform:translateX(16px);background:#c8f135}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#1a1a1a;border-bottom:1px solid #1e1e1e}
+.stat{background:#0f0f0f;padding:12px 10px;text-align:center}
+.stat-val{font-size:19px;font-weight:600;color:#c8f135;display:block}
+.stat-lbl{font-size:10px;color:#555;margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.tab-bar{display:flex;border-bottom:1px solid #1e1e1e;background:#0f0f0f}
+.tab-btn{flex:1;padding:10px 6px;font-size:11px;font-weight:500;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s}
+.tab-btn:hover{color:#aaa}
+.tab-btn.active{color:#c8f135;border-bottom-color:#c8f135}
+.tab-lock{font-size:9px;opacity:.5;margin-left:2px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.section{padding:11px 16px;border-bottom:1px solid #1a1a1a}
+.section-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:8px;font-weight:600}
+.site-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#141414;border-radius:7px;border:1px solid #1e1e1e;margin-bottom:4px}
+.site-name{font-size:12px;color:#ccc}
+.site-status{font-size:10px;color:#4ade80}
+.quota-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.quota-label{font-size:12px;color:#aaa;white-space:nowrap}
+.quota-bar-wrap{flex:1;background:#2a2a2a;border-radius:20px;height:6px;overflow:hidden}
+.quota-bar{height:100%;background:#c8f135;border-radius:20px;transition:width .3s}
+.quota-rem{font-size:11px;color:#c8f135;font-weight:600;white-space:nowrap}
+.upgrade-row{display:flex;align-items:center;justify-content:center;padding:7px;background:#c8f13511;border:1px solid #c8f13533;border-radius:7px;cursor:pointer;margin-bottom:8px}
+.upgrade-row:hover{background:#c8f13522}
+.upgrade-label{font-size:12px;color:#c8f135;font-weight:600}
+.key-input{width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:7px;color:#e0e0e0;padding:7px 10px;font-size:11px;font-family:inherit;outline:none;margin-bottom:5px}
+.key-input:focus{border-color:#c8f13555}
+.pro-badge-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#16a34a11;border:1px solid #16a34a33;border-radius:7px}
+.pro-badge-label{font-size:12px;color:#4ade80;font-weight:600}
+.pro-change{font-size:10px;color:#555;cursor:pointer}
+.pro-change:hover{color:#aaa}
+.translator{padding:11px 16px}
+textarea{width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:7px;color:#e0e0e0;padding:8px 10px;font-size:12px;font-family:inherit;resize:none;height:68px;outline:none;transition:border-color .15s;margin-bottom:7px}
+textarea:focus{border-color:#c8f13555}
+.output{background:#141414;border:1px solid #2a2a2a;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'SF Mono','Fira Code',monospace;color:#c8f135;min-height:44px;white-space:pre-wrap;word-break:break-all;margin-bottom:7px}
+.saving{display:none;background:#16a34a22;border:1px solid #16a34a44;color:#4ade80;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;margin-bottom:7px;text-align:center}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap}
+button{padding:6px 11px;border-radius:7px;border:1px solid #2a2a2a;background:transparent;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;font-weight:500}
+button:hover{background:#1e1e1e;border-color:#333}
+.btn-main{background:#c8f13522;border-color:#c8f13555;color:#a8d420}
+.btn-main:hover{background:#c8f13533}
+.gate{display:flex;flex-direction:column;align-items:center;padding:32px 20px;gap:10px;text-align:center}
+.gate-icon{font-size:28px;opacity:.4}
+.gate-title{font-size:14px;font-weight:600;color:#888}
+.gate-sub{font-size:12px;color:#555;line-height:1.5}
+.gate-btn{padding:8px 20px;border-radius:100px;border:1px solid #c8f13555;background:#c8f13511;color:#a8d420;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.gate-btn:hover{background:#c8f13522}
+.analytics{padding:14px 16px}
+.anl-alltime{display:flex;gap:6px;margin-bottom:16px}
+.anl-stat{flex:1;background:#141414;border:1px solid #1e1e1e;border-radius:9px;padding:10px;text-align:center}
+.anl-val{font-size:17px;font-weight:600;color:#c8f135;display:block}
+.anl-lbl{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.04em}
+.chart-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555;font-weight:600;margin-bottom:10px}
+.chart{display:flex;flex-direction:column;gap:5px;margin-bottom:18px}
+.chart-row{display:flex;align-items:center;gap:8px}
+.chart-day{font-size:10px;color:#555;width:28px;text-align:right;flex-shrink:0}
+.chart-bar-wrap{flex:1;background:#1a1a1a;border-radius:4px;height:12px;overflow:hidden}
+.chart-bar{height:100%;background:#c8f13566;border-radius:4px;min-width:2px}
+.chart-count{font-size:10px;color:#444;width:42px;text-align:left;flex-shrink:0}
+.site-table{width:100%;border-collapse:collapse;font-size:12px}
+.site-table th{color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:4px 6px;border-bottom:1px solid #1e1e1e}
+.site-table td{padding:7px 6px;border-bottom:1px solid #141414;color:#aaa}
+.site-table td:last-child{color:#c8f135;font-weight:600;text-align:right}
+.setting-section{padding:11px 16px;border-bottom:1px solid #1a1a1a}
+.pack-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #141414}
+.pack-row:last-child{border-bottom:none}
+.pack-info{display:flex;align-items:center;gap:8px}
+.pack-icon{font-size:14px}
+.pack-name{font-size:12px;font-weight:500;color:#ddd}
+.pack-desc{font-size:10px;color:#555}
+.mini-toggle{position:relative;width:30px;height:17px;flex-shrink:0}
+.mini-toggle input{display:none}
+.mini-slider{position:absolute;inset:0;background:#2a2a2a;border-radius:20px;cursor:pointer;border:1px solid #333;transition:background .2s}
+.mini-slider::before{content:\'\';position:absolute;width:11px;height:11px;background:#555;border-radius:50%;top:2px;left:2px;transition:all .2s}
+.mini-toggle input:checked+.mini-slider{background:#c8f13544;border-color:#c8f135}
+.mini-toggle input:checked+.mini-slider::before{transform:translateX(13px);background:#c8f135}
+.rules-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;max-height:120px;overflow-y:auto}
+.rule-item{display:flex;align-items:center;justify-content:space-between;background:#141414;border:1px solid #1e1e1e;border-radius:7px;padding:5px 8px}
+.rule-text{font-size:11px;color:#aaa;font-family:'SF Mono','Fira Code',monospace}
+.rule-del{background:none;border:none;color:#555;cursor:pointer;font-size:13px;padding:0 2px}
+.rule-del:hover{color:#f87171;background:none}
+.add-rule-row{display:flex;gap:5px}
+.rule-input{flex:1;background:#141414;border:1px solid #2a2a2a;border-radius:7px;color:#e0e0e0;padding:6px 8px;font-size:11px;font-family:inherit;outline:none}
+.rule-input:focus{border-color:#c8f13555}
+.auto-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.auto-label{font-size:12px;color:#ddd}
+.auto-sub{font-size:10px;color:#555}
+.footer{padding:9px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #1a1a1a}
+.footer a{font-size:10px;color:#444;text-decoration:none}
+.footer a:hover{color:#c8f135}
+.version{font-size:10px;color:#333}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">
-    <span class="logo-icon">P→</span>
-    Promptly
-  </div>
+  <div class="logo"><span class="logo-icon">P&#8594;</span> Promptly</div>
   <div class="toggle-wrap">
     <span class="toggle-lbl" id="toggle-lbl">ON</span>
-    <label class="toggle">
-      <input type="checkbox" id="main-toggle" checked>
-      <span class="slider"></span>
-    </label>
+    <label class="toggle"><input type="checkbox" id="main-toggle" checked><span class="slider"></span></label>
   </div>
 </div>
 
 <div class="stats">
-  <div class="stat">
-    <span class="stat-val" id="s-saved">0</span>
-    <div class="stat-lbl">% saved</div>
-  </div>
-  <div class="stat">
-    <span class="stat-val" id="s-prompts">0</span>
-    <div class="stat-lbl">prompts</div>
-  </div>
-  <div class="stat">
-    <span class="stat-val" id="s-avg">—</span>
-    <div class="stat-lbl">avg saving</div>
-  </div>
+  <div class="stat"><span class="stat-val" id="s-saved">0</span><div class="stat-lbl">% saved</div></div>
+  <div class="stat"><span class="stat-val" id="s-prompts">0</span><div class="stat-lbl">prompts</div></div>
+  <div class="stat"><span class="stat-val" id="s-avg">&#8212;</span><div class="stat-lbl">avg saving</div></div>
 </div>
 
-<div class="section" id="plan-section">
-  <div class="section-title">Plan</div>
-  <div id="plan-free" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <span style="font-size:12px;color:#aaa">Free · <span id="daily-used">0</span>/10 today</span>
-      <div style="background:#2a2a2a;border-radius:20px;height:6px;width:100px;overflow:hidden;margin:0 8px;flex:1">
-        <div id="quota-bar" style="height:100%;background:#c8f135;border-radius:20px;transition:width .3s;width:0%"></div>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('home',this)">&#9889; Home</button>
+  <button class="tab-btn" onclick="switchTab('analytics',this)">&#128202; Stats<span class="tab-lock" id="lock-analytics">&#128274;</span></button>
+  <button class="tab-btn" onclick="switchTab('pro',this)">&#9881; Pro<span class="tab-lock" id="lock-pro">&#128274;</span></button>
+</div>
+
+<!-- HOME -->
+<div class="tab-pane active" id="tab-home">
+  <div class="section">
+    <div class="section-title">Plan</div>
+    <div id="plan-free" style="display:none">
+      <div class="quota-row">
+        <span class="quota-label">Free &middot; <span id="daily-used">0</span>/10 today</span>
+        <div class="quota-bar-wrap"><div class="quota-bar" id="quota-bar" style="width:0%"></div></div>
+        <span class="quota-rem" id="daily-remaining">10 left</span>
       </div>
-      <span id="daily-remaining" style="font-size:11px;color:#c8f135;font-weight:600"></span>
+      <div class="upgrade-row" onclick="openUpgrade()"><span class="upgrade-label">&#9889; Upgrade to Pro &mdash; $7/mo</span></div>
+      <input class="key-input" type="text" id="license-input" placeholder="Enter license key&hellip;">
+      <button style="width:100%;padding:6px;border-radius:7px;border:1px solid #c8f13555;background:#c8f13511;color:#a8d420;font-size:11px;cursor:pointer;font-family:inherit" onclick="activateLicense()">Activate license</button>
     </div>
-    <div class="site-row" style="justify-content:center;cursor:pointer;background:#c8f13511;border-color:#c8f13533" onclick="openUpgrade()">
-      <span style="font-size:12px;color:#c8f135;font-weight:600">⚡ Upgrade to Pro — $7/mo</span>
-    </div>
-    <div style="margin-top:8px">
-      <input type="text" id="license-input" placeholder="Enter license key…"
-        style="width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:7px;
-               color:#e0e0e0;padding:7px 10px;font-size:11px;font-family:inherit;outline:none">
-      <button onclick="activateLicense()"
-        style="width:100%;margin-top:6px;padding:6px;border-radius:7px;border:1px solid #c8f13555;
-               background:#c8f13511;color:#a8d420;font-size:11px;cursor:pointer;font-family:inherit">
-        Activate license
-      </button>
+    <div id="plan-pro" style="display:none">
+      <div class="pro-badge-row">
+        <span class="pro-badge-label">&#10003; Pro &mdash; unlimited compressions</span>
+        <span class="pro-change" onclick="deactivateLicense()">Change</span>
+      </div>
     </div>
   </div>
-  <div id="plan-pro" style="display:none">
-    <div class="site-row" style="background:#16a34a11;border-color:#16a34a33">
-      <span style="font-size:12px;color:#4ade80;font-weight:600">✓ Pro — unlimited compressions</span>
-      <span style="font-size:10px;color:#555;cursor:pointer" onclick="deactivateLicense()">Change</span>
+  <div class="section">
+    <div class="section-title">Active on</div>
+    <div class="site-row"><span class="site-name">claude.ai</span><span class="site-status">&#9679; active</span></div>
+    <div class="site-row"><span class="site-name">chatgpt.com</span><span class="site-status">&#9679; active</span></div>
+    <div class="site-row"><span class="site-name">gemini.google.com</span><span class="site-status">&#9679; active</span></div>
+    <div class="site-row"><span class="site-name">copilot.microsoft.com</span><span class="site-status">&#9679; active</span></div>
+  </div>
+  <div class="translator">
+    <div class="section-title">Quick translator</div>
+    <textarea id="eng-in" placeholder="Type your English prompt here&hellip;"></textarea>
+    <div class="saving" id="saving-pill"></div>
+    <div class="output" id="ps-out">Promptolian output&hellip;</div>
+    <div class="btn-row">
+      <button class="btn-main" onclick="translate()">&#9889; Compress</button>
+      <button id="tele-btn" onclick="toggleTele()">Tele: OFF</button>
+      <button onclick="copyOut()">Copy</button>
+      <button onclick="clearAll()">Clear</button>
     </div>
   </div>
 </div>
 
-<div class="section">
-  <div class="section-title">Active on</div>
-  <div class="site-row"><span class="site-name">claude.ai</span><span class="site-status">● active</span></div>
-  <div class="site-row"><span class="site-name">chatgpt.com</span><span class="site-status">● active</span></div>
-  <div class="site-row"><span class="site-name">gemini.google.com</span><span class="site-status">● active</span></div>
-  <div class="site-row"><span class="site-name">copilot.microsoft.com</span><span class="site-status">● active</span></div>
+<!-- ANALYTICS -->
+<div class="tab-pane" id="tab-analytics">
+  <div id="analytics-gate" class="gate">
+    <div class="gate-icon">&#128202;</div>
+    <div class="gate-title">Analytics is a Pro feature</div>
+    <div class="gate-sub">Track tokens saved per day, per site,<br>and across all sessions.</div>
+    <button class="gate-btn" onclick="openUpgrade()">Upgrade to Pro &#8594;</button>
+  </div>
+  <div id="analytics-content" style="display:none" class="analytics">
+    <div class="anl-alltime">
+      <div class="anl-stat"><span class="anl-val" id="anl-tokens">0</span><div class="anl-lbl">Tokens saved</div></div>
+      <div class="anl-stat"><span class="anl-val" id="anl-comps">0</span><div class="anl-lbl">Sessions</div></div>
+      <div class="anl-stat"><span class="anl-val" id="anl-avg">&#8212;</span><div class="anl-lbl">Avg %</div></div>
+    </div>
+    <div class="chart-title">Last 7 days</div>
+    <div class="chart" id="week-chart"></div>
+    <div class="chart-title">By site</div>
+    <table class="site-table">
+      <thead><tr><th>Site</th><th>Sessions</th><th>Avg saved</th></tr></thead>
+      <tbody id="site-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
-<div class="translator">
-  <div class="section-title">Quick translator</div>
-  <textarea id="eng-in" placeholder="Type your English prompt here..."></textarea>
-  <div class="saving" id="saving-pill"></div>
-  <div class="output" id="ps-out">Promptolian output...</div>
-  <div class="btn-row">
-    <button class="btn-main" onclick="translate()">⚡ Compress</button>
-    <button id="tele-btn" onclick="toggleTele()" title="Strip articles &amp; copulas for max savings">Tele: OFF</button>
-    <button onclick="copyOut()">Copy</button>
-    <button onclick="clearAll()">Clear</button>
+<!-- PRO SETTINGS -->
+<div class="tab-pane" id="tab-pro">
+  <div id="pro-gate" class="gate">
+    <div class="gate-icon">&#9881;&#65039;</div>
+    <div class="gate-title">Pro features</div>
+    <div class="gate-sub">Domain packs, custom vocabulary,<br>and auto-compress on send.</div>
+    <button class="gate-btn" onclick="openUpgrade()">Upgrade to Pro &#8594;</button>
+  </div>
+  <div id="pro-content" style="display:none">
+    <div class="setting-section">
+      <div class="section-title">Domain packs</div>
+      <div class="pack-row">
+        <div class="pack-info"><span class="pack-icon">&#127973;</span><div><div class="pack-name">Medical</div><div class="pack-desc">HTN, MI, CBC, Dx/Tx/Rx&hellip;</div></div></div>
+        <label class="mini-toggle"><input type="checkbox" id="pack-medical" onchange="savePacks()"><span class="mini-slider"></span></label>
+      </div>
+      <div class="pack-row">
+        <div class="pack-info"><span class="pack-icon">&#127891;</span><div><div class="pack-name">Academic</div><div class="pack-desc">RCT, CI, SD, H&#8320;, peer-rev&hellip;</div></div></div>
+        <label class="mini-toggle"><input type="checkbox" id="pack-academic" onchange="savePacks()"><span class="mini-slider"></span></label>
+      </div>
+      <div class="pack-row">
+        <div class="pack-info"><span class="pack-icon">&#9878;&#65039;</span><div><div class="pack-name">Legal Pro</div><div class="pack-desc">pltf, MSJ, SOL, depo, NCA&hellip;</div></div></div>
+        <label class="mini-toggle"><input type="checkbox" id="pack-legal_pro" onchange="savePacks()"><span class="mini-slider"></span></label>
+      </div>
+    </div>
+    <div class="setting-section">
+      <div class="section-title">Custom vocabulary</div>
+      <div class="rules-list" id="rules-list"></div>
+      <div class="add-rule-row">
+        <input class="rule-input" id="rule-phrase" placeholder="phrase&hellip;" style="flex:2">
+        <input class="rule-input" id="rule-abbrev" placeholder="abbrev">
+        <button class="btn-main" onclick="addCustomRule()" style="padding:6px 10px;font-size:11px">Add</button>
+      </div>
+    </div>
+    <div class="setting-section">
+      <div class="section-title">Auto-compress</div>
+      <div class="auto-row">
+        <div><div class="auto-label">Compress on Enter</div><div class="auto-sub">Compress automatically before sending</div></div>
+        <label class="mini-toggle"><input type="checkbox" id="auto-compress" onchange="saveAuto()"><span class="mini-slider"></span></label>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="footer">
-  <a>promptly.so</a>
-  <span class="version">v1.0.0</span>
+  <a href="https://promptly.so" target="_blank">promptly.so</a>
+  <span class="version">v1.1.0</span>
 </div>
 
 <script>
-const RULES = [
-  // Roles & context
-  [/you are an? expert (in |on |at )?/gi,'§EXP '],
-  [/you are an? /gi,'§ROLE '],
-  [/act as (a |an )?/gi,'§ACT '],
-  [/pretend (you are|to be) (a |an )?/gi,'§ROLE '],
-  [/here is (the |some )?context[:\s]*/gi,'§CTX '],
-  [/given (this |the )?context[:\s]*/gi,'§CTX '],
-  // Filler openers
-  [/I would like you to /gi,''],
-  [/I need you to /gi,''],
-  [/can you (please )?/gi,''],
-  [/could you (please )?/gi,''],
-  [/please /gi,''],
-  // Output format
-  [/return only (the )?code[^.]*\.?/gi,'→code'],
-  [/return as (a )?bullet[- ]?list/gi,'→list'],
-  [/in bullet points?/gi,'→list'],
-  [/return as (a )?numbered list/gi,'→nlist'],
-  [/return as (a )?table/gi,'→table'],
-  [/return as json/gi,'→json'],
-  [/in json format/gi,'→json'],
-  [/return as yaml/gi,'→yaml'],
-  [/return as (csv|markdown)/gi,(_,f)=>'→'+f.toLowerCase()],
-  [/step[- ]by[- ]step/gi,'→step'],
-  [/pros and cons/gi,'→pros/cons'],
-  [/be (very )?concise\.?/gi,'→short'],
-  [/keep it (very )?short\.?/gi,'→short'],
-  [/\bbriefly\b/gi,'→short'],
-  [/in (simple|plain|easy) (terms|language|english)/gi,'→ELI5'],
-  [/for (a )?beginner(s)?/gi,'→ELI5'],
-  [/in (great |comprehensive )?detail/gi,'→long'],
-  [/\bcomprehensive\b/gi,'→long'],
-  [/no explanation/gi,'⊖explain'],
-  [/without (any )?explanation/gi,'⊖explain'],
-  // Task verbs
-  [/fix (the |any |a )?bug(s)?( in| on)?/gi,'BUG'],
-  [/write (a |an )?unit tests? for/gi,'TEST'],
-  [/write tests? for/gi,'TEST'],
-  [/write (a |an )?function (to |that )?/gi,'FN '],
-  [/create (a |an )?function (to |that )?/gi,'FN '],
-  [/write (a |an )?class\b/gi,'CLS'],
-  [/summarize (this |the |a )?/gi,'∑ '],
-  [/summary of (the |this |a )?/gi,'∑ '],
-  [/explain how\b/gi,'? how'],
-  [/difference between\b/gi,'§DIFF'],
-  [/compare\b/gi,'§DIFF'],
-  [/\bdebug\b/gi,'BUG'],
-  [/\boptimize\b/gi,'OPT'],
-  [/\brefactor\b/gi,'∆'],
-  [/\brewrite\b/gi,'∆'],
-  [/\bimprove\b/gi,'∆'],
-  [/\bupdate\b/gi,'∆'],
-  [/\bedit\b/gi,'∆'],
-  [/\banalyze\b/gi,'ANLZ'],
-  [/\banalyse\b/gi,'ANLZ'],
-  [/\bevaluate\b/gi,'EVAL'],
-  [/\bassess\b/gi,'EVAL'],
-  [/\bimplement\b/gi,'impl'],
-  [/\bgenerate\b/gi,'GEN'],
-  [/\bcreate\b/gi,'mk'],
-  [/\bbuild\b/gi,'bld'],
-  [/\btranslate\b/gi,'⇄'],
-  [/\bconvert\b/gi,'⇄'],
-  [/\bdescribe\b/gi,'?'],
-  [/\bexplain\b/gi,'?'],
-  [/\bhow does\b/gi,'?'],
-  [/\bwhat (is|are)\b/gi,'?'],
-  [/\bwhy (is|are|does|do)\b/gi,'?why'],
-  [/\breview (my |this |the )?/gi,'« '],
-  [/\brevise (my |this |the )?/gi,'« '],
-  [/\bcontinue\b/gi,'»'],
-  [/\bfind\b/gi,'⊂'],
-  [/\bsearch (for )?\b/gi,'⊂'],
-  [/\bextract\b/gi,'⊂'],
-  [/\bprovide (a |an )?/gi,''],
-  [/\bgive me (a |an )?/gi,''],
-  [/\bhelp me (with )?(a |an )?/gi,''],
-  [/\bdeploy\b/gi,'dpl'],
-  [/\bconfigure\b/gi,'cfg'],
-  [/\bset up\b/gi,'cfg'],
-  [/\binstall\b/gi,'inst'],
-  [/\bdocument\b/gi,'docs'],
-  // Constraints
-  [/make sure (to |that )?/gi,'!! '],
-  [/ensure (that )?/gi,'!! '],
-  [/\bdo not\b/gi,'§NOT'],
-  [/\bdon't\b/gi,'§NOT'],
-  [/\bavoid\b/gi,'§NOT'],
-  [/\bnever\b/gi,'§NOT'],
-  [/\b(very )?important[:\s]+/gi,'!! '],
-  [/\bcritical[:\s]+/gi,'!! '],
-  [/\bmust\b/gi,'!!'],
-  // Logic & connectors
-  [/\balso\b/gi,'§ALSO'],
-  [/\badditionally\b/gi,'§ALSO'],
-  [/\balternative(ly)?\b/gi,'§ALT'],
-  [/\binstead\b/gi,'§ALT'],
-  [/\bbest practice(s)?\b/gi,'§BEST'],
-  [/\brecommended\b/gi,'§BEST'],
-  [/\bfor example\b/gi,'§EX'],
-  [/\bfor instance\b/gi,'§EX'],
-  [/\bcontext\b/gi,'§CTX'],
-  [/\boutput\b/gi,'→'],
-  [/\bgiven\b/gi,'←'],
-  [/\binput\b/gi,'←'],
-  // Quantifiers
-  [/\ball\b/gi,'∀'],
-  [/\beach\b/gi,'∀'],
-  [/\bevery\b/gi,'∀'],
-  [/\bat least\b/gi,'min'],
-  [/\bat most\b/gi,'max'],
-  [/\bmore than\b/gi,'>'],
-  [/\bless than\b/gi,'<'],
-  [/\bapproximately\b/gi,'~'],
-  // Tech
-  [/\bmachine learning\b/gi,'ML'],
-  [/\bartificial intelligence\b/gi,'AI'],
-  [/\blarge language model(s)?\b/gi,'LLM'],
-  [/\bnatural language processing\b/gi,'NLP'],
-  [/\bdeep learning\b/gi,'DL'],
-  [/\bneural network(s)?\b/gi,'NN'],
-  [/\bunit test(s)?\b/gi,'TEST'],
-  [/\bpull request(s)?\b/gi,'PR'],
-  [/\buser interface\b/gi,'UI'],
-  [/\buser experience\b/gi,'UX'],
-  [/\bcommand[- ]line( interface)?\b/gi,'CLI'],
-  [/\brest api\b/gi,'REST'],
-  [/\bci\/cd\b/gi,'CI/CD'],
-  [/\bcontinuous integration\b/gi,'CI'],
-  [/\bcontinuous deployment\b/gi,'CD'],
-  [/\bversion control\b/gi,'VCS'],
-  [/\bobject[- ]oriented\b/gi,'OOP'],
-  [/\bdesign pattern(s)?\b/gi,'DP'],
-  [/\bdatabase\b/gi,'DB'],
-  [/\brepository\b/gi,'repo'],
-  [/\bapplication\b/gi,'app'],
-  [/\barchitecture\b/gi,'arch'],
-  [/\binfrastructure\b/gi,'infra'],
-  [/\bdeployment\b/gi,'dpl'],
-  [/\benvironment\b/gi,'env'],
-  [/\bconfiguration\b/gi,'cfg'],
-  [/\bdependenc(y|ies)\b/gi,'dep'],
-  [/\bauthentication\b/gi,'auth'],
-  [/\bauthorization\b/gi,'authz'],
-  [/\basynchronous\b/gi,'async'],
-  [/\bsynchronous\b/gi,'sync'],
-  [/\bendpoint(s)?\b/gi,'EP'],
-  [/\bmiddleware\b/gi,'MW'],
-  [/\bframework\b/gi,'fw'],
-  [/\blibrary\b/gi,'lib'],
-  [/\bpackage\b/gi,'pkg'],
-  [/\bperformance\b/gi,'perf'],
-  [/\bscalabilit(y|ies)\b/gi,'scale'],
-  [/\blatency\b/gi,'lat'],
-  [/\bthroughput\b/gi,'tput'],
-  [/\bsecurity\b/gi,'SEC'],
-  [/\bvulnerabilit(y|ies)\b/gi,'VULN'],
-  [/\bencryption\b/gi,'ENC'],
-  [/\bvalidation\b/gi,'val'],
-  [/\bpipeline\b/gi,'pipe'],
-  [/\bmicroservice(s)?\b/gi,'µsvc'],
-  [/\bcontainer(s)?\b/gi,'ctr'],
-  [/\bfunction\b/gi,'FN'],
-  [/\bmethod\b/gi,'FN'],
-  [/\bclass\b/gi,'CLS'],
-  // Programming languages
-  [/\bpython\b/gi,'py'],
-  [/\bjavascript\b/gi,'js'],
-  [/\btypescript\b/gi,'ts'],
-  [/\bgolang\b/gi,'go'],
-  [/\bkotlin\b/gi,'kt'],
-  [/\bc\+\+\b/gi,'cpp'],
-  [/\bruby\b/gi,'rb'],
-  [/\bbash\b/gi,'sh'],
-  [/\bshell script\b/gi,'sh'],
-  // Finance
-  [/\bcompound annual growth rate\b/gi,'CAGR'],
-  [/\bcustomer acquisition cost\b/gi,'CAC'],
-  [/\bcustomer lifetime value\b/gi,'LTV'],
-  [/\bmonthly recurring revenue\b/gi,'MRR'],
-  [/\bannual recurring revenue\b/gi,'ARR'],
-  [/\bgross merchandise value\b/gi,'GMV'],
-  [/\baverage revenue per user\b/gi,'ARPU'],
-  [/\breturn on investment\b/gi,'ROI'],
-  [/\bnet present value\b/gi,'NPV'],
-  [/\bearnings per share\b/gi,'EPS'],
-  [/\bkey performance indicator(s)?\b/gi,'KPI'],
-  [/\bprofit and loss\b/gi,'P&L'],
-  [/\byear[- ]over[- ]year\b/gi,'YoY'],
-  [/\bquarter[- ]over[- ]quarter\b/gi,'QoQ'],
-  [/\bmonth[- ]over[- ]month\b/gi,'MoM'],
-  [/\btotal addressable market\b/gi,'TAM'],
-  [/\bnet revenue retention\b/gi,'NRR'],
-  [/\bnet promoter score\b/gi,'NPS'],
-  [/\bbasis points?\b/gi,'bps'],
-  [/\bhead ?count\b/gi,'HC'],
-  [/\bcash flow\b/gi,'CF'],
-  [/\baccounts receivable\b/gi,'AR'],
-  [/\baccounts payable\b/gi,'AP'],
-  [/\bbalance sheet\b/gi,'BS'],
-  [/\boperating expenditure\b/gi,'OpEx'],
-  [/\bcapital expenditure\b/gi,'CapEx'],
-  [/\bprofit margin\b/gi,'margin'],
-  [/\bforecast\b/gi,'fcst'],
-  [/\bquarterly\b/gi,'qtrly'],
-  [/\bannual(ly)?\b/gi,'ann'],
-  // Law
-  [/\bnon[- ]disclosure agreement\b/gi,'NDA'],
-  [/\bterms of service\b/gi,'ToS'],
-  [/\bterms and conditions\b/gi,'T&C'],
-  [/\bintellectual property\b/gi,'IP'],
-  [/\blimited liability company\b/gi,'LLC'],
-  [/\bgeneral data protection regulation\b/gi,'GDPR'],
-  [/\bservice level agreement\b/gi,'SLA'],
-  [/\bcalifornia consumer privacy act\b/gi,'CCPA'],
-  [/\bindemnif(y|ication)\b/gi,'indem'],
-  [/\bliabilit(y|ies)\b/gi,'liab'],
-  [/\bjurisdiction\b/gi,'jxn'],
-  [/\bregulation(s)?\b/gi,'reg'],
-  [/\bcompliance\b/gi,'compl'],
-  [/\bclause\b/gi,'cl'],
-  [/\bamendment\b/gi,'amdt'],
-  [/\bdamages\b/gi,'dmg'],
-  [/\bbreach\b/gi,'brch'],
-  [/\bprivacy policy\b/gi,'PrivPol'],
-  // Data science
-  [/\bconvolutional neural network(s)?\b/gi,'CNN'],
-  [/\brecurrent neural network(s)?\b/gi,'RNN'],
-  [/\bprincipal component analysis\b/gi,'PCA'],
-  [/\bexploratory data analysis\b/gi,'EDA'],
-  [/\bk[- ]nearest neighbor(s)?\b/gi,'KNN'],
-  [/\bsupport vector machine(s)?\b/gi,'SVM'],
-  [/\bgradient (boosting|descent)\b/gi,(_,t)=>t==='descent'?'GD':'GB'],
-  [/\bcross[- ]validation\b/gi,'CV'],
-  [/\bhyperparameter(s)?\b/gi,'HP'],
-  [/\blearning rate\b/gi,'lr'],
-  [/\barea under the curve\b/gi,'AUC'],
-  [/\broot mean square error\b/gi,'RMSE'],
-  [/\bmean absolute error\b/gi,'MAE'],
-  [/\bF1[- ]score\b/gi,'F1'],
-  [/\btime series\b/gi,'TS'],
-  [/\bdimensionality reduction\b/gi,'DR'],
-  [/\bfeature engineering\b/gi,'FE'],
-  [/\bfeature selection\b/gi,'FS'],
-  [/\bdata frame\b/gi,'df'],
-  [/\bdata warehouse\b/gi,'DWH'],
-  [/\bbusiness intelligence\b/gi,'BI'],
-  [/\bextract[,]? transform[,]? load\b/gi,'ETL'],
-  [/\boverfitting\b/gi,'overfit'],
-  [/\bunderfitting\b/gi,'underfit'],
-  [/\bone[- ]hot encoding\b/gi,'OHE'],
-  [/\bmissing values?\b/gi,'NaN'],
-  [/\btraining (data|set)\b/gi,'train_data'],
-  [/\bvalidation (data|set)\b/gi,'val_data'],
-  [/\btest (data|set)\b/gi,'test_data'],
-  // Social / marketing
-  [/\bcall to action\b/gi,'CTA'],
-  [/\bclick[- ]through rate\b/gi,'CTR'],
-  [/\bconversion rate\b/gi,'CVR'],
-  [/\bcost per (click|acquisition)\b/gi,(_,t)=>t==='click'?'CPC':'CPA'],
-  [/\bsearch engine optimization\b/gi,'SEO'],
-  [/\bsearch engine marketing\b/gi,'SEM'],
-  [/\bpay[- ]per[- ]click\b/gi,'PPC'],
-  [/\buser[- ]generated content\b/gi,'UGC'],
-  [/\bengagement rate\b/gi,'ER'],
-  [/\bkey opinion leader(s)?\b/gi,'KOL'],
-  [/\bvalue proposition\b/gi,'VP'],
-  [/\btarget audience\b/gi,'TA'],
-  [/\bcontent calendar\b/gi,'CC'],
-  [/\bbrand awareness\b/gi,'BA'],
-  [/\bsocial media\b/gi,'SM'],
-  [/\binfluencer(s)?\b/gi,'infl'],
-  [/\bsubscriber(s)?\b/gi,'sub'],
-  [/\bfollower(s)?\b/gi,'flw'],
-  [/\bcommunity manager\b/gi,'CM'],
-  [/ +/g,' '],
+const RULES=[
+[/you are an? expert (in |on |at )?/gi,"§EXP "],[/you are an? /gi,"§ROLE "],[/act as (a |an )?/gi,"§ACT "],
+[/pretend (you are|to be) (a |an )?/gi,"§ROLE "],[/here is (the |some )?context[:\s]*/gi,"§CTX "],
+[/given (this |the )?context[:\s]*/gi,"§CTX "],[/I would like you to /gi,""],[/I need you to /gi,""],
+[/can you (please )?/gi,""],[/could you (please )?/gi,""],[/please /gi,""],
+[/return only (the )?code[^.]*\.?/gi,"\u2192code"],[/return as (a )?bullet[- ]?list/gi,"\u2192list"],
+[/in bullet points?/gi,"\u2192list"],[/return as (a )?numbered list/gi,"\u2192nlist"],
+[/return as (a )?table/gi,"\u2192table"],[/return as json/gi,"\u2192json"],[/in json format/gi,"\u2192json"],
+[/return as yaml/gi,"\u2192yaml"],[/return as (csv|markdown)/gi,(_,f)=>"\u2192"+f.toLowerCase()],
+[/step[- ]by[- ]step/gi,"\u2192step"],[/pros and cons/gi,"\u2192pros/cons"],
+[/be (very )?concise\.?/gi,"\u2192short"],[/keep it (very )?short\.?/gi,"\u2192short"],
+[/\bbriefly\b/gi,"\u2192short"],[/in (simple|plain|easy) (terms|language|english)/gi,"\u2192ELI5"],
+[/for (a )?beginner(s)?/gi,"\u2192ELI5"],[/in (great |comprehensive )?detail/gi,"\u2192long"],
+[/\bcomprehensive\b/gi,"\u2192long"],[/no explanation/gi,"\u2296explain"],
+[/without (any )?explanation/gi,"\u2296explain"],
+[/fix (the |any |a )?bug(s)?( in| on)?/gi,"BUG"],[/write (a |an )?unit tests? for/gi,"TEST"],
+[/write tests? for/gi,"TEST"],[/write (a |an )?function (to |that )?/gi,"FN "],
+[/create (a |an )?function (to |that )?/gi,"FN "],[/write (a |an )?class\b/gi,"CLS"],
+[/summarize (this |the |a )?/gi,"\u2211 "],[/summary of (the |this |a )?/gi,"\u2211 "],
+[/explain how\b/gi,"? how"],[/difference between\b/gi,"§DIFF"],[/compare\b/gi,"§DIFF"],
+[/\bdebug\b/gi,"BUG"],[/\boptimize\b/gi,"OPT"],[/\brefactor\b/gi,"\u0394"],
+[/\brewrite\b/gi,"\u0394"],[/\bimprove\b/gi,"\u0394"],[/\bupdate\b/gi,"\u0394"],
+[/\bedit\b/gi,"\u0394"],[/\banalyze\b/gi,"ANLZ"],[/\banalyse\b/gi,"ANLZ"],
+[/\bevaluate\b/gi,"EVAL"],[/\bassess\b/gi,"EVAL"],[/\bimplement\b/gi,"impl"],
+[/\bgenerate\b/gi,"GEN"],[/\bcreate\b/gi,"mk"],[/\bbuild\b/gi,"bld"],
+[/\btranslate\b/gi,"\u21c4"],[/\bconvert\b/gi,"\u21c4"],[/\bdescribe\b/gi,"?"],
+[/\bexplain\b/gi,"?"],[/\bhow does\b/gi,"?"],[/\bwhat (is|are)\b/gi,"?"],
+[/\bwhy (is|are|does|do)\b/gi,"?why"],[/\breview (my |this |the )?/gi,"\u00ab "],
+[/\brevise (my |this |the )?/gi,"\u00ab "],[/\bcontinue\b/gi,"\u00bb"],
+[/\bfind\b/gi,"\u2282"],[/\bsearch (for )?\b/gi,"\u2282"],[/\bextract\b/gi,"\u2282"],
+[/\bprovide (a |an )?/gi,""],[/\bgive me (a |an )?/gi,""],[/\bhelp me (with )?(a |an )?/gi,""],
+[/\bdeploy\b/gi,"dpl"],[/\bconfigure\b/gi,"cfg"],[/\bset up\b/gi,"cfg"],
+[/\binstall\b/gi,"inst"],[/\bdocument\b/gi,"docs"],
+[/make sure (to |that )?/gi,"!! "],[/ensure (that )?/gi,"!! "],
+[/\bdo not\b/gi,"§NOT"],[/\bdon't\b/gi,"§NOT"],[/\bavoid\b/gi,"§NOT"],[/\bnever\b/gi,"§NOT"],
+[/\b(very )?important[:\s]+/gi,"!! "],[/\bcritical[:\s]+/gi,"!! "],[/\bmust\b/gi,"!!"],
+[/\balso\b/gi,"§ALSO"],[/\badditionally\b/gi,"§ALSO"],[/\balternative(ly)?\b/gi,"§ALT"],
+[/\binstead\b/gi,"§ALT"],[/\bbest practice(s)?\b/gi,"§BEST"],[/\brecommended\b/gi,"§BEST"],
+[/\bfor example\b/gi,"§EX"],[/\bfor instance\b/gi,"§EX"],[/\bcontext\b/gi,"§CTX"],
+[/\boutput\b/gi,"\u2192"],[/\bgiven\b/gi,"\u2190"],[/\binput\b/gi,"\u2190"],
+[/\ball\b/gi,"\u2200"],[/\beach\b/gi,"\u2200"],[/\bevery\b/gi,"\u2200"],
+[/\bat least\b/gi,"min"],[/\bat most\b/gi,"max"],[/\bmore than\b/gi,">"],
+[/\bless than\b/gi,"<"],[/\bapproximately\b/gi,"~"],
+[/\bmachine learning\b/gi,"ML"],[/\bartificial intelligence\b/gi,"AI"],
+[/\blarge language model(s)?\b/gi,"LLM"],[/\bnatural language processing\b/gi,"NLP"],
+[/\bdeep learning\b/gi,"DL"],[/\bneural network(s)?\b/gi,"NN"],
+[/\bunit test(s)?\b/gi,"TEST"],[/\bpull request(s)?\b/gi,"PR"],
+[/\buser interface\b/gi,"UI"],[/\buser experience\b/gi,"UX"],
+[/\bcommand[- ]line( interface)?\b/gi,"CLI"],[/\brest api\b/gi,"REST"],
+[/\bci\/cd\b/gi,"CI/CD"],[/\bcontinuous integration\b/gi,"CI"],
+[/\bcontinuous deployment\b/gi,"CD"],[/\bversion control\b/gi,"VCS"],
+[/\bobject[- ]oriented\b/gi,"OOP"],[/\bdesign pattern(s)?\b/gi,"DP"],
+[/\bdatabase\b/gi,"DB"],[/\brepository\b/gi,"repo"],[/\bapplication\b/gi,"app"],
+[/\barchitecture\b/gi,"arch"],[/\binfrastructure\b/gi,"infra"],
+[/\bdeployment\b/gi,"dpl"],[/\benvironment\b/gi,"env"],[/\bconfiguration\b/gi,"cfg"],
+[/\bdependenc(y|ies)\b/gi,"dep"],[/\bauthentication\b/gi,"auth"],
+[/\bauthorization\b/gi,"authz"],[/\basynchronous\b/gi,"async"],
+[/\bsynchronous\b/gi,"sync"],[/\bendpoint(s)?\b/gi,"EP"],[/\bmiddleware\b/gi,"MW"],
+[/\bframework\b/gi,"fw"],[/\blibrary\b/gi,"lib"],[/\bpackage\b/gi,"pkg"],
+[/\bperformance\b/gi,"perf"],[/\bscalabilit(y|ies)\b/gi,"scale"],
+[/\blatency\b/gi,"lat"],[/\bthroughput\b/gi,"tput"],[/\bsecurity\b/gi,"SEC"],
+[/\bvulnerabilit(y|ies)\b/gi,"VULN"],[/\bencryption\b/gi,"ENC"],
+[/\bvalidation\b/gi,"val"],[/\bpipeline\b/gi,"pipe"],
+[/\bmicroservice(s)?\b/gi,"\u00b5svc"],[/\bcontainer(s)?\b/gi,"ctr"],
+[/\bfunction\b/gi,"FN"],[/\bmethod\b/gi,"FN"],[/\bclass\b/gi,"CLS"],
+[/\bpython\b/gi,"py"],[/\bjavascript\b/gi,"js"],[/\btypescript\b/gi,"ts"],
+[/\bgolang\b/gi,"go"],[/\bkotlin\b/gi,"kt"],[/\bc\+\+\b/gi,"cpp"],
+[/\bruby\b/gi,"rb"],[/\bbash\b/gi,"sh"],[/\bshell script\b/gi,"sh"],
+[/\bcompound annual growth rate\b/gi,"CAGR"],[/\bcustomer acquisition cost\b/gi,"CAC"],
+[/\bcustomer lifetime value\b/gi,"LTV"],[/\bmonthly recurring revenue\b/gi,"MRR"],
+[/\bannual recurring revenue\b/gi,"ARR"],[/\bgross merchandise value\b/gi,"GMV"],
+[/\baverage revenue per user\b/gi,"ARPU"],[/\breturn on investment\b/gi,"ROI"],
+[/\bnet present value\b/gi,"NPV"],[/\bearnings per share\b/gi,"EPS"],
+[/\bkey performance indicator(s)?\b/gi,"KPI"],[/\bprofit and loss\b/gi,"P&L"],
+[/\byear[- ]over[- ]year\b/gi,"YoY"],[/\bquarter[- ]over[- ]quarter\b/gi,"QoQ"],
+[/\bmonth[- ]over[- ]month\b/gi,"MoM"],[/\btotal addressable market\b/gi,"TAM"],
+[/\bnet revenue retention\b/gi,"NRR"],[/\bnet promoter score\b/gi,"NPS"],
+[/\bbasis points?\b/gi,"bps"],[/\bhead ?count\b/gi,"HC"],[/\bcash flow\b/gi,"CF"],
+[/\baccounts receivable\b/gi,"AR"],[/\baccounts payable\b/gi,"AP"],
+[/\bbalance sheet\b/gi,"BS"],[/\boperating expenditure\b/gi,"OpEx"],
+[/\bcapital expenditure\b/gi,"CapEx"],[/\bprofit margin\b/gi,"margin"],
+[/\bforecast\b/gi,"fcst"],[/\bquarterly\b/gi,"qtrly"],[/\bannual(ly)?\b/gi,"ann"],
+[/\bnon[- ]disclosure agreement\b/gi,"NDA"],[/\bterms of service\b/gi,"ToS"],
+[/\bterms and conditions\b/gi,"T&C"],[/\bintellectual property\b/gi,"IP"],
+[/\blimited liability company\b/gi,"LLC"],[/\bgeneral data protection regulation\b/gi,"GDPR"],
+[/\bservice level agreement\b/gi,"SLA"],[/\bcalifornia consumer privacy act\b/gi,"CCPA"],
+[/\bindemnif(y|ication)\b/gi,"indem"],[/\bliabilit(y|ies)\b/gi,"liab"],
+[/\bjurisdiction\b/gi,"jxn"],[/\bregulation(s)?\b/gi,"reg"],[/\bcompliance\b/gi,"compl"],
+[/\bclause\b/gi,"cl"],[/\bamendment\b/gi,"amdt"],[/\bdamages\b/gi,"dmg"],
+[/\bbreach\b/gi,"brch"],[/\bprivacy policy\b/gi,"PrivPol"],
+[/\bconvolutional neural network(s)?\b/gi,"CNN"],[/\brecurrent neural network(s)?\b/gi,"RNN"],
+[/\bprincipal component analysis\b/gi,"PCA"],[/\bexploratory data analysis\b/gi,"EDA"],
+[/\bk[- ]nearest neighbor(s)?\b/gi,"KNN"],[/\bsupport vector machine(s)?\b/gi,"SVM"],
+[/\bgradient (boosting|descent)\b/gi,(_,t)=>t==="descent"?"GD":"GB"],
+[/\bcross[- ]validation\b/gi,"CV"],[/\bhyperparameter(s)?\b/gi,"HP"],
+[/\blearning rate\b/gi,"lr"],[/\barea under the curve\b/gi,"AUC"],
+[/\broot mean square error\b/gi,"RMSE"],[/\bmean absolute error\b/gi,"MAE"],
+[/\bF1[- ]score\b/gi,"F1"],[/\btime series\b/gi,"TS"],
+[/\bdimensionality reduction\b/gi,"DR"],[/\bfeature engineering\b/gi,"FE"],
+[/\bfeature selection\b/gi,"FS"],[/\bdata frame\b/gi,"df"],
+[/\bdata warehouse\b/gi,"DWH"],[/\bbusiness intelligence\b/gi,"BI"],
+[/\bextract[,]? transform[,]? load\b/gi,"ETL"],[/\boverfitting\b/gi,"overfit"],
+[/\bunderfitting\b/gi,"underfit"],[/\bone[- ]hot encoding\b/gi,"OHE"],
+[/\bmissing values?\b/gi,"NaN"],[/\btraining (data|set)\b/gi,"train_data"],
+[/\bvalidation (data|set)\b/gi,"val_data"],[/\btest (data|set)\b/gi,"test_data"],
+[/\bcall to action\b/gi,"CTA"],[/\bclick[- ]through rate\b/gi,"CTR"],
+[/\bconversion rate\b/gi,"CVR"],
+[/\bcost per (click|acquisition)\b/gi,(_,t)=>t==="click"?"CPC":"CPA"],
+[/\bsearch engine optimization\b/gi,"SEO"],[/\bsearch engine marketing\b/gi,"SEM"],
+[/\bpay[- ]per[- ]click\b/gi,"PPC"],[/\buser[- ]generated content\b/gi,"UGC"],
+[/\bengagement rate\b/gi,"ER"],[/\bkey opinion leader(s)?\b/gi,"KOL"],
+[/\bvalue proposition\b/gi,"VP"],[/\btarget audience\b/gi,"TA"],
+[/\bcontent calendar\b/gi,"CC"],[/\bbrand awareness\b/gi,"BA"],
+[/\bsocial media\b/gi,"SM"],[/\binfluencer(s)?\b/gi,"infl"],
+[/\bsubscriber(s)?\b/gi,"sub"],[/\bfollower(s)?\b/gi,"flw"],
+[/\bcommunity manager\b/gi,"CM"],[/ +/g," "],
 ];
-
-const TELE_RULES = [
-  [/(is|are|was|were) (a|an|the) /gi,''],
-  [/(has|have|had) (a|an|the) /gi,''],
-  [/\bthe\b /gi,''],
-  [/\ba\b /gi,''],
-  [/\ban\b /gi,''],
-  [/\bcurrently\b/gi,''],
-  [/\bactually\b/gi,''],
-  [/\bessentially\b/gi,''],
-  [/\bbasically\b/gi,''],
-  [/\bsimply\b/gi,''],
-  [/\bjust\b/gi,''],
-  [/\bthere (is|are|was|were) /gi,''],
-  [/\bit (is|was) /gi,''],
-  [/\b(reported|stated|noted) that\b/gi,':'],
-  [/\bwhich (is|was|are|were) /gi,''],
-  [/\bthat (is|was) /gi,''],
-  [/\bin order to\b/gi,'to'],
-  [/\bso that\b/gi,'→'],
-  [/ +/g,' '],
+const TELE=[
+[/(is|are|was|were) (a|an|the) /gi,""],[/(has|have|had) (a|an|the) /gi,""],
+[/\bthe\b /gi,""],[/\ba\b /gi,""],[/\ban\b /gi,""],
+[/\bcurrently\b/gi,""],[/\bactually\b/gi,""],[/\bessentially\b/gi,""],
+[/\bbasically\b/gi,""],[/\bsimply\b/gi,""],[/\bjust\b/gi,""],
+[/\bthere (is|are|was|were) /gi,""],[/\bit (is|was) /gi,""],
+[/\b(reported|stated|noted) that\b/gi,":"],[/\bwhich (is|was|are|were) /gi,""],
+[/\bthat (is|was) /gi,""],[/\bin order to\b/gi,"to"],[/\bso that\b/gi,"\u2192"],
+[/ +/g," "],
 ];
-
-let teleMode = false;
-
-function encode(t, tele=false) {
-  let o = t.trim();
-  for(const[p,r]of RULES) o=o.replace(p,r);
-  if(tele) for(const[p,r]of TELE_RULES) o=o.replace(p,r);
-  return o.replace(/\. /g,'.\n').replace(/ +/g,' ').trim();
-}
-function tokens(t){return Math.ceil(t.trim().split(/[\s,.:;!?()\[\]{}"']+/).filter(Boolean).length*1.3);}
-
-const FREE_LIMIT = 10;
-
-function getTodayKey(){ return new Date().toISOString().slice(0,10); }
-
-chrome.storage.local.get(['promptly_enabled','promptly_tokens_saved','promptly_prompts','promptly_tele','promptly_license','promptly_daily'],(res)=>{
-  const on=res.promptly_enabled!==false;
-  document.getElementById('main-toggle').checked=on;
-  document.getElementById('toggle-lbl').textContent=on?'ON':'OFF';
-  const saved=res.promptly_tokens_saved||0;
-  const prompts=res.promptly_prompts||0;
-  document.getElementById('s-saved').textContent=saved;
-  document.getElementById('s-prompts').textContent=prompts;
-  document.getElementById('s-avg').textContent=prompts>0?Math.round(saved/prompts)+'%':'—';
-  teleMode=res.promptly_tele===true;
-  updateTeleBtn();
-  updatePlanUI(res.promptly_license, res.promptly_daily);
+let teleMode=false,isPro=false;
+function enc(t,tele){let o=t.trim();for(const[p,r]of RULES)o=o.replace(p,r);if(tele)for(const[p,r]of TELE)o=o.replace(p,r);return o.replace(/\. /g,".\n").replace(/ +/g," ").trim();}
+function tok(t){return Math.ceil(t.trim().split(/[\s,.:;!?()[\]{}"']+/).filter(Boolean).length*1.3);}
+function switchTab(n,b){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.getElementById("tab-"+n).classList.add("active");b.classList.add("active");if(n==="analytics")loadAnalytics();}
+const FL=10;
+function dk(){return new Date().toISOString().slice(0,10);}
+chrome.storage.local.get(["promptly_enabled","promptly_tokens_saved","promptly_prompts","promptly_tele","promptly_license","promptly_daily","promptly_packs","promptly_custom_rules","promptly_auto"],r=>{
+  const on=r.promptly_enabled!==false;
+  document.getElementById("main-toggle").checked=on;
+  document.getElementById("toggle-lbl").textContent=on?"ON":"OFF";
+  const sv=r.promptly_tokens_saved||0,pr=r.promptly_prompts||0;
+  document.getElementById("s-saved").textContent=sv;
+  document.getElementById("s-prompts").textContent=pr;
+  document.getElementById("s-avg").textContent=pr>0?Math.round(sv/pr)+"%":"—";
+  teleMode=r.promptly_tele===true;updTele();
+  isPro=!!r.promptly_license;
+  updPlan(r.promptly_license,r.promptly_daily);
+  updLocks(isPro);
+  if(isPro)loadPro(r.promptly_packs||[],r.promptly_custom_rules||[],r.promptly_auto===true);
 });
-
-function updatePlanUI(license, daily){
-  const today=getTodayKey();
-  const used=(daily && daily.date===today)?daily.count:0;
-  if(license){
-    document.getElementById('plan-free').style.display='none';
-    document.getElementById('plan-pro').style.display='block';
+function updLocks(p){document.getElementById("lock-analytics").style.display=p?"none":"";document.getElementById("lock-pro").style.display=p?"none":"";}
+function updPlan(lic,daily){
+  const used=(daily&&daily.date===dk())?daily.count:0;
+  if(lic){
+    document.getElementById("plan-free").style.display="none";document.getElementById("plan-pro").style.display="block";
+    document.getElementById("analytics-gate").style.display="none";document.getElementById("analytics-content").style.display="block";
+    document.getElementById("pro-gate").style.display="none";document.getElementById("pro-content").style.display="block";
   } else {
-    document.getElementById('plan-pro').style.display='none';
-    document.getElementById('plan-free').style.display='block';
-    document.getElementById('daily-used').textContent=used;
-    const rem=Math.max(0,FREE_LIMIT-used);
-    document.getElementById('daily-remaining').textContent=rem+' left';
-    document.getElementById('quota-bar').style.width=Math.min(100,used/FREE_LIMIT*100)+'%';
-    if(used>=FREE_LIMIT){
-      document.getElementById('quota-bar').style.background='#f87171';
-      document.getElementById('daily-remaining').style.color='#f87171';
-      document.getElementById('daily-remaining').textContent='limit reached';
-    }
+    document.getElementById("plan-pro").style.display="none";document.getElementById("plan-free").style.display="block";
+    const rem=Math.max(0,FL-used);
+    document.getElementById("daily-used").textContent=used;
+    document.getElementById("daily-remaining").textContent=rem+" left";
+    document.getElementById("quota-bar").style.width=Math.min(100,used/FL*100)+"%";
+    if(used>=FL){document.getElementById("quota-bar").style.background="#f87171";document.getElementById("daily-remaining").style.color="#f87171";document.getElementById("daily-remaining").textContent="limit reached";}
   }
 }
-
-function openUpgrade(){
-  chrome.tabs.create({url:'https://promptly.so/#pricing'});
-}
-
+function openUpgrade(){chrome.tabs.create({url:"https://promptly.so/#pricing"});}
 function activateLicense(){
-  const key=document.getElementById('license-input').value.trim();
-  if(key.length<8){
-    document.getElementById('license-input').style.borderColor='#f87171';
-    return;
-  }
-  chrome.storage.local.set({promptly_license:key},()=>{
-    updatePlanUI(key,null);
-  });
+  const k=document.getElementById("license-input").value.trim();
+  if(k.length<8){document.getElementById("license-input").style.borderColor="#f87171";return;}
+  chrome.storage.local.set({promptly_license:k},()=>{isPro=true;updPlan(k,null);updLocks(true);chrome.storage.local.get(["promptly_packs","promptly_custom_rules","promptly_auto"],r=>loadPro(r.promptly_packs||[],r.promptly_custom_rules||[],r.promptly_auto===true));});
 }
-
-function deactivateLicense(){
-  chrome.storage.local.remove('promptly_license',()=>{
-    chrome.storage.local.get(['promptly_daily'],res=>updatePlanUI(null,res.promptly_daily));
-  });
-}
-
-document.getElementById('main-toggle').addEventListener('change',(e)=>{
-  const on=e.target.checked;
-  chrome.storage.local.set({promptly_enabled:on});
-  document.getElementById('toggle-lbl').textContent=on?'ON':'OFF';
-});
-
+function deactivateLicense(){chrome.storage.local.remove("promptly_license",()=>{isPro=false;chrome.storage.local.get(["promptly_daily"],r=>updPlan(null,r.promptly_daily));updLocks(false);});}
+document.getElementById("main-toggle").addEventListener("change",e=>{chrome.storage.local.set({promptly_enabled:e.target.checked});document.getElementById("toggle-lbl").textContent=e.target.checked?"ON":"OFF";});
 function translate(){
-  const eng=document.getElementById('eng-in').value;
-  if(!eng.trim())return;
-  const ps=encode(eng,teleMode);
-  document.getElementById('ps-out').textContent=ps;
-  const et=tokens(eng),pt=tokens(ps);
-  const saved=Math.max(0,et-pt);
-  const pct=et>0?Math.round(saved/et*100):0;
-  const pill=document.getElementById('saving-pill');
-  pill.style.display='block';
-  pill.textContent=pct+'% smaller · '+saved+' tokens saved';
-  chrome.storage.local.get(['promptly_tokens_saved','promptly_prompts'],(res)=>{
-    const ns=(res.promptly_tokens_saved||0)+pct;
-    const np=(res.promptly_prompts||0)+1;
+  const e=document.getElementById("eng-in").value;if(!e.trim())return;
+  const ps=enc(e,teleMode);document.getElementById("ps-out").textContent=ps;
+  const et=tok(e),pt=tok(ps),sv=Math.max(0,et-pt),pc=et>0?Math.round(sv/et*100):0;
+  const pill=document.getElementById("saving-pill");pill.style.display="block";pill.textContent=pc+"% smaller · "+sv+" tokens saved";
+  chrome.storage.local.get(["promptly_tokens_saved","promptly_prompts"],r=>{
+    const ns=(r.promptly_tokens_saved||0)+pc,np=(r.promptly_prompts||0)+1;
     chrome.storage.local.set({promptly_tokens_saved:ns,promptly_prompts:np});
-    document.getElementById('s-saved').textContent=ns;
-    document.getElementById('s-prompts').textContent=np;
-    document.getElementById('s-avg').textContent=Math.round(ns/np)+'%';
+    document.getElementById("s-saved").textContent=ns;document.getElementById("s-prompts").textContent=np;
+    document.getElementById("s-avg").textContent=Math.round(ns/np)+"%";
   });
 }
-
-function toggleTele(){
-  teleMode=!teleMode;
-  chrome.storage.local.set({promptly_tele:teleMode});
-  updateTeleBtn();
+function toggleTele(){teleMode=!teleMode;chrome.storage.local.set({promptly_tele:teleMode});updTele();}
+function updTele(){const b=document.getElementById("tele-btn");if(!b)return;b.textContent=teleMode?"⚡ Tele: ON":"Tele: OFF";b.style.background=teleMode?"#c8f13522":"transparent";b.style.borderColor=teleMode?"#c8f13555":"#2a2a2a";b.style.color=teleMode?"#a8d420":"#ccc";}
+function copyOut(){const t=document.getElementById("ps-out").textContent;if(!t||t.includes("output"))return;navigator.clipboard.writeText(t);}
+function clearAll(){document.getElementById("eng-in").value="";document.getElementById("ps-out").textContent="Promptolian output…";document.getElementById("saving-pill").style.display="none";}
+function loadAnalytics(){if(!isPro)return;chrome.storage.local.get(["promptly_history"],r=>renderAnl(r.promptly_history||[]));}
+function renderAnl(h){
+  const tt=h.reduce((s,e)=>s+Math.max(0,(e.et||0)-(e.pt||0)),0),tc=h.length,ap=tc>0?Math.round(h.reduce((s,e)=>s+(e.pct||0),0)/tc):0;
+  document.getElementById("anl-tokens").textContent=tt>999?(tt/1000).toFixed(1)+"k":tt;
+  document.getElementById("anl-comps").textContent=tc;document.getElementById("anl-avg").textContent=tc>0?ap+"%":"—";
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],today=new Date();today.setHours(0,0,0,0);
+  const bk=[];for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);bk.push({lb:days[d.getDay()],c:h.filter(e=>new Date(e.ts).toISOString().slice(0,10)===k).length});}
+  const mx=Math.max(1,...bk.map(b=>b.c));
+  document.getElementById("week-chart").innerHTML=bk.map(b=>`<div class="chart-row"><span class="chart-day">${b.lb}</span><div class="chart-bar-wrap"><div class="chart-bar" style="width:${Math.round(b.c/mx*100)}%"></div></div><span class="chart-count">${b.c} comp${b.c!==1?"s":""}</span></div>`).join("");
+  const sm={};h.forEach(e=>{const s=e.site||"unknown";if(!sm[s])sm[s]={c:0,p:0};sm[s].c++;sm[s].p+=(e.pct||0);});
+  const rows=Object.entries(sm).sort((a,b)=>b[1].c-a[1].c).slice(0,4);
+  document.getElementById("site-tbody").innerHTML=rows.length?rows.map(([s,v])=>`<tr><td>${s.replace("www.","")}</td><td>${v.c}</td><td>${Math.round(v.p/v.c)}%</td></tr>`).join(""):"<tr><td colspan=\"3\" style=\"color:#555;text-align:center;padding:14px\">No data yet</td></tr>";
 }
-
-function updateTeleBtn(){
-  const btn=document.getElementById('tele-btn');
-  if(!btn)return;
-  btn.textContent=teleMode?'⚡ Tele: ON':'Tele: OFF';
-  btn.style.background=teleMode?'#c8f13522':'transparent';
-  btn.style.borderColor=teleMode?'#c8f13555':'#2a2a2a';
-  btn.style.color=teleMode?'#a8d420':'#ccc';
+function loadPro(packs,rules,auto){
+  ["medical","academic","legal_pro"].forEach(p=>{const e=document.getElementById("pack-"+p);if(e)e.checked=packs.includes(p);});
+  renderRules(rules);const ae=document.getElementById("auto-compress");if(ae)ae.checked=auto;
 }
-
-function copyOut(){
-  const t=document.getElementById('ps-out').textContent;
-  if(t==='Promptolian output...')return;
-  navigator.clipboard.writeText(t);
+function savePacks(){const p=["medical","academic","legal_pro"].filter(p=>{const e=document.getElementById("pack-"+p);return e&&e.checked;});chrome.storage.local.set({promptly_packs:p});}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function renderRules(rules){
+  const l=document.getElementById("rules-list");if(!l)return;
+  l.innerHTML=rules.length?rules.map((r,i)=>`<div class="rule-item"><span class="rule-text">${esc(r.pattern)} &#8594; ${esc(r.replacement)}</span><button class="rule-del" onclick="delRule(${i})">&#10005;</button></div>`).join(""):"<div style=\"font-size:11px;color:#555;padding:4px 0\">No custom rules yet.</div>";
 }
-
-function clearAll(){
-  document.getElementById('eng-in').value='';
-  document.getElementById('ps-out').textContent='Promptolian output...';
-  document.getElementById('saving-pill').style.display='none';
+function addCustomRule(){
+  const p=document.getElementById("rule-phrase").value.trim(),a=document.getElementById("rule-abbrev").value.trim();if(!p||!a)return;
+  chrome.storage.local.get(["promptly_custom_rules"],r=>{const rules=r.promptly_custom_rules||[];rules.push({pattern:p,replacement:a});chrome.storage.local.set({promptly_custom_rules:rules},()=>{renderRules(rules);document.getElementById("rule-phrase").value="";document.getElementById("rule-abbrev").value="";});});
 }
+function delRule(i){chrome.storage.local.get(["promptly_custom_rules"],r=>{const rules=(r.promptly_custom_rules||[]).filter((_,j)=>j!==i);chrome.storage.local.set({promptly_custom_rules:rules},()=>renderRules(rules));});}
+function saveAuto(){chrome.storage.local.set({promptly_auto:document.getElementById("auto-compress").checked});}
 </script>
 </body>
 </html>
