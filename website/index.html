@@ -125,11 +125,16 @@ footer a:hover{color:#aaa}
 <section class="demo-section" id="demo">
   <div class="section-label">Live demo</div>
   <div class="section-title">See Promptolian in action</div>
-  <p class="section-sub">Type any prompt and watch it compress in real time.</p>
+  <p class="section-sub">Type any prompt and watch it compress in real time. Works in English, Italian, French, German, Dutch, Chinese and more.</p>
   <div class="demo-card">
     <div class="demo-row">
       <div class="demo-col">
-        <label>Your prompt (English)</label>
+        <label style="display:flex;align-items:center;gap:8px">
+          Your prompt
+          <span id="lang-badge" style="display:none;font-size:11px;font-weight:600;
+            background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;
+            padding:2px 8px;border-radius:20px"></span>
+        </label>
         <textarea id="eng-input" placeholder="e.g. You are an expert Python developer. Write a function to sort a list. Return only the code, no explanation." oninput="liveCompress()"></textarea>
       </div>
       <div class="demo-col">
@@ -138,7 +143,7 @@ footer a:hover{color:#aaa}
       </div>
     </div>
     <div class="stats-row">
-      <div class="stat-box"><span class="stat-val" id="s-eng">—</span><div class="stat-lbl">English tokens</div></div>
+      <div class="stat-box"><span class="stat-val" id="s-eng">—</span><div class="stat-lbl">Original tokens</div></div>
       <div class="stat-box"><span class="stat-val" id="s-ps">—</span><div class="stat-lbl">Promptolian tokens</div></div>
       <div class="stat-box"><span class="stat-val" id="s-pct">—</span><div class="stat-lbl">Saved</div></div>
       <div class="stat-box"><span class="stat-val" id="s-fpr">100%</span><div class="stat-lbl">Fact preservation</div></div>
@@ -572,9 +577,33 @@ const EXAMPLES = [
 
 let telegraphic = false;
 
-function encode(t, tele) {
+// ── Client-side language detection ──────────────────────────────────────────
+const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle']);
+const _FR_W = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui']);
+const _DE_W = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine']);
+const _NL_W = new Set(['de','het','een','van','dat','zijn','niet','voor','met','die','maar']);
+const LANG_LABELS = {en:'🇬🇧 EN',it:'🇮🇹 IT',fr:'🇫🇷 FR',de:'🇩🇪 DE',nl:'🇳🇱 NL',zh:'🇨🇳 ZH',ja:'🇯🇵 JA'};
+
+function detectLang(text) {
+  if (/[一-鿿]/.test(text) && !/[ぁ-ヿ]/.test(text)) return 'zh';
+  if (/[ぁ-ヿ]/.test(text)) return 'ja';
+  const ws = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+  let it=0,fr=0,de=0,nl=0;
+  for (const w of ws) {
+    if (_IT_W.has(w)) it++; if (_FR_W.has(w)) fr++;
+    if (_DE_W.has(w)) de++; if (_NL_W.has(w)) nl++;
+  }
+  const mx = Math.max(it,fr,de,nl);
+  if (mx < 2) return 'en';
+  return mx===it?'it':mx===fr?'fr':mx===de?'de':'nl';
+}
+
+function encode(t, tele, lang='en') {
   let o = t.trim();
-  for (const [p, r] of RULES) o = o.replace(p, r);
+  // RULES are English symbol compression — skip for other languages
+  if (lang === 'en') {
+    for (const [p, r] of RULES) o = o.replace(p, r);
+  }
   if (tele) {
     for (const [p, r] of TELEGRAPHIC_RULES) o = o.replace(p, r);
   }
@@ -591,7 +620,15 @@ function liveCompress() {
   debounce = setTimeout(() => {
     const eng = document.getElementById('eng-input').value;
     if (!eng.trim()) { reset(); return; }
-    const ps = encode(eng, telegraphic);
+    const lang = detectLang(eng);
+    const badge = document.getElementById('lang-badge');
+    if (lang !== 'en') {
+      badge.textContent = LANG_LABELS[lang] || lang.toUpperCase();
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    const ps = encode(eng, telegraphic, lang);
     const et = tokens(eng), pt = tokens(ps);
     const saved = Math.max(0, et - pt);
     const pct = et > 0 ? Math.round(saved / et * 100) : 0;

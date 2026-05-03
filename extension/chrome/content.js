@@ -456,9 +456,38 @@
     });
   }
 
-  function psEncode(text, telegraphic = false, packs = [], custom = []) {
+  // ── Language detection (no external library) ─────────────────────────────
+  const _IT = new Set(['che','non','per','con','una','gli','sono','questo','della','nella','delle']);
+  const _FR = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par']);
+  const _DE = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch']);
+  const _NL = new Set(['de','het','een','van','dat','zijn','niet','voor','met','die','maar','wordt']);
+  const _ZH = /[一-鿿]/;
+  const _JA = /[぀-ヿ]/;
+
+  const LANG_FLAGS = { en:'🇬🇧', it:'🇮🇹', fr:'🇫🇷', de:'🇩🇪', nl:'🇳🇱', zh:'🇨🇳', ja:'🇯🇵' };
+
+  function detectLang(text) {
+    if (_ZH.test(text) && !_JA.test(text)) return 'zh';
+    if (_JA.test(text)) return 'ja';
+    const words = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+    let it = 0, fr = 0, de = 0, nl = 0;
+    for (const w of words) {
+      if (_IT.has(w)) it++;
+      if (_FR.has(w)) fr++;
+      if (_DE.has(w)) de++;
+      if (_NL.has(w)) nl++;
+    }
+    const max = Math.max(it, fr, de, nl);
+    if (max < 2) return 'en';
+    return max === it ? 'it' : max === fr ? 'fr' : max === de ? 'de' : 'nl';
+  }
+
+  function psEncode(text, telegraphic = false, packs = [], custom = [], lang = 'en') {
     let out = text.trim();
-    for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
+    // PS_RULES contain English-specific symbols — skip for non-English
+    if (lang === 'en') {
+      for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
+    }
     for (const pack of packs) {
       for (const rule of (DOMAIN_PACKS[pack] || [])) out = out.replace(rule[0], rule[1]);
     }
@@ -610,6 +639,7 @@
     bar.innerHTML = `
       <span class="p-logo">P→</span>
       <span class="p-stats" id="p-stats">Promptly ready</span>
+      <span class="p-lang" id="p-lang" title="Detected language" style="display:none"></span>
       <div class="p-actions">
         <button class="p-btn p-compress" id="p-compress">⚡ Compress</button>
         <button class="p-btn p-tele" id="p-tele" title="Telegraphic mode strips articles &amp; copulas for max compression">Tele: OFF</button>
@@ -640,7 +670,13 @@
       }
 
       originalText = text;
-      const compressed = psEncode(text, teleMode, activePacks, customRules);
+      const lang = detectLang(text);
+      const langEl = document.getElementById('p-lang');
+      if (langEl) {
+        langEl.textContent = (LANG_FLAGS[lang] || '🌐') + ' ' + lang.toUpperCase();
+        langEl.style.display = 'inline';
+      }
+      const compressed = psEncode(text, teleMode, activePacks, customRules, lang);
       site.setText(input, compressed);
       const et = countTokens(text), pt = countTokens(compressed);
       const saved = Math.max(0, et - pt);
@@ -759,7 +795,8 @@
       if (!text.trim()) return;
       if (!_quotaCache.ok) { showUpgradeNotice(_quotaCache.count); return; }
       originalText = text;
-      const compressed = psEncode(text, teleMode, activePacks, customRules);
+      const lang = detectLang(text);
+      const compressed = psEncode(text, teleMode, activePacks, customRules, lang);
       site.setText(input, compressed);
       isCompressed = true;
       incrementQuota().then(n => {
