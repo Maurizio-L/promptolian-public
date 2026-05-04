@@ -1168,9 +1168,11 @@ function setTier(tier) {
 }
 
 // ── Language detection ─────────────────────────────────────────────────────
-const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle','il','lo','la','le','di','da','in','su','ho','ha','ci','si','mi','ti','vi','ma','se','io','tu','lui','lei','noi','voi','loro']);
-const _FR_W = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par','cette','nous','vous','ils','elles','mais','mon','ton','son','mes','tes','ses','au','aux','du','ce','je','tu','il','elle','on','en','et','le','la']);
-const _DE_W = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch','sich','dem','den','des','bei','nach','aus','an','am','im','zu','es','er','sie','wir','ich','du','ihr','was','wie','wo','wer']);
+// Words chosen to be distinctive — common English homophones removed:
+// DE: removed was/an/am/im/es/er   FR: removed en/le/la/on/il/et   IT: removed in/su/ho/ha/si/ma/se
+const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle','lo','di','da','ci','mi','ti','vi','io','tu','lui','lei','noi','voi','loro']);
+const _FR_W = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par','cette','nous','vous','ils','elles','mais','mon','ton','son','mes','tes','ses','au','aux','du','ce','je','elle','tu']);
+const _DE_W = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch','sich','dem','den','des','bei','nach','aus','zu','sie','wir','ich','du','ihr','wie','wo','wer']);
 const _ES_W = new Set(['que','los','las','del','con','para','por','como','pero','esto','esta','son','ser','tiene','hay','cuando','puede','debe','hacer','quiero','necesito','eres','analiza','genera','crea','optimiza']);
 const LANG_LABELS = {en:'🇬🇧 English',it:'🇮🇹 Italian',fr:'🇫🇷 French',de:'🇩🇪 German',es:'🇪🇸 Spanish',zh:'🇨🇳 Chinese',ja:'🇯🇵 Japanese'};
 const LANG_COLORS = {
@@ -1188,13 +1190,16 @@ function detectLang(text) {
   if (/[一-鿿]/.test(text) && !/[ぁ-ヿ]/.test(text)) return 'zh';
   if (/[ぁ-ヿ]/.test(text)) return 'ja';
   const ws = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+  if (ws.length === 0) return 'en';
   let it=0,fr=0,de=0,es=0;
   for (const w of ws) {
     if (_IT_W.has(w)) it++; if (_FR_W.has(w)) fr++;
     if (_DE_W.has(w)) de++; if (_ES_W.has(w)) es++;
   }
   const mx = Math.max(it,fr,de,es);
-  if (mx < 1) return 'en';
+  // Require ≥2 matching words AND ≥6% of words — prevents single English
+  // words like "was" (German for "what") from triggering a false detection
+  if (mx < 2 || mx / ws.length < 0.06) return 'en';
   return mx===it?'it':mx===fr?'fr':mx===de?'de':'es';
 }
 
