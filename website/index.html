@@ -256,7 +256,16 @@ footer a:hover{color:#aaa}
       <div class="stat-box"><span class="stat-val" id="s-pct">—</span><div class="stat-lbl">Saved</div></div>
       <div class="stat-box"><span class="stat-val" id="s-fpr">≥98%</span><div class="stat-lbl">Fact preservation</div></div>
     </div>
+    <div class="demo-btns" style="margin-bottom:6px">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:4px">Tier:</span>
+      <button class="demo-btn active" id="tier-std" onclick="setTier('standard')">Standard</button>
+      <button class="demo-btn" id="tier-pro" onclick="setTier('pro')">Pro</button>
+      <button class="demo-btn" id="tier-dev" onclick="setTier('developer')">Developer</button>
+      <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+      <button class="demo-btn" id="tele-btn" onclick="toggleTelegraphic()">⚡ Telegraphic: OFF</button>
+    </div>
     <div class="demo-btns">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:4px">Example:</span>
       <button class="demo-btn" onclick="tryExample(0)">Dev</button>
       <button class="demo-btn" onclick="tryExample(1)">Finance</button>
       <button class="demo-btn" onclick="tryExample(2)">Data science</button>
@@ -264,14 +273,12 @@ footer a:hover{color:#aaa}
       <button class="demo-btn" onclick="tryExample(4)">Spanish</button>
       <button class="demo-btn" onclick="tryExample(5)">Chinese</button>
       <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
-      <button class="demo-btn" id="tele-btn" onclick="toggleTelegraphic()">⚡ Telegraphic: OFF</button>
       <button class="demo-btn" onclick="copyOutput()">Copy</button>
       <button class="demo-btn" onclick="clearDemo()">Clear</button>
     </div>
-    <div class="demo-note">
-      <span>Note</span>
-      This demo uses <strong>Standard compression</strong> — runs entirely in your browser, no data is sent anywhere.
-      Pro and Developer compression levels require a server — available after sign-up via the <a href="docs.html" style="color:var(--ink);font-weight:500">API</a>.
+    <div class="demo-note" id="demo-note">
+      <span>Standard</span>
+      Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.
     </div>
   </div>
 </section>
@@ -1071,7 +1078,89 @@ const EXAMPLES = [
   "你是一个专业的Python开发者。分析代码并优化性能，修复第47行的错误。只返回代码，不需要解释。",
 ];
 
+// ── PRO tier rules (pre-standard) ─────────────────────────────────────────
+const PRO_OPENERS = [
+  [/\bit is (?:important|critical|essential|crucial|key) to note that\s*/gi,'Note: '],
+  [/\bit should be noted that\s*/gi,'Note: '],
+  [/\bplease note that\s*/gi,'Note: '],
+  [/\bplease be aware that\s*/gi,'Note: '],
+  [/\bfor your (?:information|reference),?\s*/gi,'FYI: '],
+  [/\bas you (?:may|might|should|can) know,?\s*/gi,''],
+  [/\bas (?:i|we) (?:mentioned|noted|discussed|said) (?:before|earlier|previously|above),?\s*/gi,''],
+  [/\bwith that (?:being )?said,?\s*/gi,''],
+  [/\bhaving said that,?\s*/gi,''],
+  [/\bthat being said,?\s*/gi,''],
+  [/\bfor (?:context|reference|background)[,:\s]+/gi,'§CTX '],
+  [/\bto (?:summarize|recap|put it simply)[,:\s]+/gi,'∑: '],
+  [/\bin (?:summary|conclusion)[,:\s]+/gi,'∑: '],
+  [/\bjust (?:a )?(?:quick )?note[,:\s]+/gi,'Note: '],
+];
+const PRO_VERBOSE = [
+  [/\bhas the ability to\b/gi,'can'],[/\bis (?:able|capable) to\b/gi,'can'],
+  [/\bmake (?:use of|usage of)\b/gi,'use'],[/\btake into (?:account|consideration)\b/gi,'consider'],
+  [/\bcarry out\b/gi,'do'],[/\bcome up with\b/gi,'find'],[/\bpoint out\b/gi,'note'],
+  [/\blook into\b/gi,'check'],[/\bkeep in mind\b/gi,'remember'],
+  [/\bat the end of the day\b/gi,'ultimately'],
+  [/\bfrom the (?:perspective|standpoint|point of view) of\b/gi,'re:'],
+  [/\bin (?:terms|respect) of\b/gi,'re:'],[/\bpertaining to\b/gi,'re:'],
+  [/\bon (?:a|the) regular basis\b/gi,'regularly'],[/\bon (?:a|the) monthly basis\b/gi,'monthly'],
+  [/\bso as to\b/gi,'to'],[/\bwith the (?:goal|aim|objective|intention) of\b/gi,'to'],
+  [/\bby (?:means|way) of\b/gi,'via'],[/\bthat is to say\b/gi,'i.e.'],
+  [/\bnamely\b/gi,'i.e.'],[/\balong with\b/gi,'+'],[/\btogether with\b/gi,'+'],
+  [/\bincluding but not limited to\b/gi,'incl.'],[/\ba (?:total|sum) of\b/gi,''],
+];
+const PRO_MATH = [
+  [/\bgreater than or equal to\b/gi,'≥'],[/\bless than or equal to\b/gi,'≤'],
+  [/\bnot equal to\b/gi,'≠'],[/\bapproximately equal to\b/gi,'≈'],
+  [/\bversus\b/gi,'vs'],[/\bcompared (?:to|with)\b/gi,'vs'],[/\brelative to\b/gi,'vs'],
+  [/\bmonth[- ]over[- ]month\b/gi,'MoM'],[/\bweek[- ]over[- ]week\b/gi,'WoW'],
+  [/(?:grew|increased|went\s+up|rose) from ([\d.,]+(?:\s*(?:million|billion|[KMB]))?)\s+to\s+([\d.,]+(?:\s*(?:million|billion|[KMB]))?)/gi,'$1→$2'],
+];
+const PRO_NUMERIC = [
+  [/\b([\d.]+)\s*million\b/gi,'$1M'],[/\b([\d.]+)\s*billion\b/gi,'$1B'],
+  [/\b([\d.]+)\s*thousand\b/gi,'$1K'],[/\b([\d.]+)\s*percent\b/gi,'$1%'],
+  [/\b(\d+)\s*milliseconds?\b/gi,'$1ms'],[/\b(\d+)\s*seconds?\b/gi,'$1s'],
+  [/\b(\d+)\s*minutes?\b/gi,'$1min'],[/\b(\d+)\s*hours?\b/gi,'$1h'],
+  [/\b(\d+)\s*days?\b/gi,'$1d'],[/\b(\d+)\s*weeks?\b/gi,'$1wk'],
+  [/\b(\d+)\s*months?\b/gi,'$1mo'],[/\b(\d+)\s*years?\b/gi,'$1yr'],
+];
+const PRO_RELCL = [
+  [/,\s*which\s+(?:is|are|was|were)\s+(?:a |an |the )?[^,\.;]{3,45}(?=[,\.])/gi,''],
+  [/,\s*(?:also\s+)?(?:known as|referred to as|called)\s+[^,\.;]{2,30}/gi,''],
+];
+function encodePro(t, tele, lang='en') {
+  let o = t.trim();
+  if (lang === 'en') {
+    for (const [p,r] of PRO_OPENERS) o=o.replace(p,r);
+    for (const [p,r] of PRO_VERBOSE) o=o.replace(p,r);
+    for (const [p,r] of PRO_MATH) o=o.replace(p,r);
+    for (const [p,r] of PRO_NUMERIC) o=o.replace(p,r);
+  }
+  o = encode(o, tele, lang);
+  if (lang === 'en') {
+    for (const [p,r] of PRO_RELCL) o=o.replace(p,r);
+  }
+  return o.replace(/  +/g,' ').trim();
+}
+
 let telegraphic = false;
+let currentTier = 'standard';
+
+function setTier(tier) {
+  currentTier = tier;
+  document.getElementById('tier-std').classList.toggle('active', tier==='standard');
+  document.getElementById('tier-pro').classList.toggle('active', tier==='pro');
+  document.getElementById('tier-dev').classList.toggle('active', tier==='developer');
+  const note = document.getElementById('demo-note');
+  if (tier === 'standard') {
+    note.innerHTML = '<span>Standard</span> Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.';
+  } else if (tier === 'pro') {
+    note.innerHTML = '<span style="background:#faf5ff;border-color:#e9d5ff;color:#7c3aed">Pro</span> Standard + verbose phrase removal, math operators, unit abbreviations. ~30–35% shorter. Browser simulation — server adds grammar cleanup.';
+  } else {
+    note.innerHTML = '<span style="background:#fff7ed;border-color:#fed7aa;color:#c2410c">Developer</span> Pro + AI semantic rewrite via <a href="docs.html" style="color:var(--ink);font-weight:500">API</a>. Showing Pro output — AI rewrite saves ~10–15% more on the server. ~40–45% shorter.';
+  }
+  liveCompress();
+}
 
 // ── Language detection ─────────────────────────────────────────────────────
 const _IT_W = new Set(['che','non','per','con','una','gli','sono','questo','della','nelle','il','lo','la','le','di','da','in','su','ho','ha','ci','si','mi','ti','vi','ma','se','io','tu','lui','lei','noi','voi','loro']);
@@ -1136,11 +1225,24 @@ function liveCompress() {
     const lc = LANG_COLORS[lang] || LANG_COLORS.en;
     badge.textContent = LANG_LABELS[lang] || lang.toUpperCase();
     badge.style.cssText = `display:inline;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${lc.bg};border:1px solid ${lc.border};color:${lc.color}`;
-    const ps = encode(eng, telegraphic, lang);
+    let ps;
+    if (currentTier === 'pro' || currentTier === 'developer') {
+      ps = encodePro(eng, telegraphic, lang);
+    } else {
+      ps = encode(eng, telegraphic, lang);
+    }
     const et = tokens(eng), pt = tokens(ps);
     const saved = Math.max(0, et - pt);
     const pct = et > 0 ? Math.round(saved / et * 100) : 0;
-    document.getElementById('ps-output').textContent = ps;
+    const outEl = document.getElementById('ps-output');
+    outEl.textContent = ps;
+    if (currentTier === 'developer') {
+      outEl.style.opacity = '0.85';
+      outEl.title = 'Pro-tier preview — AI rewrite applies on server for ~10-15% more savings';
+    } else {
+      outEl.style.opacity = '';
+      outEl.title = '';
+    }
     document.getElementById('s-eng').textContent = et;
     document.getElementById('s-ps').textContent = pt;
     document.getElementById('s-pct').textContent = pct + '%';

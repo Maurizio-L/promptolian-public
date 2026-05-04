@@ -107,6 +107,10 @@ button:hover{background:#1e1e1e;border-color:#333}
 .footer a{font-size:10px;color:#444;text-decoration:none}
 .footer a:hover{color:#c8f135}
 .version{font-size:10px;color:#333}
+.tier-btn{padding:4px 9px;border-radius:6px;border:1px solid #2a2a2a;background:transparent;color:#666;font-size:10px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.tier-btn:hover{background:#1e1e1e;color:#aaa}
+.tier-btn.active{background:#c8f13522;border-color:#c8f13555;color:#a8d420}
+.tier-btn:disabled{opacity:.35;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -161,12 +165,18 @@ button:hover{background:#1e1e1e;border-color:#333}
   </div>
   <div class="translator">
     <div class="section-title">Quick translator</div>
-    <textarea id="eng-in" placeholder="Type your English prompt here&hellip;"></textarea>
+    <textarea id="eng-in" placeholder="Type your prompt here&hellip;" oninput="liveTranslate()"></textarea>
+    <div style="display:flex;gap:4px;margin-bottom:7px;align-items:center">
+      <span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">Tier:</span>
+      <button class="tier-btn active" id="tbtn-std" onclick="setPopupTier('standard')">Standard</button>
+      <button class="tier-btn" id="tbtn-pro" onclick="setPopupTier('pro')">Pro</button>
+      <button class="tier-btn" id="tbtn-dev" onclick="setPopupTier('developer')">Developer</button>
+      <button id="tele-btn" onclick="toggleTele()" style="margin-left:auto;padding:4px 8px;font-size:10px">Tele: OFF</button>
+    </div>
     <div class="saving" id="saving-pill"></div>
     <div class="output" id="ps-out">Promptolian output&hellip;</div>
     <div class="btn-row">
-      <button class="btn-main" onclick="translate()">&#9889; Compress</button>
-      <button id="tele-btn" onclick="toggleTele()">Tele: OFF</button>
+      <button class="btn-main" onclick="doCompress()">&#9889; Compress</button>
       <button onclick="copyOut()">Copy</button>
       <button onclick="clearAll()">Clear</button>
     </div>
@@ -430,7 +440,23 @@ const TELE=[
 [/\bthat (is|was) /gi,""],[/\bin order to\b/gi,"to"],[/\bso that\b/gi,"\u2192"],
 [/ +/g," "],
 ];
-let teleMode=false,isPro=false;
+// PRO tier rules
+const PRO_OPN=[[/\bit is (?:important|critical|essential|crucial|key) to note that\s*/gi,'Note: '],[/\bit should be noted that\s*/gi,'Note: '],[/\bplease note that\s*/gi,'Note: '],[/\bfor your (?:information|reference),?\s*/gi,'FYI: '],[/\bfor (?:context|reference|background)[,:\s]+/gi,'§CTX '],[/\bto (?:summarize|recap|put it simply)[,:\s]+/gi,'∑: '],[/\bin (?:summary|conclusion)[,:\s]+/gi,'∑: ']];
+const PRO_VRB=[[/\bhas the ability to\b/gi,'can'],[/\bis (?:able|capable) to\b/gi,'can'],[/\bmake (?:use of|usage of)\b/gi,'use'],[/\btake into (?:account|consideration)\b/gi,'consider'],[/\bcarry out\b/gi,'do'],[/\bcome up with\b/gi,'find'],[/\bkeep in mind\b/gi,'remember'],[/\bfrom the (?:perspective|standpoint|point of view) of\b/gi,'re:'],[/\bin (?:terms|respect) of\b/gi,'re:'],[/\bpertaining to\b/gi,'re:'],[/\bso as to\b/gi,'to'],[/\bwith the (?:goal|aim|objective|intention) of\b/gi,'to'],[/\bby (?:means|way) of\b/gi,'via'],[/\bthat is to say\b/gi,'i.e.'],[/\bnamely\b/gi,'i.e.'],[/\balong with\b/gi,'+'],[/\btogether with\b/gi,'+'],[/\bincluding but not limited to\b/gi,'incl.'],[/\ba (?:total|sum) of\b/gi,'']];
+const PRO_MTH=[[/\bgreater than or equal to\b/gi,'≥'],[/\bless than or equal to\b/gi,'≤'],[/\bnot equal to\b/gi,'≠'],[/\bapproximately equal to\b/gi,'≈'],[/\bversus\b/gi,'vs'],[/\bcompared (?:to|with)\b/gi,'vs'],[/\bmonth[- ]over[- ]month\b/gi,'MoM'],[/\bweek[- ]over[- ]week\b/gi,'WoW']];
+const PRO_NUM=[[/\b([\d.]+)\s*million\b/gi,'$1M'],[/\b([\d.]+)\s*billion\b/gi,'$1B'],[/\b([\d.]+)\s*thousand\b/gi,'$1K'],[/\b([\d.]+)\s*percent\b/gi,'$1%'],[/\b(\d+)\s*milliseconds?\b/gi,'$1ms'],[/\b(\d+)\s*seconds?\b/gi,'$1s'],[/\b(\d+)\s*minutes?\b/gi,'$1min'],[/\b(\d+)\s*hours?\b/gi,'$1h']];
+const PRO_RCL=[[/,\s*which\s+(?:is|are|was|were)\s+(?:a |an |the )?[^,\.;]{3,45}(?=[,\.])/gi,''],[/,\s*(?:also\s+)?(?:known as|referred to as|called)\s+[^,\.;]{2,30}/gi,'']];
+function encPro(t,tele){
+  let o=t.trim();
+  for(const[p,r]of PRO_OPN)o=o.replace(p,r);
+  for(const[p,r]of PRO_VRB)o=o.replace(p,r);
+  for(const[p,r]of PRO_MTH)o=o.replace(p,r);
+  for(const[p,r]of PRO_NUM)o=o.replace(p,r);
+  o=enc(o,tele);
+  for(const[p,r]of PRO_RCL)o=o.replace(p,r);
+  return o.replace(/  +/g,' ').trim();
+}
+let teleMode=false,isPro=false,popupTier='standard';
 function enc(t,tele){
   const wc=t.trim().split(/\s+/).length;
   let o=t.trim();
@@ -441,11 +467,40 @@ function enc(t,tele){
   if(wc>30)o=abbrev(o);                          // F
   return o.replace(/\. /g,".\n").replace(/ +/g," ").trim();
 }
+function setPopupTier(t){
+  if((t==='pro'||t==='developer')&&!isPro){openUpgrade();return;}
+  popupTier=t;
+  chrome.storage.local.set({promptly_tier:t});
+  ['std','pro','dev'].forEach(k=>document.getElementById('tbtn-'+k).classList.remove('active'));
+  document.getElementById('tbtn-'+(t==='developer'?'dev':t==='pro'?'pro':'std')).classList.add('active');
+  liveTranslate();
+}
+let _ltDebounce;
+function liveTranslate(){
+  clearTimeout(_ltDebounce);
+  _ltDebounce=setTimeout(()=>{const e=document.getElementById('eng-in').value;if(!e.trim())return;doCompressInternal(e);},200);
+}
+function doCompress(){const e=document.getElementById('eng-in').value;if(!e.trim())return;doCompressInternal(e,true);}
+function doCompressInternal(e,save){
+  const ps=(popupTier==='pro'||popupTier==='developer')?encPro(e,teleMode):enc(e,teleMode);
+  document.getElementById('ps-out').textContent=ps;
+  const et=tok(e),pt=tok(ps),sv=Math.max(0,et-pt),pc=et>0?Math.round(sv/et*100):0;
+  const pill=document.getElementById('saving-pill');pill.style.display='block';
+  pill.textContent=pc+'% smaller · '+sv+' tokens saved'+(popupTier==='developer'?' (Pro preview — AI rewrite via API saves ~10% more)':'');
+  if(save){
+    chrome.storage.local.get(['promptly_tokens_saved','promptly_prompts'],r=>{
+      const ns=(r.promptly_tokens_saved||0)+pc,np=(r.promptly_prompts||0)+1;
+      chrome.storage.local.set({promptly_tokens_saved:ns,promptly_prompts:np});
+      document.getElementById('s-saved').textContent=ns;document.getElementById('s-prompts').textContent=np;
+      document.getElementById('s-avg').textContent=Math.round(ns/np)+'%';
+    });
+  }
+}
 function tok(t){return Math.ceil(t.trim().split(/[\s,.:;!?()[\]{}"']+/).filter(Boolean).length*1.3);}
 function switchTab(n,b){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.getElementById("tab-"+n).classList.add("active");b.classList.add("active");if(n==="analytics")loadAnalytics();}
 const FL=10;
 function dk(){return new Date().toISOString().slice(0,10);}
-chrome.storage.local.get(["promptly_enabled","promptly_tokens_saved","promptly_prompts","promptly_tele","promptly_license","promptly_daily","promptly_packs","promptly_custom_rules","promptly_auto"],r=>{
+chrome.storage.local.get(["promptly_enabled","promptly_tokens_saved","promptly_prompts","promptly_tele","promptly_license","promptly_daily","promptly_packs","promptly_custom_rules","promptly_auto","promptly_tier"],r=>{
   const on=r.promptly_enabled!==false;
   document.getElementById("main-toggle").checked=on;
   document.getElementById("toggle-lbl").textContent=on?"ON":"OFF";
@@ -458,6 +513,13 @@ chrome.storage.local.get(["promptly_enabled","promptly_tokens_saved","promptly_p
   updPlan(r.promptly_license,r.promptly_daily);
   updLocks(isPro);
   if(isPro)loadPro(r.promptly_packs||[],r.promptly_custom_rules||[],r.promptly_auto===true);
+  // Load saved tier (only allow pro/dev if isPro)
+  const savedTier=r.promptly_tier||'standard';
+  popupTier=(savedTier!=='standard'&&!isPro)?'standard':savedTier;
+  const tKey=popupTier==='developer'?'dev':popupTier==='pro'?'pro':'std';
+  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
+  const tb=document.getElementById('tbtn-'+tKey);if(tb)tb.classList.add('active');
+  if(!isPro){['tbtn-pro','tbtn-dev'].forEach(id=>{const el=document.getElementById(id);if(el)el.title='Upgrade to Pro to unlock';});}
 });
 function updLocks(p){document.getElementById("lock-analytics").style.display=p?"none":"";document.getElementById("lock-pro").style.display=p?"none":"";}
 function updPlan(lic,daily){
@@ -483,18 +545,6 @@ function activateLicense(){
 }
 function deactivateLicense(){chrome.storage.local.remove("promptly_license",()=>{isPro=false;chrome.storage.local.get(["promptly_daily"],r=>updPlan(null,r.promptly_daily));updLocks(false);});}
 document.getElementById("main-toggle").addEventListener("change",e=>{chrome.storage.local.set({promptly_enabled:e.target.checked});document.getElementById("toggle-lbl").textContent=e.target.checked?"ON":"OFF";});
-function translate(){
-  const e=document.getElementById("eng-in").value;if(!e.trim())return;
-  const ps=enc(e,teleMode);document.getElementById("ps-out").textContent=ps;
-  const et=tok(e),pt=tok(ps),sv=Math.max(0,et-pt),pc=et>0?Math.round(sv/et*100):0;
-  const pill=document.getElementById("saving-pill");pill.style.display="block";pill.textContent=pc+"% smaller · "+sv+" tokens saved";
-  chrome.storage.local.get(["promptly_tokens_saved","promptly_prompts"],r=>{
-    const ns=(r.promptly_tokens_saved||0)+pc,np=(r.promptly_prompts||0)+1;
-    chrome.storage.local.set({promptly_tokens_saved:ns,promptly_prompts:np});
-    document.getElementById("s-saved").textContent=ns;document.getElementById("s-prompts").textContent=np;
-    document.getElementById("s-avg").textContent=Math.round(ns/np)+"%";
-  });
-}
 function toggleTele(){teleMode=!teleMode;chrome.storage.local.set({promptly_tele:teleMode});updTele();}
 function updTele(){const b=document.getElementById("tele-btn");if(!b)return;b.textContent=teleMode?"⚡ Tele: ON":"Tele: OFF";b.style.background=teleMode?"#c8f13522":"transparent";b.style.borderColor=teleMode?"#c8f13555":"#2a2a2a";b.style.color=teleMode?"#a8d420":"#ccc";}
 function copyOut(){const t=document.getElementById("ps-out").textContent;if(!t||t.includes("output"))return;navigator.clipboard.writeText(t);}
