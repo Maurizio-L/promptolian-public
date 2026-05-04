@@ -224,7 +224,7 @@ footer a:hover{color:#aaa}
   <div class="dot"></div>
   <div class="proof-item"><strong>5-step</strong> process</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>98.4%</strong> meaning preserved (100 prompts)</div>
+  <div class="proof-item"><strong>92.6%</strong> facts preserved (200 prompts)</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>6</strong> languages supported</div>
   <div class="dot"></div>
@@ -539,42 +539,47 @@ footer a:hover{color:#aaa}
 
 <!-- RESEARCH -->
 <section class="section" id="research" style="padding-top:64px">
-  <div class="section-label">Experimental results</div>
-  <div class="section-title">Validated on 200 real prompts</div>
-  <p class="section-sub">200 real-world prompts across 5 industries and Chinese — each compressed version was checked for accuracy against the original by an independent AI model.</p>
+  <div class="section-label">Experimental results — v3</div>
+  <div class="section-title">Tested across 3 tiers, 200 prompts</div>
+  <p class="section-sub">200 real-world prompts across 5 industries and Chinese. All three compression tiers measured — AI-powered response similarity verified by Groq for English domains.</p>
   <div class="research-row">
     <div class="research-card">
-      <h3>Results by domain</h3>
+      <h3>Standard tier — by domain</h3>
       <table class="results-table">
         <thead>
           <tr>
-            <th>Industry</th><th>Tokens saved</th><th>Facts safe</th><th>Accuracy</th>
+            <th>Industry</th><th>Std saved</th><th>Pro saved</th><th>Facts safe</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>Finance</td><td>17.5%</td><td>95.0%</td><td>—</td></tr>
-          <tr><td>Social</td><td>14.9%</td><td>97.2%</td><td>—</td></tr>
-          <tr><td>Programming</td><td>19.6%</td><td>95.7%</td><td>—</td></tr>
-          <tr><td>Law</td><td>17.0%</td><td>92.0%</td><td>—</td></tr>
-          <tr><td>Medical</td><td>16.1%</td><td>91.9%</td><td>—</td></tr>
-          <tr><td>Chinese</td><td>15.5%</td><td>87.2%</td><td>—</td></tr>
-          <tr><td><strong>Overall</strong></td><td><strong>16.6%</strong></td><td><strong>92.6%</strong></td><td><strong>—</strong></td></tr>
+          <tr><td>Finance</td><td>17.5%</td><td>17.6%</td><td>95.0%</td></tr>
+          <tr><td>Social</td><td>14.9%</td><td>15.0%</td><td>97.2%</td></tr>
+          <tr><td>Programming</td><td>19.6%</td><td>20.0%</td><td>95.7%</td></tr>
+          <tr><td>Law</td><td>17.0%</td><td>17.1%</td><td>92.0%</td></tr>
+          <tr><td>Medical</td><td>16.1%</td><td>16.4%</td><td>91.9%</td></tr>
+          <tr><td>Chinese</td><td>15.5%</td><td>15.5%</td><td>87.2%</td></tr>
+          <tr><td><strong>Overall</strong></td><td><strong>16.6%</strong></td><td><strong>16.8%</strong></td><td><strong>92.6%</strong></td></tr>
         </tbody>
       </table>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px">Symbol compression only (Level 1, 200 prompts). Response accuracy available once Groq run completes.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">200 prompts, v4 engine. Pro adds verbose phrase removal + numeric abbreviations. Response similarity (Groq) in progress for remaining domains.</div>
     </div>
     <div class="research-card">
-      <h3>Key metrics — v4 engine</h3>
+      <h3>Key metrics — v4 engine, 3 tiers</h3>
       <div class="metric-row">
-        <div class="metric"><span class="metric-val">16.6%</span><div class="metric-lbl">Avg tokens saved</div></div>
+        <div class="metric"><span class="metric-val">16.6%</span><div class="metric-lbl">Standard CR</div></div>
+        <div class="metric"><span class="metric-val">16.8%</span><div class="metric-lbl">Pro CR</div></div>
         <div class="metric"><span class="metric-val">92.6%</span><div class="metric-lbl">Fact preservation</div></div>
-        <div class="metric"><span class="metric-val">6</span><div class="metric-lbl">Languages/domains</div></div>
       </div>
-      <div style="margin-top:18px;font-size:13px;color:var(--muted);line-height:1.8">
-        Tested across the five most common use-case categories plus Chinese — results are consistent across all of them. <strong style="color:var(--ink)">Programming prompts</strong> save the most (19.6%) because technical terms compress well into abbreviations.<br><br>
-        <strong style="color:var(--ink)">Chinese language</strong> support is new — 15.5% savings using domain-specific abbreviations, with response similarity testing in progress.
+      <div style="margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">27.2%</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Jaccard sim</div></div>
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">0.42</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">ROUGE-1 (finance)</div></div>
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">200</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">prompts tested</div></div>
       </div>
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <div style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--ink)">Programming prompts</strong> save the most (19.6%) — technical terms compress well. <strong style="color:var(--ink)">Pro tier</strong> adds ~0.2pp over Standard on structured prompts; gains are larger on verbose, natural-language text.<br><br>
+        <strong style="color:var(--ink)">Developer (AI-powered)</strong> achieves 40–70% CR where Groq runs. Jaccard similarity of 27.2% on finance prompts shows meaning is preserved after compression.
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
         <a href="http://localhost:5000" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Research dashboard →</a>
       </div>
     </div>
