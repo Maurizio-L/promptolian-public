@@ -19,7 +19,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '../private/database/promptly.db')
+DB_PATH = os.path.join(os.path.dirname(__file__), '../../private/database/promptly.db')
 
 # ── Compression engine ────────────────────────────────────────────────────────
 RULES = [
@@ -74,24 +74,35 @@ def get_db():
     return conn
 
 def init_db():
+    import pathlib
     conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS compression_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            original_tokens INTEGER,
-            compressed_tokens INTEGER,
-            pct_saved INTEGER,
-            platform TEXT DEFAULT 'api',
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            original TEXT,
-            compressed TEXT,
-            rating INTEGER,
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-    """)
+    schema_file = pathlib.Path(__file__).parent.parent.parent / 'tools' / 'reports' / 'schema_local.sql'
+    if schema_file.exists():
+        conn.executescript(schema_file.read_text())
+    else:
+        # Minimal fallback if schema file is missing
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS compression_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                api_key TEXT,
+                original_tokens INTEGER NOT NULL,
+                compressed_tokens INTEGER NOT NULL,
+                pct_saved INTEGER NOT NULL,
+                mode TEXT DEFAULT 'standard',
+                platform TEXT DEFAULT 'api',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                original TEXT,
+                compressed TEXT,
+                rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+                comment TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+        """)
     conn.commit()
     conn.close()
 
@@ -180,6 +191,67 @@ def feedback():
         return jsonify({'status': 'ok'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/optimize-context', methods=['POST'])
+def optimize_context():
+    """Context optimisation pipeline.
+
+    POST body:
+        {
+          "messages": [{"role": "user"|"assistant", "content": "..."},...],
+          "query":    "current user message",
+          "summary":  "optional prior rolling summary",
+          "mode":     "lossless" | "aggressive"  (default: lossless)
+        }
+
+    Response:
+        {
+          "optimized_prompt":      str,  -- structured context string for LLM
+          "system":                str,  -- system-slot text (summary)
+          "messages":              list, -- pruned, optionally compressed messages
+          "user":                  str,  -- current query (optionally compressed)
+          "new_summary":           str,  -- updated rolling summary
+          "tokens_saved_estimate": int,
+          "original_tokens":       int,
+          "optimized_tokens":      int,
+          "messages_pruned":       int
+        }
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'request body required'}), 400
+
+    messages = data.get('messages')
+    query    = data.get('query', '').strip()
+    summary  = data.get('summary', '')
+    mode     = data.get('mode', 'lossless')
+
+    if not isinstance(messages, list):
+        return jsonify({'error': '"messages" must be a JSON array'}), 400
+    if not query:
+        return jsonify({'error': '"query" field is required'}), 400
+    if mode not in ('lossless', 'aggressive'):
+        return jsonify({'error': '"mode" must be "lossless" or "aggressive"'}), 400
+
+    # Validate message objects
+    for i, m in enumerate(messages):
+        if not isinstance(m, dict) or 'role' not in m or 'content' not in m:
+            return jsonify({
+                'error': f'messages[{i}] must have "role" and "content" fields'
+            }), 400
+        if m['role'] not in ('user', 'assistant', 'system'):
+            return jsonify({
+                'error': f'messages[{i}].role must be user | assistant | system'
+            }), 400
+
+    try:
+        from context_engine import ContextEngine
+        ce     = ContextEngine()
+        result = ce.optimize(messages, query, summary=summary, mode=mode)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     init_db()

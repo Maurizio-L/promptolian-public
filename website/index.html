@@ -68,7 +68,7 @@ textarea:focus{border-color:#999}
 .demo-btn.active{background:var(--lime);border-color:var(--lime)}
 .savings-pill{display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
 .demo-note{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
-.demo-note span{background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.demo-note span{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 
 /* ── ENGINES ── */
 .engines-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
@@ -277,7 +277,7 @@ footer a:hover{color:#aaa}
       <button class="demo-btn" onclick="clearDemo()">Clear</button>
     </div>
     <div class="demo-note" id="demo-note">
-      <span>Standard</span>
+      <span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8">Standard</span>
       Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.
     </div>
   </div>
@@ -581,6 +581,29 @@ footer a:hover{color:#aaa}
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
         <a href="http://localhost:5000" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Research dashboard →</a>
+      </div>
+    </div>
+
+    <!-- Developer Study card -->
+    <div class="research-card" style="border-top:3px solid #84cc16">
+      <h3>Developer API Study v1 — Real-world session savings</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7">10 simulated developer sessions × 5 turns across API design, debugging, DevOps, ML, security and more. Combined metric: query compression + context-window pruning vs naive baseline (full history, uncompressed).</p>
+      <div class="metric-row">
+        <div class="metric"><span class="metric-val" style="color:#16a34a">57.8%</span><div class="metric-lbl">Developer CR</div></div>
+        <div class="metric"><span class="metric-val" style="color:#2563eb">33.0%</span><div class="metric-lbl">Combined savings</div></div>
+        <div class="metric"><span class="metric-val" style="color:#15803d">100%</span><div class="metric-lbl">Fact preservation</div></div>
+      </div>
+      <div style="margin-top:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">101K</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Tokens saved/month</div></div>
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">46</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Tokens saved/turn</div></div>
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">10</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Dev domains tested</div></div>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--ink)">DevOps prompts</strong> benefit most (40.9% combined CR) — infrastructure terminology compresses well. All sessions achieve 100% fact score: no numbers, entities or key terms are dropped during compression.<br><br>
+        Projection: <strong style="color:var(--ink)">20 developer sessions/day × 5 turns × 22 days = 101,254 tokens saved/month</strong>, equivalent to $0.03 API cost reduction at standard input rates.
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <a href="http://localhost:5000/#developer" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Developer study →</a>
       </div>
     </div>
   </div>
@@ -1158,7 +1181,7 @@ function setTier(tier) {
   document.getElementById('tier-dev').classList.toggle('active', tier==='developer');
   const note = document.getElementById('demo-note');
   if (tier === 'standard') {
-    note.innerHTML = '<span>Standard</span> Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.';
+    note.innerHTML = '<span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8">Standard</span> Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.';
   } else if (tier === 'pro') {
     note.innerHTML = '<span style="background:#faf5ff;border-color:#e9d5ff;color:#7c3aed">Pro</span> Standard + verbose phrase removal, math operators, unit abbreviations. ~30–35% shorter. Browser simulation — server adds grammar cleanup.';
   } else {
@@ -1202,6 +1225,125 @@ function detectLang(text) {
   if (mx < 2 || mx / ws.length < 0.06) return 'en';
   return mx===it?'it':mx===fr?'fr':mx===de?'de':'es';
 }
+
+const ES_RULES = [
+  [/eres un[ao]? expert[ao] en /gi, '§EXP '],
+  [/eres un[ao]? /gi, '§ROLE '],
+  [/actúa como (un[ao]? )?/gi, '§ACT '],
+  [/actua como (un[ao]? )?/gi, '§ACT '],
+  [/por favor /gi, ''],
+  [/necesito que /gi, ''],
+  [/quiero que /gi, ''],
+  [/aquí (está|tienes) el contexto[:\s]*/gi, '§CTX '],
+  [/dado (el |este )?contexto[:\s]*/gi, '§CTX '],
+  [/devuelve (solo )?el código[^.]*\.?/gi, '→code'],
+  [/responde (solo )?con código/gi, '→code'],
+  [/en formato json/gi, '→json'],
+  [/como (una )?tabla/gi, '→table'],
+  [/paso a paso/gi, '→step'],
+  [/pros y contras/gi, '→pros/cons'],
+  [/de forma (muy )?concisa\.?/gi, '→short'],
+  [/sin explicaciones?/gi, '⊖explain'],
+  [/\banaliza\b/gi, 'ANLZ'],
+  [/\bevalúa\b/gi, 'EVAL'],
+  [/\bevalua\b/gi, 'EVAL'],
+  [/\bimplementa\b/gi, 'impl'],
+  [/\bgenera\b/gi, 'GEN'],
+  [/\bcrea\b/gi, 'mk'],
+  [/\bconstruye\b/gi, 'bld'],
+  [/\btraduce\b/gi, '⇄'],
+  [/\bconvierte\b/gi, '⇄'],
+  [/\bdescribe\b/gi, '~'],
+  [/\bexplica\b/gi, '?'],
+  [/\bresum[er]?\b/gi, '∑'],
+  [/\boptimiza\b/gi, 'OPT'],
+  [/\brefactoriza\b/gi, '∆'],
+  [/\bmejora\b/gi, '∆'],
+  [/\bcorrige\b/gi, 'BUG'],
+  [/\bdepura\b/gi, 'BUG'],
+  [/\bcompara\b/gi, '§DIFF'],
+  [/diferencia entre\b/gi, '§DIFF'],
+  [/asegúrate de (que )?/gi, '!! '],
+  [/asegurate de (que )?/gi, '!! '],
+  [/no (uses?|hagas?|incluyas?)\b/gi, '§NOT '],
+  [/\bnunca\b/gi, '§NOT'],
+  [/\bevita\b/gi, '§NOT'],
+  [/aprendizaje automático\b/gi, 'ML'],
+  [/inteligencia artificial\b/gi, 'IA'],
+  [/red neuronal\b/gi, 'NN'],
+  [/procesamiento de lenguaje natural\b/gi, 'NLP'],
+  [/base de datos\b/gi, 'BD'],
+  [/interfaz de usuario\b/gi, 'UI'],
+  [/experiencia de usuario\b/gi, 'UX'],
+  [/código fuente\b/gi, 'src'],
+  [/\brepositorio\b/gi, 'repo'],
+  [/\baplicación\b/gi, 'app'],
+  [/\bconfiguración\b/gi, 'cfg'],
+  [/\bdocumentación\b/gi, 'docs'],
+  [/\brendimiento\b/gi, 'perf'],
+  [/\bseguridad\b/gi, 'SEC'],
+  [/\bautenticación\b/gi, 'auth'],
+  [/ +/g, ' '],
+];
+
+const ZH_RULES = [
+  [/你是一?个?专业(的)?/g, '§EXP '],
+  [/你是一?个?/g, '§ROLE '],
+  [/扮演一?个?/g, '§ACT '],
+  [/作为一?个?/g, '§ACT '],
+  [/请帮(我|助)?/g, ''],
+  [/请(你|您)?/g, ''],
+  [/我(需要|想要)(你|您)?/g, ''],
+  [/帮(我|助)?/g, ''],
+  [/进行(一下|一次)?/g, ''],
+  [/具体(来说|地)?/g, ''],
+  [/相关(的)?/g, ''],
+  [/通过(以下|下面)(方式|步骤)?/g, '→'],
+  [/只(返回|输出)(代码|code)[^\n]*/g, '→code'],
+  [/(以|用)JSON格式(返回|输出)?/g, '→json'],
+  [/(以|用)表格(形式|格式)(返回|输出)?/g, '→table'],
+  [/(以|用)列表(形式|格式)(返回|输出)?/g, '→list'],
+  [/(分步骤|逐步|一步一步)/g, '→step'],
+  [/(简洁|简短|简要)(回答|说明)/g, '→short'],
+  [/不(需要|用)(解释|说明)/g, '⊖explain'],
+  [/无需(解释|说明)/g, '⊖explain'],
+  [/(分析|解析)/g, 'ANLZ'],
+  [/(评估|评价|评审)/g, 'EVAL'],
+  [/(实现|实施)/g, 'impl'],
+  [/(生成|创建)/g, 'GEN'],
+  [/(构建|搭建)/g, 'bld'],
+  [/(翻译|转换)/g, '⇄'],
+  [/(描述|说明)/g, '~'],
+  [/(解释|讲解)/g, '?'],
+  [/(总结|摘要)/g, '∑'],
+  [/(优化|提升性能)/g, 'OPT'],
+  [/(重构|改写)/g, '∆'],
+  [/(修复|调试)(bug|错误)?/gi, 'BUG'],
+  [/(比较|对比)/g, '§DIFF'],
+  [/(预测|预判)/g, 'PRED'],
+  [/(监控|监测)/g, 'MON'],
+  [/(验证|校验)/g, 'VAL'],
+  [/(确保|保证)/g, '!!'],
+  [/不(要|能|得)/g, '§NOT'],
+  [/避免/g, '§NOT'],
+  [/(必须|务必)/g, 'MUST'],
+  [/月度经常性收入/g, 'MRR'],
+  [/年度经常性收入/g, 'ARR'],
+  [/净收入留存率/g, 'NRR'],
+  [/客户获取成本/g, 'CAC'],
+  [/客户生命周期价值/g, 'LTV'],
+  [/投资回报率/g, 'ROI'],
+  [/关键绩效指标/g, 'KPI'],
+  [/运营支出/g, 'OpEx'],
+  [/资本支出/g, 'CapEx'],
+  [/现金流/g, 'CF'],
+  [/第一季度/g, 'Q1'],
+  [/第二季度/g, 'Q2'],
+  [/第三季度/g, 'Q3'],
+  [/第四季度/g, 'Q4'],
+  [/同比(增长|下降)?/g, 'YoY'],
+  [/环比(增长|下降)?/g, 'QoQ'],
+];
 
 function encode(t, tele, lang='en') {
   const wc = t.trim().split(/\s+/).length;

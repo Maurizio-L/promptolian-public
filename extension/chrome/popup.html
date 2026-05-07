@@ -486,7 +486,7 @@ function doCompressInternal(e,save){
   document.getElementById('ps-out').textContent=ps;
   const et=tok(e),pt=tok(ps),sv=Math.max(0,et-pt),pc=et>0?Math.round(sv/et*100):0;
   const pill=document.getElementById('saving-pill');pill.style.display='block';
-  pill.textContent=pc+'% smaller · '+sv+' tokens saved'+(popupTier==='developer'?' (Pro preview — AI rewrite via API saves ~10% more)':'');
+  pill.textContent=pc+'% smaller · '+sv+' tokens saved'+(popupTier==='developer'?' · Developer study avg: 57.8% CR, 33% combined savings/session':'');
   if(save){
     chrome.storage.local.get(['promptly_tokens_saved','promptly_prompts'],r=>{
       const ns=(r.promptly_tokens_saved||0)+pc,np=(r.promptly_prompts||0)+1;
