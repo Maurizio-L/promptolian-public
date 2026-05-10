@@ -611,14 +611,9 @@
   const _FR = new Set(['que','les','des','pour','dans','est','pas','une','sur','avec','qui','par']);
   const _DE = new Set(['und','die','der','das','ist','mit','für','von','nicht','ein','eine','auch']);
   const _ES = new Set(['que','una','los','las','del','con','para','por','como','pero','más','esto','esta','estas','estos','está','son','ser','tiene','hay','cuando','donde','puede','debe','hacer','quiero','necesito']);
-  const _ZH = /[一-鿿]/;
-  const _JA = /[぀-ヿ]/;
-
-  const LANG_FLAGS = { en:'🇬🇧', it:'🇮🇹', fr:'🇫🇷', de:'🇩🇪', es:'🇪🇸', zh:'🇨🇳', ja:'🇯🇵' };
+  const LANG_FLAGS = { en:'🇬🇧', it:'🇮🇹', fr:'🇫🇷', de:'🇩🇪', es:'🇪🇸' };
 
   function detectLang(text) {
-    if (_ZH.test(text) && !_JA.test(text)) return 'zh';
-    if (_JA.test(text)) return 'ja';
     const words = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
     let it = 0, fr = 0, de = 0, es = 0;
     for (const w of words) {
@@ -677,46 +672,6 @@
     [/ +/g, ' '],
   ];
 
-  const ZH_RULES = [
-    [/你是一?个?专业(的)?/g, '§EXP '],
-    [/你是一?个?/g, '§ROLE '],
-    [/扮演一?个?/g, '§ACT '],
-    [/作为一?个?/g, '§ACT '],
-    [/请帮(我|助)?/g, ''],
-    [/请(你|您)?/g, ''],
-    [/我(需要|想要)你/g, ''],
-    [/只(返回|输出)(代码|code)[^\n]*/g, '→code'],
-    [/(以|用)JSON格式(返回|输出)?/g, '→json'],
-    [/(以|用)表格(形式|格式)(返回|输出)?/g, '→table'],
-    [/(分步骤|逐步|一步一步)/g, '→step'],
-    [/(简洁|简短|简要)回答/g, '→short'],
-    [/不(需要|用)(解释|说明)/g, '⊖explain'],
-    [/无需(解释|说明)/g, '⊖explain'],
-    [/(分析|解析)/g, 'ANLZ'],
-    [/(评估|评价)/g, 'EVAL'],
-    [/(实现|实施)/g, 'impl'],
-    [/(生成|创建)/g, 'GEN'],
-    [/(构建|搭建)/g, 'bld'],
-    [/(翻译|转换)/g, '⇄'],
-    [/(总结|摘要)/g, '∑ '],
-    [/(优化|提升性能)/g, 'OPT'],
-    [/(重构|改写)/g, '∆'],
-    [/(修复|调试)/g, 'BUG'],
-    [/(比较|对比)/g, '§DIFF'],
-    [/机器学习/g, 'ML'],
-    [/人工智能/g, 'AI'],
-    [/深度学习/g, 'DL'],
-    [/神经网络/g, 'NN'],
-    [/自然语言处理/g, 'NLP'],
-    [/数据库/g, 'DB'],
-    [/用户界面/g, 'UI'],
-    [/用户体验/g, 'UX'],
-    [/应用(程序)?/g, 'app'],
-    [/配置/g, 'cfg'],
-    [/文档/g, 'docs'],
-    [/性能/g, 'perf'],
-    [/安全(性)?/g, 'SEC'],
-  ];
 
   function psEncode(text, telegraphic = false, packs = [], custom = [], lang = 'en') {
     const wordCount = text.trim().split(/\s+/).length;
@@ -732,8 +687,6 @@
       for (const [pat, rep] of PS_RULES) out = out.replace(pat, rep);
     } else if (lang === 'es') {
       for (const [pat, rep] of ES_RULES) out = out.replace(pat, rep);
-    } else if (lang === 'zh') {
-      for (const [pat, rep] of ZH_RULES) out = out.replace(pat, rep);
     }
 
     // C — domain packs + custom rules
@@ -959,7 +912,7 @@
       btn.textContent = '✓ Compressed';
       btn.style.opacity = '0.6';
       document.getElementById('p-undo').style.display = 'inline-flex';
-      chrome.runtime.sendMessage({ type: 'STATS', saved: pct });
+      chrome.runtime.sendMessage({ type: 'STATS', saved, pct });
     });
 
     document.getElementById('p-tele').addEventListener('click', () => {

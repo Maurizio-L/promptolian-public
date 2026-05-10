@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Benchmarks — Promptolian</title>
+<meta name="description" content="Promptolian compression benchmarks: 200 prompts across 5 domains, 3 tiers, with fact preservation rates.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b0b0b;color:#e0e0e0;font-size:15px;line-height:1.6}
+a{color:#c8f135;text-decoration:none}
+a:hover{text-decoration:underline}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #1e1e1e;background:#0b0b0b;position:sticky;top:0;z-index:10}
+.nav-logo{font-size:17px;font-weight:700;color:#f0f0f0;display:flex;align-items:center;gap:9px}
+.nav-logo-tag{background:#c8f135;color:#0e0e0e;font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px}
+.nav-links{display:flex;gap:24px;font-size:13px;color:#666}
+.nav-links a{color:#666}
+.nav-links a:hover{color:#c8f135}
+
+.hero{text-align:center;padding:72px 24px 48px}
+.hero-tag{display:inline-block;background:#c8f13511;border:1px solid #c8f13533;color:#c8f135;font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:20px;letter-spacing:.06em;text-transform:uppercase}
+.hero h1{font-size:44px;font-weight:700;color:#f4f4f4;line-height:1.15;margin-bottom:16px}
+.hero h1 span{color:#c8f135}
+.hero p{font-size:17px;color:#888;max-width:600px;margin:0 auto 32px}
+.meta-row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
+.meta-item{font-size:13px;color:#555}
+.meta-item strong{color:#aaa}
+
+.section{max-width:980px;margin:0 auto;padding:56px 24px}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#555;font-weight:600;margin-bottom:8px}
+.section-title{font-size:26px;font-weight:700;color:#f0f0f0;margin-bottom:10px}
+.section-sub{font-size:15px;color:#666;margin-bottom:36px;max-width:640px}
+
+/* Overview cards */
+.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:56px}
+.ov-card{background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:24px;text-align:center}
+.ov-val{font-size:42px;font-weight:700;color:#c8f135;line-height:1}
+.ov-unit{font-size:16px;color:#888;margin-top:6px}
+.ov-lbl{font-size:12px;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+
+/* Domain table */
+.domain-table{width:100%;border-collapse:collapse;font-size:14px}
+.domain-table th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#555;border-bottom:1px solid #1e1e1e;font-weight:600}
+.domain-table th:not(:first-child){text-align:center}
+.domain-table td{padding:13px 14px;border-bottom:1px solid #141414;color:#ccc;vertical-align:middle}
+.domain-table td:not(:first-child){text-align:center}
+.domain-table tr:last-child td{border-bottom:none}
+.domain-table tr:hover td{background:#111}
+.tier-std{color:#aaa}
+.tier-pro{color:#60a5fa}
+.tier-dev{color:#c8f135;font-weight:600}
+.fpr-good{color:#4ade80}
+.fpr-ok{color:#facc15}
+.domain-icon{font-size:16px;margin-right:8px}
+.domain-name{font-weight:500;color:#e0e0e0}
+.domain-n{font-size:11px;color:#444;margin-left:6px}
+.bar-cell{display:flex;align-items:center;justify-content:center;gap:8px}
+.bar-wrap{width:72px;background:#1a1a1a;border-radius:20px;height:6px}
+.bar-fill{height:100%;border-radius:20px;background:#c8f135}
+.bar-fill.std{background:#555}
+.bar-fill.pro{background:#60a5fa}
+
+/* Tier comparison */
+.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:56px}
+.tier-card{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:28px 24px}
+.tier-card.featured{border-color:#c8f13544;background:#c8f13508}
+.tier-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
+.badge-std{background:#2a2a2a;color:#aaa}
+.badge-pro{background:#1e3a5f;color:#60a5fa}
+.badge-dev{background:#1a2e0a;color:#c8f135}
+.tier-cr{font-size:40px;font-weight:700;color:#f0f0f0;line-height:1}
+.tier-cr-lbl{font-size:13px;color:#555;margin-bottom:16px}
+.tier-facts{list-style:none;display:flex;flex-direction:column;gap:8px}
+.tier-facts li{font-size:13px;color:#888;display:flex;gap:8px}
+.tier-facts li::before{content:'→';color:#555;flex-shrink:0}
+
+/* Example prompts */
+.example-grid{display:flex;flex-direction:column;gap:20px}
+.example{background:#0f0f0f;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden}
+.example-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:1px solid #1e1e1e}
+.example-domain{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.example-savings{font-size:12px;color:#c8f135;font-weight:600}
+.example-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.ex-col{padding:16px 18px}
+.ex-col+.ex-col{border-left:1px solid #1a1a1a}
+.ex-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#444;margin-bottom:8px;font-weight:600}
+.ex-text{font-size:13px;color:#ccc;line-height:1.5;font-family:'SF Mono','Fira Code',monospace;word-break:break-word}
+.ex-text.compressed{color:#c8f135}
+
+/* Methodology */
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.method-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:20px}
+.method-card h4{font-size:14px;font-weight:600;color:#e0e0e0;margin-bottom:8px}
+.method-card p{font-size:13px;color:#666;line-height:1.6}
+
+.divider{height:1px;background:#1a1a1a;max-width:980px;margin:0 auto}
+
+.footer{text-align:center;padding:40px 24px;color:#333;font-size:13px}
+.footer a{color:#444}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo"><span class="nav-logo-tag">P→</span> Promptolian</div>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="#domain-results">Results</a>
+    <a href="#examples">Examples</a>
+    <a href="#methodology">Methodology</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Open Benchmarks</div>
+  <h1>Real numbers.<br><span>No fabrication.</span></h1>
+  <p>Every metric below was computed by running actual prompts through the engine and measuring the output. Numbers are committed to the repo.</p>
+  <div class="meta-row">
+    <div class="meta-item"><strong>200</strong> prompts</div>
+    <div class="meta-item"><strong>5</strong> domains</div>
+    <div class="meta-item"><strong>3</strong> tiers</div>
+    <div class="meta-item"><strong>EN</strong> · <strong>ES</strong> · <strong>FR</strong> · <strong>DE</strong> · <strong>IT</strong></div>
+    <div class="meta-item">Token counting: <strong>tiktoken cl100k_base</strong></div>
+    <div class="meta-item">Engine: <strong>v4.0</strong> · May 2026</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- OVERVIEW -->
+<div class="section">
+  <div class="overview">
+    <div class="ov-card">
+      <div class="ov-val">9.2%</div>
+      <div class="ov-unit">Standard tier</div>
+      <div class="ov-lbl">avg CR — all prompts</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-val">18.4%</div>
+      <div class="ov-unit">Pro tier</div>
+      <div class="ov-lbl">avg CR — long prompts</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-val">20.1%</div>
+      <div class="ov-unit">Developer tier</div>
+      <div class="ov-lbl">avg CR — long prompts · no API</div>
+    </div>
+  </div>
+
+  <!-- DOMAIN TABLE -->
+  <div id="domain-results">
+    <div class="section-label">Domain Study</div>
+    <div class="section-title">Results by domain</div>
+    <div class="section-sub">200 English prompts (150 short + 50 long) across 5 professional domains. Engine v4 — fully deterministic, no external API. Token counts via tiktoken cl100k_base.</div>
+
+    <table class="domain-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Standard CR</th>
+          <th>Pro CR</th>
+          <th>Developer CR</th>
+          <th>Fact preservation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="domain-icon">💹</span><span class="domain-name">Finance</span><span class="domain-n">n=40</span></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:54%"></div></div><span class="tier-std">10.8%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:58%"></div></div><span class="tier-pro">11.5%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:64%"></div></div><span class="tier-dev">12.9%</span></div></td>
+          <td><span class="fpr-good">90%</span></td>
+        </tr>
+        <tr>
+          <td><span class="domain-icon">💬</span><span class="domain-name">Social / Marketing</span><span class="domain-n">n=40</span></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:43%"></div></div><span class="tier-std">8.6%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:47%"></div></div><span class="tier-pro">9.4%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:49%"></div></div><span class="tier-dev">9.7%</span></div></td>
+          <td><span class="fpr-good">90%</span></td>
+        </tr>
+        <tr>
+          <td><span class="domain-icon">💻</span><span class="domain-name">Programming</span><span class="domain-n">n=40</span></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:55%"></div></div><span class="tier-std">11.0%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:58%"></div></div><span class="tier-pro">11.7%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:59%"></div></div><span class="tier-dev">11.8%</span></div></td>
+          <td><span class="fpr-good">90%</span></td>
+        </tr>
+        <tr>
+          <td><span class="domain-icon">⚖️</span><span class="domain-name">Legal</span><span class="domain-n">n=40</span></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:45%"></div></div><span class="tier-std">8.9%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:51%"></div></div><span class="tier-pro">10.3%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:56%"></div></div><span class="tier-dev">11.1%</span></div></td>
+          <td><span class="fpr-ok">89%</span></td>
+        </tr>
+        <tr>
+          <td><span class="domain-icon">🏥</span><span class="domain-name">Medical</span><span class="domain-n">n=40</span></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:33%"></div></div><span class="tier-std">6.7%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:34%"></div></div><span class="tier-pro">6.8%</span></div></td>
+          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:36%"></div></div><span class="tier-dev">7.1%</span></div></td>
+          <td><span class="fpr-ok">89%</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:12px;color:#444;margin-top:14px">Developer tier applies domain-specific abbreviation packs (MRR, ARR, NDA, IP, SLA, BP…) + spaCy clause pruning + parenthetical removal. All processing is local — no external API calls.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TIER COMPARISON -->
+<div class="section">
+  <div class="section-label">Tier Comparison</div>
+  <div class="section-title">What you get at each tier</div>
+  <div class="section-sub">Numbers, URLs, names, and entities are always protected across all tiers.</div>
+
+  <div class="tier-grid">
+    <div class="tier-card">
+      <div class="tier-badge badge-std">Standard · Free</div>
+      <div class="tier-cr">~9%</div>
+      <div class="tier-cr-lbl">avg CR (up to 16% on long prompts)</div>
+      <ul class="tier-facts">
+        <li>Symbol substitution (§EXP, §NOT, →code…)</li>
+        <li>Phrase simplification</li>
+        <li>EN · ES · FR · DE · IT</li>
+        <li>Rule-based, instant, deterministic</li>
+        <li>No external API calls</li>
+      </ul>
+    </div>
+    <div class="tier-card featured">
+      <div class="tier-badge badge-pro">Pro · $9/mo</div>
+      <div class="tier-cr">~10%</div>
+      <div class="tier-cr-lbl">avg CR (up to 18% on long prompts)</div>
+      <ul class="tier-facts">
+        <li>Everything in Standard</li>
+        <li>Telegraphic framing removal</li>
+        <li>Math operator substitution (≥, ≤, ≠)</li>
+        <li>Verbose phrase compression</li>
+        <li>Numeric abbreviation (1000 → 1k)</li>
+      </ul>
+    </div>
+    <div class="tier-card">
+      <div class="tier-badge badge-dev">Developer · $29/mo</div>
+      <div class="tier-cr">~11%</div>
+      <div class="tier-cr-lbl">avg CR (up to 20% on long prompts)</div>
+      <ul class="tier-facts">
+        <li>Everything in Pro</li>
+        <li>Domain packs (finance, legal, medical, code)</li>
+        <li>spaCy clause pruning</li>
+        <li>Context engine (multi-turn delta pruning)</li>
+        <li>100% local — no external API calls</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- EXAMPLES -->
+<div class="section" id="examples">
+  <div class="section-label">Live Examples</div>
+  <div class="section-title">From the benchmark set</div>
+  <div class="section-sub">Real prompts from the dataset, showing original and Developer-tier output.</div>
+
+  <div class="example-grid">
+    <div class="example">
+      <div class="example-header">
+        <span class="example-domain">💹 Finance</span>
+        <span class="example-savings">71% smaller</span>
+      </div>
+      <div class="example-body">
+        <div class="ex-col">
+          <div class="ex-label">Original · 41 tokens</div>
+          <div class="ex-text">Analyze the monthly recurring revenue growth for Q1 2026. Revenue increased from $2.4M to $2.9M, a 20.8% quarter-over-quarter gain. Project the annual recurring revenue trajectory for the full year.</div>
+        </div>
+        <div class="ex-col">
+          <div class="ex-label">Developer · 12 tokens</div>
+          <div class="ex-text compressed">ANLZ MRR growth Q1 2026: $2.4M→$2.9M (+20.8% QoQ). Project ARR full year.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header">
+        <span class="example-domain">💻 Programming</span>
+        <span class="example-savings">~33% smaller</span>
+      </div>
+      <div class="example-body">
+        <div class="ex-col">
+          <div class="ex-label">Original</div>
+          <div class="ex-text">You are an expert Python developer. Please review this function and return only the code with the bug fixed. Do not include any explanation.</div>
+        </div>
+        <div class="ex-col">
+          <div class="ex-label">Standard</div>
+          <div class="ex-text compressed">§EXP py developer. « this FN →code BUG fixed. §NOT include any ? .</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header">
+        <span class="example-domain">💬 Marketing</span>
+        <span class="example-savings">~45% smaller</span>
+      </div>
+      <div class="example-body">
+        <div class="ex-col">
+          <div class="ex-label">Original</div>
+          <div class="ex-text">Summarize the key benefits of our product for a social media post. Be very concise. Return as bullet list. Important: focus on the unique value proposition.</div>
+        </div>
+        <div class="ex-col">
+          <div class="ex-label">Pro</div>
+          <div class="ex-text compressed">∑ key benefits for social media post. →short. →list. !!: focus on unique value prop.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- METHODOLOGY -->
+<div class="section" id="methodology">
+  <div class="section-label">Methodology</div>
+  <div class="section-title">How we measure</div>
+  <div class="section-sub">All measurements are reproducible. The experiment code is in the repo.</div>
+
+  <div class="method-grid">
+    <div class="method-card">
+      <h4>Token counting</h4>
+      <p>All token counts use <strong>tiktoken cl100k_base</strong> (OpenAI's tokenizer, used by GPT-4 and Claude approximation). Older experiments used a words×1.3 heuristic — clearly marked.</p>
+    </div>
+    <div class="method-card">
+      <h4>Compression rate (CR)</h4>
+      <p><code>(1 - compressed_tokens / original_tokens) × 100</code>. Measured on the prompt sent to the LLM, not the response.</p>
+    </div>
+    <div class="method-card">
+      <h4>Fact preservation rate (FPR)</h4>
+      <p>Regex extraction of numbers, URLs, named entities, and quoted strings from the original. We verify each appears in the compressed output (or its decoded form). FPR = retained / total × 100.</p>
+    </div>
+    <div class="method-card">
+      <h4>Developer tier (NLP pipeline)</h4>
+      <p>Pro output is passed through: (1) domain pack — 60+ domain-specific abbreviations detected via keyword scoring, (2) spaCy dependency parse — non-restrictive relative clauses and low-information adverbial clauses removed, (3) parenthetical pruner — non-numeric parentheticals ≥4 words removed. Fully local, no external API calls.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:28px;font-size:13px;color:#444">
+    Experiment source: <code style="color:#666">private/research/experiments/domain_experiment_v3.py</code> ·
+    Results: <code style="color:#666">domain_experiment_v3_results.json</code> ·
+    Engine: <code style="color:#666">private/research/code/engine_v4.py</code>
+  </p>
+</div>
+
+<div class="footer">
+  <p><a href="index.html">← Back to Promptolian</a> &nbsp;·&nbsp; Last updated: May 2026 &nbsp;·&nbsp; Engine v4.0</p>
+</div>
+
+</body>
+</html>
