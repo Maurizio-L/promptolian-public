@@ -552,19 +552,20 @@ footer a:hover{color:#aaa}
       <div style="font-size:11px;color:var(--muted);margin-top:8px">200 prompts, engine v4 (tiktoken cl100k_base). Long prompts: Pro 18.4% · Dev 20.1%.</div>
     </div>
     <div class="research-card">
-      <h3>Key metrics — v4 engine, 3 tiers</h3>
+      <h3>Key metrics — v4 engine, 3 tiers + tool schemas</h3>
       <div class="metric-row">
         <div class="metric"><span class="metric-val">9.2%</span><div class="metric-lbl">Standard CR</div></div>
         <div class="metric"><span class="metric-val">10.5%</span><div class="metric-lbl">Developer CR</div></div>
-        <div class="metric"><span class="metric-val">89.9%</span><div class="metric-lbl">Fact preservation</div></div>
+        <div class="metric"><span class="metric-val" style="color:#7c3aed">69%</span><div class="metric-lbl">Tool schema CR</div></div>
       </div>
-      <div style="margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+      <div style="margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center">
         <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">20.1%</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Dev CR (long prompts)</div></div>
+        <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">92%</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Tool schema (session)</div></div>
         <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">12.9%</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Best domain (finance)</div></div>
         <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">200</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">prompts tested</div></div>
       </div>
       <div style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.7">
-        <strong style="color:var(--ink)">Finance and Law</strong> benefit most from Developer tier domain packs — MRR, ARR, NDA, IP, SLA and 60+ other terms compressed automatically.<br><br>
+        <strong style="color:var(--ink)">Tool schemas</strong> (JSON function definitions sent on every agent call) are compressed from ~120 tokens/tool to ~37 tokens on turn 1, then to a 3-token reference on subsequent turns — 91.9% average across a 5-turn session.<br><br>
         <strong style="color:var(--ink)">Long prompts (150–250 words)</strong> see the biggest gains: Developer saves 20.1% vs Standard's 15.7%. All tiers run locally — your prompts never leave your machine.
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
@@ -676,11 +677,13 @@ footer a:hover{color:#aaa}
       <div class="price-tier">Developer</div>
       <div class="price-amount">$29</div>
       <div class="price-period">per month</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;background:var(--soft);border-radius:8px;padding:8px 12px;line-height:1.5"><strong style="color:var(--ink)">Up to 20% shorter</strong> — Pro + domain packs + NLP pruning. No API calls.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;background:var(--soft);border-radius:8px;padding:8px 12px;line-height:1.5"><strong style="color:var(--ink)">Up to 20% on prompts · up to 92% on tool schemas</strong> — Pro + domain packs + NLP pruning + DSL compiler. No API calls.</div>
       <ul class="price-features">
         <li><span class="check">✓</span>Everything in Pro</li>
-        <li><span class="check">✓</span><strong>AI-Powered engine</strong> — scores every word, keeps only what matters</li>
-        <li><span class="check">✓</span>REST API — all 3 compression levels</li>
+        <li><span class="check">✓</span><strong>Domain packs</strong> — 60+ abbreviations across finance, legal, medical, code</li>
+        <li><span class="check">✓</span><strong>Tool schema compiler</strong> — JSON → DSL, 69% turn-1 / 97% cached</li>
+        <li><span class="check">✓</span><strong>Context engine</strong> — delta prune, entity register, session Huffman</li>
+        <li><span class="check">✓</span>REST API — <code>/compress</code>, <code>/compress-tools</code>, <code>/optimize-context</code></li>
         <li><span class="check">✓</span>1 M tokens / day</li>
         <li><span class="check">✓</span>Python &amp; JS SDK</li>
         <li><span class="check">✓</span>Usage dashboard &amp; webhooks</li>

@@ -8,6 +8,7 @@ Reduces token usage across multi-turn conversations by combining:
   5. summarize()            — rolling extractive summary of older history
   6. build_context()        — merges summary + register + messages + query
   7. optimize()             — full pipeline, returns API-ready result dict
+  8. compress_tools()       — compile JSON tool schemas → compact function-sig DSL
 
 Pipeline (used by POST /optimize-context):
     raw messages
@@ -19,12 +20,23 @@ Pipeline (used by POST /optimize-context):
       → build_context
       → [compress]
 
+Tool schema pipeline (used by POST /compress-tools):
+    raw tool schemas (OpenAI / Anthropic / plain format)
+      → normalise (extract name, description, parameters)
+      → type inference (elide obvious types from param names)
+      → shared-type registry (alias params used in 3+ tools)
+      → DSL serialisation  →  "fn(p1, p2: type = default)  # desc"
+      → session cache      →  turn 2+ sends only "TOOLS:[fn1,fn2]"
+
 Standalone usage:
-    from context_engine import ContextEngine
+    from context_engine import ContextEngine, compress_tools
     ce = ContextEngine()
     result = ce.optimize(messages, query)
     # → {optimized_prompt, new_summary, tokens_saved_estimate,
     #    original_tokens, optimized_tokens, messages_pruned}
+
+    dsl, meta = compress_tools(tools)
+    # → ("search_web(query, n=10)  # …\\n…", {original_tokens, compressed_tokens, cr})
 """
 
 from __future__ import annotations
@@ -142,6 +154,265 @@ def _apply_entity_map(text: str, entity_map: dict[str, str]) -> str:
     for ent in sorted(entity_map, key=len, reverse=True):
         out = out.replace(ent, entity_map[ent])
     return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tool schema compression — DSL compilation
+# ─────────────────────────────────────────────────────────────────────────────
+
+import json as _json
+
+_JSON_TYPE_MAP = {
+    'string': 'str', 'integer': 'int', 'number': 'float',
+    'boolean': 'bool', 'array': 'list', 'object': 'dict', 'null': 'None',
+}
+
+# Param names whose type is obvious — skip annotation when schema matches
+_ELIDE_STR = re.compile(
+    r'(?:_id|_key|_code|_slug|_name|_title|_text|_content|_message|_prompt|'
+    r'_query|_url|_path|_email|_token|_hash|_type|_format|_lang|_language|'
+    r'_status|_mode|_tag|_label|_prefix|_suffix|_pattern|_description|'
+    r'_summary|_note|_reason|_input|_output|_cursor|_sort|_order|_filter|'
+    r'^query$|^text$|^content$|^message$|^prompt$|^url$|^path$|^email$|'
+    r'^language$|^format$|^sort$|^order$|^filter$|^cursor$|^token$)$', re.I,
+)
+_ELIDE_INT = re.compile(
+    r'(?:_count|_num|_number|_size|_limit|_offset|_index|_page|_rank|'
+    r'_score|_age|_year|_month|_day|_hour|_minute|_second|_timeout|'
+    r'_length|_width|_height|_depth|_priority|_weight|_version|_max|_min|'
+    r'^n$|^k$|^count$|^limit$|^offset$|^page$|^size$|^top_k$|^max$|^min$)$', re.I,
+)
+_ELIDE_BOOL = re.compile(
+    r'(?:^is_|^has_|^enable|^disable|^use_|^with_|^include_|^exclude_|'
+    r'^allow_|^show_|^hide_|^force_|^strict_|^verbose$|^debug$|^async$|'
+    r'_enabled$|_disabled$|_active$|_required$|_visible$|_recursive$)$', re.I,
+)
+_ELIDE_LIST = re.compile(
+    r'(?:_ids$|_list$|_items$|_tags$|_labels$|_names$|_urls$|_paths$|'
+    r'_keys$|_values$|_fields$|_columns$|_rows$|_args$|_params$|'
+    r'^ids$|^items$|^tags$|^fields$|^args$|^keys$|^values$)$', re.I,
+)
+
+
+def _map_type(json_type: Optional[str]) -> str:
+    return _JSON_TYPE_MAP.get(json_type or '', json_type or 'any')
+
+
+def _should_elide_type(name: str, mapped_type: str) -> bool:
+    """Return True when the type is obvious from the parameter name."""
+    if mapped_type == 'str'  and _ELIDE_STR.search(name):  return True
+    if mapped_type == 'int'  and _ELIDE_INT.search(name):  return True
+    if mapped_type == 'bool' and _ELIDE_BOOL.search(name): return True
+    if mapped_type == 'list' and _ELIDE_LIST.search(name): return True
+    return False
+
+
+def _normalise_tool(tool: dict) -> Optional[dict]:
+    """Extract {name, description, params} from OpenAI / Anthropic / plain schema."""
+    # OpenAI function-calling wrapper: {"type":"function","function":{...}}
+    if tool.get('type') == 'function' and isinstance(tool.get('function'), dict):
+        tool = tool['function']
+
+    name = tool.get('name', '').strip()
+    if not name:
+        return None
+
+    desc = tool.get('description', '').strip()
+
+    # Parameter schema: OpenAI uses "parameters", Anthropic uses "input_schema"
+    param_schema = tool.get('parameters') or tool.get('input_schema') or {}
+    properties   = param_schema.get('properties', {})
+    required_set = set(param_schema.get('required', []))
+
+    params: list[dict] = []
+    for pname, pschema in properties.items():
+        json_type   = pschema.get('type') if isinstance(pschema, dict) else None
+        mapped      = _map_type(json_type)
+        elide       = _should_elide_type(pname, mapped)
+        default_val = pschema.get('default') if isinstance(pschema, dict) else None
+        is_required = pname in required_set
+        enum_vals   = pschema.get('enum') if isinstance(pschema, dict) else None
+        params.append({
+            'name':       pname,
+            'type':       mapped,
+            'elide_type': elide,
+            'required':   is_required,
+            'default':    default_val,
+            'enum':       enum_vals[:3] if enum_vals else None,  # cap enum display
+        })
+
+    # Sort: required first, then optional
+    params.sort(key=lambda p: (0 if p['required'] else 1, p['name']))
+    return {'name': name, 'description': desc, 'params': params}
+
+
+def _format_param(p: dict) -> str:
+    """Render one parameter as 'name', 'name: type', or 'name=default'."""
+    name    = p['name']
+    typ     = p['type']
+    default = p['default']
+    elide   = p['elide_type']
+
+    if p['enum']:
+        # Show compact enum hint instead of type
+        opts = '|'.join(str(v) for v in p['enum'])
+        suffix = f': {opts}' if not default else f': {opts}={default!r}'
+        return f'{name}{suffix}'
+
+    if default is not None:
+        # Optional with default: show default, drop type if elided or it's str
+        if elide or typ == 'str':
+            return f'{name}={default!r}'
+        return f'{name}: {typ}={default!r}'
+
+    if elide:
+        return name  # type obvious from name
+
+    if typ in ('any', ''):
+        return name
+
+    return f'{name}: {typ}'
+
+
+def _build_shared_registry(normalised: list[dict], min_tools: int = 3) -> dict[str, str]:
+    """Alias parameter (name, type) pairs that appear in min_tools+ functions."""
+    counter: collections.Counter = collections.Counter()
+    for tool in normalised:
+        seen = set()
+        for p in tool['params']:
+            key = (p['name'], p['type'])
+            if key not in seen:
+                counter[key] += 1
+                seen.add(key)
+
+    aliases: dict[str, str] = {}
+    idx = 1
+    for (pname, ptype), cnt in counter.most_common():
+        if cnt >= min_tools and not _should_elide_type(pname, ptype):
+            aliases[f'§T{idx}'] = f'{pname}: {ptype}'
+            idx += 1
+    return aliases  # {symbol: "param: type"}
+
+
+def _serialise_dsl(
+    normalised: list[dict],
+    registry: dict[str, str],
+    session_seen: Optional[set],
+) -> tuple[str, list[str]]:
+    """
+    Render tools as DSL lines.
+
+    Returns (dsl_block, list_of_names_for_cache_line).
+    Already-seen tools (session cache) are skipped from DSL; caller emits
+    a compact TOOLS:[...] reference for them.
+    """
+    # Build reverse map: "param: type" → symbol
+    rev_registry = {v: k for k, v in registry.items()}
+
+    lines: list[str] = []
+    new_names: list[str] = []
+    cached_names: list[str] = []
+
+    for tool in normalised:
+        name = tool['name']
+        if session_seen is not None and name in session_seen:
+            cached_names.append(name)
+            continue
+
+        new_names.append(name)
+        parts: list[str] = []
+        for p in tool['params']:
+            raw = f'{p["name"]}: {p["type"]}'
+            if raw in rev_registry:
+                parts.append(rev_registry[raw])
+            else:
+                parts.append(_format_param(p))
+
+        sig  = f'{name}({", ".join(parts)})'
+        desc = f'  # {tool["description"]}' if tool['description'] else ''
+        # Truncate very long descriptions
+        if len(desc) > 80:
+            desc = desc[:77] + '…'
+        lines.append(f'{sig}{desc}')
+
+    dsl_block = '\n'.join(lines)
+    return dsl_block, cached_names
+
+
+def compress_tools(
+    tools: list[dict],
+    session_seen: Optional[set] = None,
+    min_registry_tools: int = 3,
+) -> tuple[str, dict]:
+    """Compile JSON tool schemas to a compact function-signature DSL.
+
+    Strategies applied (stacked):
+      1. Format conversion  — JSON → Python-style function signatures
+      2. Type elision       — drop annotations obvious from param names
+      3. Shared-type registry — alias (name:type) pairs in 3+ tools as §T1 etc.
+      4. Session cache      — tools sent in a previous turn become TOOLS:[…]
+
+    Parameters
+    ----------
+    tools              : list of tool schema dicts (OpenAI, Anthropic, or plain)
+    session_seen       : set of tool names already sent this session; mutated
+                         in-place to add newly sent names (pass None to disable)
+    min_registry_tools : minimum tools sharing a param before it gets an alias
+
+    Returns
+    -------
+    dsl_str : str   — compact string to prepend to system prompt
+    meta    : dict  — {original_tokens, compressed_tokens, cr, cached_count,
+                       registry, new_tools, cached_tools}
+    """
+    if not tools:
+        return '', {'original_tokens': 0, 'compressed_tokens': 0, 'cr': 0.0,
+                    'cached_count': 0, 'registry': {}, 'new_tools': [], 'cached_tools': []}
+
+    # Measure original (pretty JSON, as most SDKs send it)
+    original_str    = _json.dumps(tools, separators=(',', ':'))
+    original_tokens = _tokens(original_str)
+
+    # Normalise all tools
+    normalised = [n for t in tools if (n := _normalise_tool(t)) is not None]
+
+    # Build shared-type registry
+    registry = _build_shared_registry(normalised, min_tools=min_registry_tools)
+
+    # Serialise to DSL (respecting session cache)
+    dsl_block, cached_names = _serialise_dsl(normalised, registry, session_seen)
+    new_names = [t['name'] for t in normalised if t['name'] not in (cached_names or [])]
+
+    # Update session cache
+    if session_seen is not None:
+        session_seen.update(new_names)
+
+    # Assemble output block
+    parts: list[str] = []
+
+    if registry:
+        reg_line = 'TYPES:{' + ', '.join(f'{s}={v}' for s, v in registry.items()) + '}'
+        parts.append(reg_line)
+
+    if cached_names:
+        parts.append(f'TOOLS:[{",".join(cached_names)}]')  # reference only
+
+    if dsl_block:
+        parts.append(dsl_block)
+
+    out = '\n'.join(parts)
+    compressed_tokens = _tokens(out) if out else 0
+    cr = round(1 - compressed_tokens / original_tokens, 4) if original_tokens else 0.0
+
+    return out, {
+        'original_tokens':    original_tokens,
+        'compressed_tokens':  compressed_tokens,
+        'cr':                 cr,
+        'cached_count':       len(cached_names),
+        'registry':           registry,
+        'new_tools':          new_names,
+        'cached_tools':       cached_names,
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────

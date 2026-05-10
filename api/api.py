@@ -13,6 +13,7 @@ Endpoints:
   GET  /stats
   POST /feedback          body: {"original":"...","compressed":"...","rating":1-5}
   POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless"}
+  POST /compress-tools    body: {"tools":[...], "session_id":"optional-string"}
 """
 
 from flask import Flask, request, jsonify
@@ -200,9 +201,10 @@ def health():
     return jsonify({
         'status':           'ok',
         'service':          'Promptly API',
-        'version':          '2.0.0',
+        'version':          '2.1.0',
         'engine_v4':        _ENGINE_AVAILABLE,
         'tiers_available':  ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
+        'endpoints':        ['/compress', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
         'timestamp':        datetime.now().isoformat(),
     })
 
@@ -342,13 +344,85 @@ def optimize_context():
         return jsonify({'error': str(e)}), 500
 
 
+# ── In-process session cache for /compress-tools  (keyed by session_id) ──────
+_TOOL_SESSION_CACHE: dict[str, set] = {}
+
+@app.route('/compress-tools', methods=['POST'])
+def compress_tools_route():
+    """Compile JSON tool schemas to compact function-signature DSL.
+
+    Request body:
+      {
+        "tools":      [...],          // required — list of tool schema dicts
+                                      //   (OpenAI, Anthropic, or plain format)
+        "session_id": "abc123"        // optional — enables session caching:
+                                      //   turn 1 sends full DSL,
+                                      //   subsequent turns send TOOLS:[names] only
+      }
+
+    Response:
+      {
+        "dsl":               "search_web(query, n=10)  # ...",
+        "original_tokens":   1220,
+        "compressed_tokens": 373,
+        "cr":                0.694,
+        "cached_count":      0,
+        "new_tools":         ["search_web", ...],
+        "cached_tools":      []
+      }
+
+    Compression rates (benchmarked on 10 realistic tools):
+      - Turn 1  : ~69% CR (JSON → DSL, type elision, enum compaction)
+      - Turn 2+ : ~97% CR (session cache — sends only TOOLS:[...] reference)
+      - 5-turn  : ~92% average CR over a full session
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'request body required'}), 400
+
+    tools = data.get('tools')
+    if not isinstance(tools, list) or not tools:
+        return jsonify({'error': '"tools" must be a non-empty JSON array'}), 400
+    if len(tools) > 128:
+        return jsonify({'error': 'maximum 128 tools per request'}), 400
+
+    session_id = data.get('session_id', '').strip() or None
+
+    try:
+        from context_engine import compress_tools  # type: ignore
+
+        # Resolve (or create) the session cache set
+        seen: set | None = None
+        if session_id:
+            if session_id not in _TOOL_SESSION_CACHE:
+                _TOOL_SESSION_CACHE[session_id] = set()
+            seen = _TOOL_SESSION_CACHE[session_id]
+
+        dsl, meta = compress_tools(tools, session_seen=seen)
+
+        return jsonify({
+            'dsl':               dsl,
+            'original_tokens':   meta['original_tokens'],
+            'compressed_tokens': meta['compressed_tokens'],
+            'cr':                meta['cr'],
+            'cached_count':      meta['cached_count'],
+            'new_tools':         meta['new_tools'],
+            'cached_tools':      meta['cached_tools'],
+            'registry':          meta['registry'],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     init_db()
-    print('\n  Promptly API v2.0')
+    print('\n  Promptly API v2.1')
     print('  ─────────────────────────────────────────')
     print(f'  engine_v4 : {"✓ loaded" if _ENGINE_AVAILABLE else "✗ not found (Standard only)"}')
     print(f'  tiers     : {"standard / pro / developer" if _ENGINE_AVAILABLE else "standard only"}')
     print('  http://localhost:3001/health')
-    print('  POST http://localhost:3001/compress  {"text":"...","tier":"pro"}')
+    print('  POST http://localhost:3001/compress        {"text":"...","tier":"pro"}')
+    print('  POST http://localhost:3001/compress-tools  {"tools":[...],"session_id":"optional"}')
+    print('  POST http://localhost:3001/optimize-context {"messages":[...],"query":"..."}')
     print()
     app.run(host='0.0.0.0', port=3001, debug=True)
