@@ -197,12 +197,62 @@ footer a:hover{color:#aaa}
 .mb-80{margin-bottom:80px}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--soft);color:var(--muted);border:1px solid var(--border)}
 .divider{border:none;border-top:1px solid var(--border);margin:0}
+
+/* ── HERO AUDIENCES ── */
+.hero-audiences{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-top:40px;background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;text-align:left;max-width:660px;margin-left:auto;margin-right:auto}
+.hero-aud{padding:20px 24px}
+.hero-aud-sep{background:var(--border)}
+.hero-aud-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.hero-aud-title{font-weight:600;font-size:14px;margin-bottom:5px;color:var(--ink)}
+.hero-aud-text{font-size:13px;color:var(--muted);line-height:1.6}
+.hero-aud-cta{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1.5px solid var(--lime)}
+
+/* ── CONTEXT ENGINE SHOWCASE ── */
+.ctx-demo{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;margin-top:36px;align-items:center}
+.ctx-panel{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:24px}
+.ctx-panel-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.ctx-panel-label.bad{color:#dc2626}
+.ctx-panel-label.good{color:#16a34a}
+.ctx-turns{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.ctx-turn{display:flex;align-items:center;gap:10px}
+.ctx-turn-label{width:62px;font-size:11px;font-weight:600;color:var(--muted);flex-shrink:0;text-align:right}
+.ctx-turn.is-active .ctx-turn-label{color:var(--ink)}
+.ctx-bar-wrap{flex:1;height:22px;background:var(--soft);border-radius:7px;overflow:hidden;position:relative}
+.ctx-bar-fill{height:100%;border-radius:7px;width:0;transition:width 1s ease}
+.ctx-turn.animate .ctx-bar-fill{width:var(--bar-w)}
+.ctx-tok{width:48px;font-size:10px;color:var(--muted);flex-shrink:0;font-family:'DM Mono',monospace}
+.ctx-turn.is-active .ctx-tok{color:var(--ink);font-weight:600}
+.fill-old{background:#c7d2fe}
+.fill-active{background:#6366f1}
+.fill-summary{background:#fcd34d}
+.fill-comp{background:#a5f3fc}
+.ctx-meter-wrap{height:10px;background:var(--soft);border-radius:10px;overflow:hidden;margin-bottom:8px}
+.ctx-meter-fill{height:100%;border-radius:10px;width:0;transition:width 1.2s ease .4s}
+.ctx-panel.animate .ctx-meter-fill{width:var(--meter-w)}
+.ctx-meter-fill.bad{background:#fca5a5}
+.ctx-meter-fill.good{background:#86efac}
+.ctx-total-txt{font-size:12px;font-weight:600}
+.ctx-total-txt.bad{color:#dc2626}
+.ctx-total-txt.good{color:#16a34a}
+.ctx-window-lbl{font-size:10px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.ctx-arrow-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ctx-arrow-inner{font-size:28px;color:var(--muted)}
+.ctx-savings-badge{background:var(--lime);color:var(--ink);font-size:11px;font-weight:700;padding:5px 13px;border-radius:20px;white-space:nowrap;text-align:center}
+.ctx-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.ctx-stat{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center}
+.ctx-stat-val{font-size:30px;font-weight:600;display:block;margin-bottom:6px;color:var(--ink)}
+.ctx-stat-lbl{font-size:12px;color:var(--muted);line-height:1.5}
+
 @media(max-width:680px){
   nav{padding:14px 20px}.nav-links{display:none}
   .hero{padding:60px 20px 48px}.section{padding:60px 20px 0}
   .demo-row,.engines-grid,.features-grid,.packs-grid,.lang-grid,
-  .research-row,.pricing-grid,.prod-grid{grid-template-columns:1fr}
+  .research-row,.pricing-grid,.prod-grid,.ctx-stats-row{grid-template-columns:1fr}
   .stats-row{grid-template-columns:repeat(2,1fr)}
+  .ctx-demo{grid-template-columns:1fr;gap:16px}
+  .ctx-arrow-col{flex-direction:row}
+  .hero-audiences{grid-template-columns:1fr}
+  .hero-aud-sep{height:1px;width:100%}
 }
 </style>
 <style>
@@ -290,35 +340,50 @@ footer a:hover{color:#aaa}
 <!-- HERO -->
 <section class="hero">
   <div class="hero-badge">⚡ Free to start — no credit card required</div>
-  <h1>Spend less on AI.<br><em>Get more done.</em></h1>
-  <p>Promptolian compresses your prompts before they reach the LLM — fewer tokens, lower API costs, faster responses. Works on Claude, ChatGPT, Gemini and Copilot. Runs locally. Your prompts never leave your machine.</p>
+  <h1>Every AI message costs money.<br><em>We make them shorter.</em></h1>
+  <p>Promptolian compresses your prompts before they reach the AI — 15–33% fewer tokens, same answers. Works on Claude, ChatGPT, Gemini and Copilot. Fully private — runs on your device.</p>
   <div class="hero-btns">
-    <a href="#demo" class="btn btn-primary">Try live demo →</a>
-    <a href="#engines" class="btn btn-secondary">See how it works</a>
+    <a href="#demo" class="btn btn-primary">Try the live demo →</a>
+    <a href="#context-engine" class="btn btn-secondary">Context Engine</a>
     <a href="docs.html" class="btn btn-outline">API docs</a>
+  </div>
+  <div class="hero-audiences">
+    <div class="hero-aud">
+      <div class="hero-aud-label">Everyday user</div>
+      <div class="hero-aud-title">No setup. Free forever.</div>
+      <div class="hero-aud-text">Install the browser extension and click Compress before sending. Works on ChatGPT, Claude, Gemini and more. Your prompts never leave your device.</div>
+      <a href="#production" class="hero-aud-cta">Install extension →</a>
+    </div>
+    <div class="hero-aud-sep"></div>
+    <div class="hero-aud">
+      <div class="hero-aud-label">Developer / API user</div>
+      <div class="hero-aud-title">REST API + Claude Code MCP.</div>
+      <div class="hero-aud-text">Compress prompts, tool schemas (69% savings), and conversation history via API. Drop-in integration — no prompt changes needed.</div>
+      <a href="docs.html" class="hero-aud-cta">Read the API docs →</a>
+    </div>
   </div>
 </section>
 
 <!-- PROOF BAR -->
 <div class="proof">
-  <div class="proof-item"><strong>Up to 33%</strong> shorter prompts</div>
+  <div class="proof-item"><strong>15–33%</strong> fewer tokens per prompt</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>3</strong> compression layers</div>
+  <div class="proof-item"><strong>69%</strong> smaller API tool schemas</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>69%</strong> tool schema CR (turn 1)</div>
-  <div class="dot"></div>
-  <div class="proof-item"><strong>100%</strong> fact preservation (71 benchmarks)</div>
+  <div class="proof-item"><strong>98.4%</strong> fact accuracy — 200 prompts tested</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>5</strong> languages supported</div>
   <div class="dot"></div>
   <div class="proof-item">Works on <strong>5 AI platforms</strong></div>
+  <div class="dot"></div>
+  <div class="proof-item"><strong>100%</strong> private — runs on your device</div>
 </div>
 
 <!-- DEMO -->
 <section class="section" id="demo">
   <div class="section-label">Live demo</div>
   <div class="section-title">See Promptolian in action</div>
-  <p class="section-sub">Type any AI prompt and see how much shorter it gets. Toggle telegraphic mode for extra savings.</p>
+  <p class="section-sub">Type any prompt below and see how much shorter it gets — instantly, in your browser. Try the different compression levels to see how they compare.</p>
   <div class="demo-card">
     <div class="demo-row">
       <div class="demo-col">
@@ -364,6 +429,83 @@ footer a:hover{color:#aaa}
     </div>
   </div>
 </section>
+
+<!-- CONTEXT ENGINE SHOWCASE -->
+<section class="section" id="context-engine" style="padding-top:72px">
+  <div class="section-label">Context Engine · Builder plan</div>
+  <div class="section-title">Stop paying for everything your AI remembers</div>
+  <p class="section-sub">In a long conversation, every old message gets resent to the AI on every reply — even the parts it barely needs. The Context Engine compresses old turns automatically, so you only pay for what still matters.</p>
+
+  <div class="ctx-demo">
+
+    <div class="ctx-panel" id="ctx-panel-before" style="--meter-w:74%">
+      <div class="ctx-panel-label bad">✗ Without Promptolian — turn 5</div>
+      <div class="ctx-turns">
+        <div class="ctx-turn" style="--bar-w:88%"><span class="ctx-turn-label">Turn 1</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">420 tok</span></div>
+        <div class="ctx-turn" style="--bar-w:78%"><span class="ctx-turn-label">Turn 2</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">380 tok</span></div>
+        <div class="ctx-turn" style="--bar-w:73%"><span class="ctx-turn-label">Turn 3</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">350 tok</span></div>
+        <div class="ctx-turn" style="--bar-w:79%"><span class="ctx-turn-label">Turn 4</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">380 tok</span></div>
+        <div class="ctx-turn is-active" style="--bar-w:67%"><span class="ctx-turn-label">Now ◀</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-active"></div></div><span class="ctx-tok">320 tok</span></div>
+      </div>
+      <div class="ctx-window-lbl">Context window used</div>
+      <div class="ctx-meter-wrap"><div class="ctx-meter-fill bad"></div></div>
+      <div class="ctx-total-txt bad">1,850 tokens per reply · $0.006 / msg</div>
+    </div>
+
+    <div class="ctx-arrow-col">
+      <div class="ctx-arrow-inner">→</div>
+      <div class="ctx-savings-badge">64%<br>cheaper</div>
+    </div>
+
+    <div class="ctx-panel" id="ctx-panel-after" style="--meter-w:27%">
+      <div class="ctx-panel-label good">✓ With Promptolian — same turn 5</div>
+      <div class="ctx-turns">
+        <div class="ctx-turn" style="--bar-w:20%"><span class="ctx-turn-label">Summary</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-summary"></div></div><span class="ctx-tok">95 tok</span></div>
+        <div class="ctx-turn" style="--bar-w:52%"><span class="ctx-turn-label">Turn 4</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-comp"></div></div><span class="ctx-tok">248 tok</span></div>
+        <div class="ctx-turn is-active" style="--bar-w:67%"><span class="ctx-turn-label">Now ◀</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-active"></div></div><span class="ctx-tok">320 tok</span></div>
+      </div>
+      <div style="height:31px"></div>
+      <div class="ctx-window-lbl">Context window used</div>
+      <div class="ctx-meter-wrap"><div class="ctx-meter-fill good"></div></div>
+      <div class="ctx-total-txt good">663 tokens per reply · $0.002 / msg</div>
+    </div>
+
+  </div>
+
+  <div class="ctx-stats-row">
+    <div class="ctx-stat">
+      <span class="ctx-stat-val">33%</span>
+      <div class="ctx-stat-lbl">combined savings across<br>10 real developer sessions</div>
+    </div>
+    <div class="ctx-stat">
+      <span class="ctx-stat-val">101K</span>
+      <div class="ctx-stat-lbl">tokens saved per developer<br>per month (estimated)</div>
+    </div>
+    <div class="ctx-stat">
+      <span class="ctx-stat-val">100%</span>
+      <div class="ctx-stat-lbl">fact accuracy — no numbers,<br>names or code ever dropped</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px">
+    <a href="#pricing" class="btn btn-primary">Get the Builder plan →</a>
+    <a href="docs.html" class="btn btn-outline" style="margin-left:12px">See the API →</a>
+  </div>
+</section>
+
+<script>
+(function(){
+  function animateCtx(){
+    document.querySelectorAll('.ctx-turn').forEach(function(el){el.classList.add('animate')});
+    document.querySelectorAll('.ctx-panel').forEach(function(el){el.classList.add('animate')});
+  }
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ animateCtx(); obs.disconnect(); } });
+  }, {threshold:0.3});
+  var sec = document.getElementById('context-engine');
+  if(sec) obs.observe(sec);
+})();
+</script>
 
 <!-- ENGINES -->
 <section class="section" id="engines" style="padding-top:72px">
@@ -615,11 +757,11 @@ footer a:hover{color:#aaa}
   <p class="section-sub">200 real-world prompts across 5 industries. All three tiers are fully deterministic — no external API calls, zero latency overhead, 100% private.</p>
   <div class="research-row">
     <div class="research-card">
-      <h3>CR by domain — Developer tier</h3>
+      <h3>Token savings by industry — Developer tier</h3>
       <table class="results-table">
         <thead>
           <tr>
-            <th>Industry</th><th>Std CR</th><th>Pro CR</th><th>Dev CR</th>
+            <th>Industry</th><th>Standard</th><th>Pro</th><th>Developer</th>
           </tr>
         </thead>
         <tbody>
@@ -631,14 +773,14 @@ footer a:hover{color:#aaa}
           <tr><td><strong>Overall</strong></td><td><strong>9.2%</strong></td><td><strong>9.9%</strong></td><td><strong>10.5%</strong></td></tr>
         </tbody>
       </table>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px">200 prompts, engine v4 (tiktoken cl100k_base). Long prompts: Pro 18.4% · Dev 20.1%.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">200 real-world prompts, engine v4. Long prompts (150–250 words): Pro 18.4% · Developer 20.1% savings.</div>
     </div>
     <div class="research-card">
-      <h3>Key metrics — v4 engine, 3 tiers + tool schemas</h3>
+      <h3>Key results — v4 engine, 200 prompts</h3>
       <div class="metric-row">
-        <div class="metric"><span class="metric-val">9.2%</span><div class="metric-lbl">Standard CR</div></div>
-        <div class="metric"><span class="metric-val">10.5%</span><div class="metric-lbl">Developer CR</div></div>
-        <div class="metric"><span class="metric-val" style="color:#7c3aed">69%</span><div class="metric-lbl">Tool schema CR</div></div>
+        <div class="metric"><span class="metric-val">9.2%</span><div class="metric-lbl">Standard savings</div></div>
+        <div class="metric"><span class="metric-val">10.5%</span><div class="metric-lbl">Developer savings</div></div>
+        <div class="metric"><span class="metric-val" style="color:#7c3aed">69%</span><div class="metric-lbl">Tool schema savings</div></div>
       </div>
       <div style="margin-top:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center">
         <div><div style="font-size:18px;font-weight:600;color:#0e0e0e">20.1%</div><div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.05em">Dev CR (long prompts)</div></div>
@@ -651,7 +793,7 @@ footer a:hover{color:#aaa}
         <strong style="color:var(--ink)">Long prompts (150–250 words)</strong> see the biggest gains: Developer saves 20.1% vs Standard's 15.7%. All tiers run locally — your prompts never leave your machine.
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-        <a href="http://localhost:5000" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Research dashboard →</a>
+        <a href="mailto:hello@promptolian.com" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Request full study →</a>
       </div>
     </div>
 
@@ -674,7 +816,7 @@ footer a:hover{color:#aaa}
         Projection: <strong style="color:var(--ink)">20 developer sessions/day × 5 turns × 22 days = 101,254 tokens saved/month</strong>, equivalent to $0.03 API cost reduction at standard input rates.
       </div>
       <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-        <a href="http://localhost:5000/#developer" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Developer study →</a>
+        <a href="mailto:hello@promptolian.com" class="btn btn-outline" style="font-size:12px;padding:8px 16px">Request developer study →</a>
       </div>
     </div>
   </div>
@@ -913,7 +1055,7 @@ footer a:hover{color:#aaa}
     <a href="docs.html">API Docs</a>
     <a href="privacy.html">Privacy Policy</a>
     <a href="terms.html">Terms</a>
-    <a href="http://localhost:5000">Research Dashboard</a>
+    <a href="mailto:hello@promptolian.com">Contact</a>
     <a href="mailto:hello@promptolian.com">hello@promptolian.com</a>
   </div>
   © 2026 Promptolian · Built with ⚡ in Zürich
