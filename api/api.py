@@ -35,9 +35,11 @@ CORS(app)
 DB_PATH = os.path.join(os.path.dirname(__file__), '../../private/database/promptly.db')
 _DATABASE_URL = os.getenv('DATABASE_URL')  # set by Railway; if absent, use SQLite
 
+_LOCAL_API   = str(Path(__file__).parent)
 _ENGINE_PATH = str(Path(__file__).parent.parent.parent / 'private' / 'research' / 'code')
-if _ENGINE_PATH not in sys.path:
-    sys.path.insert(0, _ENGINE_PATH)
+for _p in (_LOCAL_API, _ENGINE_PATH):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
