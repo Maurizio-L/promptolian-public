@@ -1547,7 +1547,7 @@ function clearDemo() {
 // ── Stripe checkout ──────────────────────────────────────────────────────────
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3001'
-  : 'https://api.promptolian.com';  // update this to your Railway URL
+  : 'https://api.promptolian.com';
 
 async function startCheckout(plan, billing) {
   const email = prompt('Your email address for the subscription:');

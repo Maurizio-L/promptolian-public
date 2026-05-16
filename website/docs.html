@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Promptly API — Developer Documentation</title>
+<title>Promptolian API — Developer Documentation</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 :root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--dark:#0f0f0f;--dark2:#141414;--dark3:#1a1a1a;--border:#2a2a2a;--radius:12px}
@@ -11,8 +11,6 @@
 body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#e0e0e0;font-size:14px;line-height:1.6}
 a{color:var(--lime);text-decoration:none}
 a:hover{text-decoration:underline}
-
-/* Nav */
 nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:var(--dark);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:20px;color:#f0f0f0;text-decoration:none}
 .logo-icon{background:var(--lime);color:var(--ink);font-weight:700;font-size:12px;padding:4px 8px;border-radius:7px;font-family:'DM Sans',sans-serif}
@@ -20,19 +18,13 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
 .nav-links a{font-size:13px;color:#888}
 .nav-links a:hover{color:#e0e0e0;text-decoration:none}
 .nav-cta{background:var(--lime);color:var(--ink)!important;padding:7px 18px;border-radius:100px;font-size:12px;font-weight:600}
-
-/* Layout */
 .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px)}
-
-/* Sidebar */
 .sidebar{background:var(--dark2);border-right:1px solid var(--border);padding:28px 0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
 .sidebar-group{margin-bottom:28px}
 .sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555;padding:0 20px;margin-bottom:8px}
 .sidebar a{display:block;padding:7px 20px;font-size:13px;color:#888;transition:all .15s}
 .sidebar a:hover{color:#e0e0e0;background:#1e1e1e;text-decoration:none}
 .sidebar a.active{color:var(--lime);background:#c8f13511;border-right:2px solid var(--lime)}
-
-/* Main content */
 .main{padding:48px 56px;max-width:900px}
 .main h1{font-family:'DM Serif Display',serif;font-size:40px;color:#f0f0f0;margin-bottom:12px}
 .main h2{font-family:'DM Serif Display',serif;font-size:26px;color:#f0f0f0;margin:48px 0 16px;padding-top:16px;border-top:1px solid var(--border)}
@@ -40,17 +32,12 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
 .main p{color:#aaa;margin-bottom:14px;line-height:1.75}
 .main ul{color:#aaa;padding-left:20px;margin-bottom:14px}
 .main ul li{margin-bottom:6px}
-
-/* Lead */
 .lead{font-size:17px;color:#888;margin-bottom:36px;line-height:1.7}
 .badge{display:inline-flex;align-items:center;gap:6px;background:#c8f13511;border:1px solid #c8f13533;color:var(--lime);font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;margin-bottom:28px}
-
-/* Endpoint pill */
 .endpoint{display:flex;align-items:center;gap:12px;background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin:16px 0 24px;font-family:'Fira Code','SF Mono',monospace;font-size:13px}
 .method{background:#c8f13522;color:var(--lime);padding:3px 10px;border-radius:6px;font-weight:700;font-size:12px;letter-spacing:.04em}
+.method.get{background:#3b82f622;color:#60a5fa}
 .path{color:#e0e0e0}
-
-/* Code blocks */
 .code-tabs{margin:16px 0}
 .code-tab-bar{display:flex;gap:2px;background:var(--dark3);border-radius:var(--radius) var(--radius) 0 0;padding:8px 8px 0;border:1px solid var(--border);border-bottom:none}
 .code-tab-btn{padding:6px 16px;border-radius:8px 8px 0 0;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#666;font-family:'DM Sans',sans-serif;transition:all .15s}
@@ -59,18 +46,8 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
 .code-pane.active{display:block}
 pre{padding:20px 22px;overflow-x:auto;margin:0}
 code{font-family:'Fira Code','SF Mono',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4}
-.kw{color:#c8f135}
-.str{color:#ce9178}
-.cmt{color:#6a9955}
-.fn{color:#dcdcaa}
-.num{color:#b5cea8}
-.type{color:#4ec9b0}
-.var{color:#9cdcfe}
-
-/* Inline code */
+.kw{color:#c8f135}.str{color:#ce9178}.cmt{color:#6a9955}.fn{color:#dcdcaa}.num{color:#b5cea8}.type{color:#4ec9b0}.var{color:#9cdcfe}
 code.inline{background:var(--dark3);border:1px solid var(--border);padding:2px 7px;border-radius:5px;font-size:12px;color:#e0e0e0}
-
-/* Param table */
 .param-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:13px}
 .param-table th{text-align:left;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--border)}
 .param-table td{padding:10px 12px;border-bottom:1px solid #1e1e1e;color:#ccc;vertical-align:top}
@@ -78,24 +55,14 @@ code.inline{background:var(--dark3);border:1px solid var(--border);padding:2px 7
 .param-table td:nth-child(2){color:#888;font-size:12px}
 .required{color:#f87171;font-size:10px;font-weight:700;vertical-align:super;margin-left:3px}
 .optional{color:#555;font-size:10px;vertical-align:super;margin-left:3px}
-
-/* Response block */
 .resp-block{background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin:16px 0 24px;font-family:'Fira Code',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4;overflow-x:auto}
-
-/* Alert boxes */
 .alert{padding:14px 16px;border-radius:var(--radius);margin:20px 0;font-size:13px;line-height:1.6}
 .alert-info{background:#1e3a5f22;border:1px solid #3b82f633;color:#93c5fd}
 .alert-warn{background:#f59e0b11;border:1px solid #f59e0b33;color:#fbbf24}
-
-/* Status codes */
 .status-table{width:100%;border-collapse:collapse;margin:12px 0 24px;font-size:13px}
 .status-table td{padding:9px 12px;border-bottom:1px solid #1e1e1e}
 .status-table td:first-child{font-family:'Fira Code',monospace;font-size:12px;width:80px}
-.status-ok{color:#4ade80}
-.status-err{color:#f87171}
-.status-warn{color:#fbbf24}
-
-/* Section anchors */
+.status-ok{color:#4ade80}.status-err{color:#f87171}.status-warn{color:#fbbf24}
 h2,h3{scroll-margin-top:80px}
 </style>
 </head>
@@ -103,7 +70,7 @@ h2,h3{scroll-margin-top:80px}
 
 <nav>
   <a class="logo" href="/">
-    <span class="logo-icon">P→</span> Promptly
+    <span class="logo-icon">∑→</span> Promptolian
   </a>
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
@@ -125,144 +92,112 @@ h2,h3{scroll-margin-top:80px}
     </div>
     <div class="sidebar-group">
       <div class="sidebar-label">Endpoints</div>
-      <a href="#compress">POST /v1/compress</a>
-      <a href="#batch">POST /v1/compress/batch</a>
-      <a href="#health">GET /v1/health</a>
+      <a href="#compress">POST /compress</a>
+      <a href="#optimize-context">POST /optimize-context</a>
+      <a href="#compress-tools">POST /compress-tools</a>
+      <a href="#stats">GET /stats</a>
+      <a href="#health">GET /health</a>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-label">Reference</div>
-      <a href="#modes">Compression modes</a>
-      <a href="#domains">Domain packs</a>
+      <a href="#tiers">Compression tiers</a>
       <a href="#errors">Errors</a>
       <a href="#limits">Rate limits</a>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-label">SDKs</div>
-      <a href="#sdk-python">Python</a>
-      <a href="#sdk-js">JavaScript / Node</a>
-      <a href="#sdk-rust">Rust</a>
-      <a href="#sdk-cpp">C++</a>
+      <div class="sidebar-label">Integrations</div>
+      <a href="#cli">CLI</a>
+      <a href="#mcp">Claude Code MCP</a>
+      <a href="#curl-examples">curl examples</a>
     </div>
   </nav>
 
   <!-- Main -->
   <main class="main">
 
-    <div class="badge">Developer API · v1</div>
-    <h1>Promptly API</h1>
+    <div class="badge">Promptolian API · v2.2</div>
+    <h1>Promptolian API</h1>
     <p class="lead">
-      Compress AI prompts programmatically. Plug Promptly into your pipeline to cut token costs
-      before every LLM call — with 180+ compression rules, domain-specific vocabulary packs, and
-      provable fact preservation.
+      Compress AI prompts programmatically. Send text, get back shorter text and token metrics.
+      No AI involved — all compression runs locally on the server using NLP rules.
+      Privacy-first by design.
     </p>
 
     <!-- ── Overview ── -->
     <h2 id="overview">Overview</h2>
-    <p>The Promptly REST API exposes the same compression engine used in the browser extension. You send plain English text; you get back Promptolian-compressed text and metrics.</p>
-    <p><strong>Base URL:</strong> <code class="inline">https://api.promptly.so</code></p>
-    <p>All requests and responses use JSON. All endpoints require a Bearer token in the <code class="inline">Authorization</code> header.</p>
+    <p>The Promptolian REST API exposes the same compression engine used in the browser extension and CLI. You send plain text; you get back compressed text plus token savings metrics.</p>
+    <p><strong>Base URL:</strong> <code class="inline">https://api.promptolian.com</code></p>
+    <p>All requests and responses use JSON. The free tier requires no authentication — rate limits apply per IP. The Builder plan ($19/mo) requires an API key for 2M tokens/day.</p>
 
     <div class="alert alert-info">
-      The Developer API plan ($19/mo) includes 1&thinsp;M tokens/day. Need more? <a href="mailto:hello@promptly.so">Contact us</a> for volume pricing.
+      Builder plan ($19/mo) — 2M tokens/day, all tiers, REST API + MCP access. Need more? <a href="mailto:hello@promptolian.com">Contact us</a>.
     </div>
 
     <!-- ── Auth ── -->
     <h2 id="auth">Authentication</h2>
-    <p>Pass your API key in the <code class="inline">Authorization</code> header as a Bearer token:</p>
+    <p>Pass your API key either in the JSON body or as a header. Free tier works without a key (standard tier only, IP rate-limited).</p>
 
     <div class="code-tabs">
       <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchCodeTab(this,'auth','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','python')">Python</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','rust')">Rust</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'auth','cpp')">C++</button>
+        <button class="code-tab-btn active" onclick="switchTab(this,'auth','body')">JSON body</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'auth','header')">Header</button>
       </div>
-      <div class="code-pane active" id="auth-curl">
-<pre><code><span class="fn">curl</span> https://api.promptly.so/v1/health \
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span></code></pre>
+      <div class="code-pane active" id="auth-body">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"text": "...", "tier": "pro", "api_key": "YOUR_API_KEY"}'</span></code></pre>
       </div>
-      <div class="code-pane" id="auth-python">
-<pre><code><span class="kw">import</span> promptly
-
-client = promptly.<span class="type">Client</span>(api_key=<span class="str">"YOUR_API_KEY"</span>)
-<span class="cmt"># or: client = promptly.Client()  — reads PROMPTLY_API_KEY env var</span></code></pre>
-      </div>
-      <div class="code-pane" id="auth-rust">
-<pre><code><span class="kw">use</span> promptly::Client;
-
-<span class="kw">let</span> client = Client::new(<span class="str">"YOUR_API_KEY"</span>);
-<span class="cmt">// or: Client::from_env()  — reads PROMPTLY_API_KEY</span></code></pre>
-      </div>
-      <div class="code-pane" id="auth-cpp">
-<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
-
-Promptly::Client client(<span class="str">"YOUR_API_KEY"</span>);
-<span class="cmt">// or: Promptly::Client::from_env()</span></code></pre>
+      <div class="code-pane" id="auth-header">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"X-API-Key: YOUR_API_KEY"</span> \
+  -d <span class="str">'{"text": "...", "tier": "pro"}'</span></code></pre>
       </div>
     </div>
 
     <!-- ── Quickstart ── -->
     <h2 id="quickstart">Quickstart</h2>
-    <p>Compress a prompt in one call:</p>
+    <p>Compress a prompt in one call — no API key needed for standard tier:</p>
 
     <div class="code-tabs">
       <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchCodeTab(this,'qs','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','python')">Python</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','rust')">Rust</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'qs','cpp')">C++</button>
+        <button class="code-tab-btn active" onclick="switchTab(this,'qs','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'qs','python')">Python</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'qs','js')">JavaScript</button>
       </div>
       <div class="code-pane active" id="qs-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress \
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
+<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{
     "text": "You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation.",
-    "mode": "standard"
+    "tier": "standard"
   }'</span></code></pre>
       </div>
       <div class="code-pane" id="qs-python">
-<pre><code><span class="kw">import</span> promptly
+<pre><code><span class="kw">import</span> httpx
 
-client = promptly.<span class="type">Client</span>(api_key=<span class="str">"YOUR_API_KEY"</span>)
-
-result = client.compress(
-    text=<span class="str">"You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation."</span>,
-    mode=<span class="str">"standard"</span>,
-)
-
-<span class="fn">print</span>(result.compressed)      <span class="cmt"># §EXP py developer. FN sort list →code ⊖explain.</span>
-<span class="fn">print</span>(result.compression_rate)  <span class="cmt"># 0.28  (28% tokens saved)</span></code></pre>
+resp = httpx.post(<span class="str">"https://api.promptolian.com/compress"</span>, json={
+    <span class="str">"text"</span>: <span class="str">"You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation."</span>,
+    <span class="str">"tier"</span>: <span class="str">"standard"</span>,
+    <span class="str">"api_key"</span>: <span class="str">"YOUR_API_KEY"</span>,  <span class="cmt"># omit for free tier</span>
+})
+data = resp.json()
+<span class="fn">print</span>(data[<span class="str">"compressed"</span>])        <span class="cmt"># §EXP py developer. FN sort list →code ⊖explain.</span>
+<span class="fn">print</span>(data[<span class="str">"tokens_saved_pct"</span>])  <span class="cmt"># 21</span></code></pre>
       </div>
-      <div class="code-pane" id="qs-rust">
-<pre><code><span class="kw">use</span> promptly::{Client, CompressRequest};
-
-<span class="kw">let</span> client = Client::new(<span class="str">"YOUR_API_KEY"</span>);
-
-<span class="kw">let</span> res = client
-    .compress(CompressRequest {
-        text: <span class="str">"You are an expert Python developer. Please write a function to sort a list."</span>.into(),
-        mode: <span class="str">"standard"</span>.into(),
-        ..Default::default()
-    })
-    .await?;
-
-<span class="fn">println!</span>(<span class="str">"{}"</span>, res.compressed);
-<span class="fn">println!</span>(<span class="str">"CR: {:.1}%"</span>, res.compression_rate * <span class="num">100.0</span>);</code></pre>
-      </div>
-      <div class="code-pane" id="qs-cpp">
-<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
-<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
-
-Promptly::Client client(<span class="str">"YOUR_API_KEY"</span>);
-
-<span class="kw">auto</span> req = Promptly::CompressRequest{};
-req.text = <span class="str">"You are an expert Python developer. Write a function to sort a list."</span>;
-req.mode = <span class="str">"standard"</span>;
-
-<span class="kw">auto</span> res = client.compress(req);
-std::cout &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;
-std::cout &lt;&lt; <span class="str">"CR: "</span> &lt;&lt; res.compression_rate * <span class="num">100</span> &lt;&lt; <span class="str">"%\n"</span>;</code></pre>
+      <div class="code-pane" id="qs-js">
+<pre><code><span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.promptolian.com/compress'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  body: JSON.<span class="fn">stringify</span>({
+    text: <span class="str">'You are an expert Python developer. Please write a function to sort a list and return only the code.'</span>,
+    tier: <span class="str">'standard'</span>,
+    api_key: <span class="str">'YOUR_API_KEY'</span>,
+  }),
+});
+<span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
+console.<span class="fn">log</span>(data.compressed);
+console.<span class="fn">log</span>(<span class="str">`Saved ${data.tokens_saved_pct}%`</span>);</code></pre>
       </div>
     </div>
 
@@ -270,389 +205,368 @@ std::cout &lt;&lt; <span class="str">"CR: "</span> &lt;&lt; res.compression_rate
     <div class="resp-block"><span class="kw">{</span>
   <span class="str">"compressed"</span>:        <span class="str">"§EXP py developer. FN sort list →code ⊖explain."</span>,
   <span class="str">"original_tokens"</span>:   <span class="num">24</span>,
-  <span class="str">"compressed_tokens"</span>: <span class="num">17</span>,
-  <span class="str">"compression_rate"</span>:  <span class="num">0.29</span>,
-  <span class="str">"mode"</span>:              <span class="str">"standard"</span>,
-  <span class="str">"domain"</span>:            <span class="kw">null</span>,
-  <span class="str">"processing_ms"</span>:     <span class="num">3</span>
+  <span class="str">"compressed_tokens"</span>: <span class="num">19</span>,
+  <span class="str">"tokens_saved"</span>:      <span class="num">5</span>,
+  <span class="str">"tokens_saved_pct"</span>:  <span class="num">21</span>,
+  <span class="str">"tier"</span>:              <span class="str">"standard"</span>
 <span class="kw">}</span></div>
 
-    <!-- ── POST /v1/compress ── -->
-    <h2 id="compress">POST /v1/compress</h2>
+    <!-- ── POST /compress ── -->
+    <h2 id="compress">POST /compress</h2>
     <p>Compress a single prompt. Returns the compressed text plus token metrics.</p>
 
     <div class="endpoint">
       <span class="method">POST</span>
-      <span class="path">/v1/compress</span>
+      <span class="path">https://api.promptolian.com/compress</span>
     </div>
 
     <h3>Request body</h3>
     <table class="param-table">
       <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td>text<span class="required">*</span></td><td>string</td><td>The prompt text to compress. Max 32,000 characters.</td></tr>
-        <tr><td>mode<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">telegraphic</code>, or <code class="inline">adaptive</code>. Telegraphic strips articles and copulas for maximum compression. Adaptive auto-selects based on Protected Token Ratio.</td></tr>
-        <tr><td>domain<span class="optional">opt</span></td><td>string</td><td>Apply a domain vocabulary pack on top of standard rules: <code class="inline">medical</code>, <code class="inline">academic</code>, <code class="inline">legal_pro</code>, <code class="inline">finance</code>, <code class="inline">data_science</code>, <code class="inline">social</code>.</td></tr>
-        <tr><td>custom_rules<span class="optional">opt</span></td><td>array</td><td>Array of <code class="inline">[pattern, replacement]</code> string pairs. Pattern is treated as a word-boundary regex.</td></tr>
-        <tr><td>preserve_facts<span class="optional">opt</span></td><td>bool</td><td>Default <code class="inline">true</code>. Pre-pass protects proper nouns, numbers, URLs, emails, and file paths from compression.</td></tr>
+        <tr><td>text<span class="required">*</span></td><td>string</td><td>The prompt text to compress. Max 50,000 characters.</td></tr>
+        <tr><td>tier<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">pro</code>, or <code class="inline">developer</code>. Higher tiers apply more aggressive NLP-based compression. Pro/developer require Builder plan.</td></tr>
+        <tr><td>lang<span class="optional">opt</span></td><td>string</td><td>Language hint: <code class="inline">auto</code> (default), <code class="inline">en</code>, <code class="inline">es</code>, <code class="inline">fr</code>, <code class="inline">de</code>, <code class="inline">it</code>.</td></tr>
+        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Your API key. Alternatively pass as <code class="inline">X-API-Key</code> header. Required for pro/developer tiers.</td></tr>
       </tbody>
     </table>
 
-    <h3>Full example with all options</h3>
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchCodeTab(this,'full','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','python')">Python</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','rust')">Rust</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'full','cpp')">C++</button>
-      </div>
-      <div class="code-pane active" id="full-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress \
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{
-    "text": "Analyze this patient case. The patient has hypertension and type 2 diabetes. Calculate the glomerular filtration rate and provide a comprehensive metabolic panel interpretation.",
-    "mode": "telegraphic",
-    "domain": "medical",
-    "custom_rules": [["patient case", "pt case"]],
-    "preserve_facts": true
-  }'</span></code></pre>
-      </div>
-      <div class="code-pane" id="full-python">
-<pre><code>result = client.compress(
-    text=<span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes. "</span>
-         <span class="str">"Calculate the glomerular filtration rate and provide a comprehensive metabolic panel interpretation."</span>,
-    mode=<span class="str">"telegraphic"</span>,
-    domain=<span class="str">"medical"</span>,
-    custom_rules=[[<span class="str">"patient case"</span>, <span class="str">"pt case"</span>]],
-    preserve_facts=<span class="kw">True</span>,
-)
+    <h3>Response fields</h3>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>compressed</td><td>string</td><td>The compressed prompt text.</td></tr>
+        <tr><td>original_tokens</td><td>integer</td><td>Token count of the input (BPE estimate).</td></tr>
+        <tr><td>compressed_tokens</td><td>integer</td><td>Token count of the compressed output.</td></tr>
+        <tr><td>tokens_saved</td><td>integer</td><td>Tokens saved = original − compressed.</td></tr>
+        <tr><td>tokens_saved_pct</td><td>integer</td><td>Percentage of tokens saved (0–100).</td></tr>
+        <tr><td>tier</td><td>string</td><td>The tier actually used.</td></tr>
+      </tbody>
+    </table>
 
-<span class="fn">print</span>(result.compressed)
-<span class="cmt"># ANLZ pt case. pt HTN T2DM. calc GFR →long CMP interpretation.</span>
-<span class="fn">print</span>(<span class="fn">f</span><span class="str">"{result.compression_rate:.0%} compression"</span>)  <span class="cmt"># 38% compression</span></code></pre>
-      </div>
-      <div class="code-pane" id="full-rust">
-<pre><code><span class="kw">let</span> res = client.compress(CompressRequest {
-    text: <span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes."</span>.into(),
-    mode: <span class="str">"telegraphic"</span>.into(),
-    domain: <span class="type">Some</span>(<span class="str">"medical"</span>.into()),
-    custom_rules: <span class="type">Some</span>(<span class="fn">vec!</span>[(<span class="str">"patient case"</span>.into(), <span class="str">"pt case"</span>.into())]),
-    preserve_facts: <span class="type">Some</span>(<span class="kw">true</span>),
-}).await?;
-
-<span class="fn">println!</span>(<span class="str">"{}"</span>, res.compressed);</code></pre>
-      </div>
-      <div class="code-pane" id="full-cpp">
-<pre><code><span class="kw">auto</span> req = Promptly::CompressRequest{};
-req.text = <span class="str">"Analyze this patient case. The patient has hypertension and type 2 diabetes."</span>;
-req.mode = <span class="str">"telegraphic"</span>;
-req.domain = <span class="str">"medical"</span>;
-req.custom_rules = {{<span class="str">"patient case"</span>, <span class="str">"pt case"</span>}};
-req.preserve_facts = <span class="kw">true</span>;
-
-<span class="kw">auto</span> res = client.compress(req);
-std::cout &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;</code></pre>
-      </div>
-    </div>
-
-    <!-- ── POST /v1/compress/batch ── -->
-    <h2 id="batch">POST /v1/compress/batch</h2>
-    <p>Compress up to 100 prompts in a single request. Each item can specify its own mode and domain.</p>
+    <!-- ── POST /optimize-context ── -->
+    <h2 id="optimize-context">POST /optimize-context</h2>
+    <p>Prune and compress a multi-turn conversation history before sending it to an LLM. Removes off-topic messages, compresses retained ones, and optionally produces a rolling summary. Requires Builder plan.</p>
 
     <div class="endpoint">
       <span class="method">POST</span>
-      <span class="path">/v1/compress/batch</span>
+      <span class="path">https://api.promptolian.com/optimize-context</span>
     </div>
+
+    <h3>Request body</h3>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>messages<span class="required">*</span></td><td>array</td><td>Array of <code class="inline">{"role": "user|assistant", "content": "..."}</code> objects.</td></tr>
+        <tr><td>query<span class="required">*</span></td><td>string</td><td>The current user query. Used to score relevance of past messages.</td></tr>
+        <tr><td>summary<span class="optional">opt</span></td><td>string</td><td>Rolling summary from a previous call. Injected as context.</td></tr>
+        <tr><td>mode<span class="optional">opt</span></td><td>string</td><td><code class="inline">lossless</code> (default) — removes only clearly off-topic messages. <code class="inline">aggressive</code> — prunes more heavily.</td></tr>
+        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Builder plan key required.</td></tr>
+      </tbody>
+    </table>
 
     <div class="code-tabs">
       <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchCodeTab(this,'batch','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','python')">Python</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','rust')">Rust</button>
-        <button class="code-tab-btn" onclick="switchCodeTab(this,'batch','cpp')">C++</button>
+        <button class="code-tab-btn active" onclick="switchTab(this,'ctx','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'ctx','python')">Python</button>
       </div>
-      <div class="code-pane active" id="batch-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptly.so/v1/compress/batch \
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \
+      <div class="code-pane active" id="ctx-curl">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/optimize-context \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{
-    "items": [
-      { "id": "p1", "text": "You are an expert Python developer. Write a unit test for a sorting function.", "mode": "standard" },
-      { "id": "p2", "text": "Analyze the patient blood pressure and heart rate. Check for atrial fibrillation.", "mode": "telegraphic", "domain": "medical" }
-    ]
+    "messages": [
+      {"role": "user",      "content": "I am building a FastAPI app"},
+      {"role": "assistant", "content": "Great, I can help with FastAPI."},
+      {"role": "user",      "content": "What is the weather today?"},
+      {"role": "assistant", "content": "I am not sure about the weather."},
+      {"role": "user",      "content": "Back to FastAPI — how do I add auth?"}
+    ],
+    "query":   "How do I add JWT authentication to FastAPI?",
+    "mode":    "lossless",
+    "api_key": "YOUR_API_KEY"
   }'</span></code></pre>
       </div>
-      <div class="code-pane" id="batch-python">
-<pre><code>results = client.compress_batch([
-    {<span class="str">"id"</span>: <span class="str">"p1"</span>, <span class="str">"text"</span>: <span class="str">"You are an expert Python developer. Write a unit test for a sorting function."</span>, <span class="str">"mode"</span>: <span class="str">"standard"</span>},
-    {<span class="str">"id"</span>: <span class="str">"p2"</span>, <span class="str">"text"</span>: <span class="str">"Analyze the patient blood pressure and heart rate."</span>, <span class="str">"mode"</span>: <span class="str">"telegraphic"</span>, <span class="str">"domain"</span>: <span class="str">"medical"</span>},
-])
-
-<span class="kw">for</span> r <span class="kw">in</span> results:
-    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{r.id}: {r.compressed}"</span>)</code></pre>
-      </div>
-      <div class="code-pane" id="batch-rust">
-<pre><code><span class="kw">let</span> results = client.compress_batch(<span class="fn">vec!</span>[
-    BatchItem { id: <span class="str">"p1"</span>.into(), text: <span class="str">"You are an expert Python developer..."</span>.into(), mode: <span class="str">"standard"</span>.into(), ..Default::default() },
-    BatchItem { id: <span class="str">"p2"</span>.into(), text: <span class="str">"Analyze patient blood pressure..."</span>.into(), mode: <span class="str">"telegraphic"</span>.into(), domain: <span class="type">Some</span>(<span class="str">"medical"</span>.into()), ..Default::default() },
-]).await?;</code></pre>
-      </div>
-      <div class="code-pane" id="batch-cpp">
-<pre><code>std::vector&lt;Promptly::BatchItem&gt; items = {
-    {<span class="str">"p1"</span>, <span class="str">"You are an expert Python developer..."</span>, <span class="str">"standard"</span>, <span class="str">""</span>},
-    {<span class="str">"p2"</span>, <span class="str">"Analyze patient blood pressure..."</span>,  <span class="str">"telegraphic"</span>, <span class="str">"medical"</span>},
-};
-<span class="kw">auto</span> results = client.compress_batch(items);</code></pre>
+      <div class="code-pane" id="ctx-python">
+<pre><code>resp = httpx.post(<span class="str">"https://api.promptolian.com/optimize-context"</span>, json={
+    <span class="str">"messages"</span>: [
+        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"I am building a FastAPI app"</span>},
+        {<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="str">"Great, I can help with FastAPI."</span>},
+        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"What is the weather today?"</span>},
+        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"Back to FastAPI — how do I add auth?"</span>},
+    ],
+    <span class="str">"query"</span>:   <span class="str">"How do I add JWT authentication to FastAPI?"</span>,
+    <span class="str">"mode"</span>:    <span class="str">"lossless"</span>,
+    <span class="str">"api_key"</span>: <span class="str">"YOUR_API_KEY"</span>,
+})
+data = resp.json()
+<span class="fn">print</span>(data[<span class="str">"optimized_prompt"</span>])
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"{data['messages_pruned']} messages pruned, {data['tokens_saved_estimate']} tokens saved"</span>)</code></pre>
       </div>
     </div>
 
-    <h3>Batch response</h3>
+    <h3>Response</h3>
     <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"results"</span>: [
-    <span class="kw">{</span>
-      <span class="str">"id"</span>:               <span class="str">"p1"</span>,
-      <span class="str">"compressed"</span>:       <span class="str">"§EXP py developer. TEST sort FN."</span>,
-      <span class="str">"original_tokens"</span>:  <span class="num">14</span>,
-      <span class="str">"compressed_tokens"</span>: <span class="num">9</span>,
-      <span class="str">"compression_rate"</span>: <span class="num">0.36</span>
-    <span class="kw">}</span>,
-    <span class="kw">{</span>
-      <span class="str">"id"</span>:               <span class="str">"p2"</span>,
-      <span class="str">"compressed"</span>:       <span class="str">"ANLZ pt BP HR. check AFib."</span>,
-      <span class="str">"original_tokens"</span>:  <span class="num">10</span>,
-      <span class="str">"compressed_tokens"</span>: <span class="num">6</span>,
-      <span class="str">"compression_rate"</span>: <span class="num">0.40</span>
-    <span class="kw">}</span>
-  ],
-  <span class="str">"total_original_tokens"</span>:   <span class="num">24</span>,
-  <span class="str">"total_compressed_tokens"</span>: <span class="num">15</span>,
-  <span class="str">"avg_compression_rate"</span>:    <span class="num">0.38</span>,
-  <span class="str">"processing_ms"</span>:           <span class="num">7</span>
+  <span class="str">"optimized_prompt"</span>:      <span class="str">"[compressed conversation ready to send to LLM]"</span>,
+  <span class="str">"original_tokens"</span>:        <span class="num">87</span>,
+  <span class="str">"optimized_tokens"</span>:       <span class="num">54</span>,
+  <span class="str">"tokens_saved_estimate"</span>:  <span class="num">33</span>,
+  <span class="str">"messages_pruned"</span>:        <span class="num">2</span>,
+  <span class="str">"new_summary"</span>:            <span class="str">"User building FastAPI app, asked about auth."</span>
 <span class="kw">}</span></div>
 
-    <!-- ── GET /v1/health ── -->
-    <h2 id="health">GET /v1/health</h2>
-    <p>Returns server status and your plan quota. No body required.</p>
+    <!-- ── POST /compress-tools ── -->
+    <h2 id="compress-tools">POST /compress-tools</h2>
+    <p>Compress a JSON tool schema array (OpenAI / Anthropic format) into a compact DSL. Achieves ~69% compression on first call, ~97% on subsequent calls via session caching. Requires Builder plan.</p>
 
     <div class="endpoint">
-      <span class="method" style="background:#3b82f622;color:#60a5fa">GET</span>
-      <span class="path">/v1/health</span>
+      <span class="method">POST</span>
+      <span class="path">https://api.promptolian.com/compress-tools</span>
+    </div>
+
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>tools<span class="required">*</span></td><td>array</td><td>Array of tool objects in OpenAI or Anthropic format.</td></tr>
+        <tr><td>session_id<span class="optional">opt</span></td><td>string</td><td>Unique ID for this conversation session. Enables cache-hit compression (~97% CR) on repeated calls.</td></tr>
+        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Builder plan key required.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchTab(this,'tools','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'tools','python')">Python</button>
+      </div>
+      <div class="code-pane active" id="tools-curl">
+<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress-tools \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Get the current weather for a location",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "location": {"type": "string", "description": "City name"},
+            "unit":     {"type": "string", "enum": ["celsius","fahrenheit"]}
+          },
+          "required": ["location"]
+        }
+      }
+    ],
+    "session_id": "my-chat-session-123",
+    "api_key":    "YOUR_API_KEY"
+  }'</span></code></pre>
+      </div>
+      <div class="code-pane" id="tools-python">
+<pre><code>tools = [{
+    <span class="str">"name"</span>: <span class="str">"get_weather"</span>,
+    <span class="str">"description"</span>: <span class="str">"Get the current weather for a location"</span>,
+    <span class="str">"input_schema"</span>: {
+        <span class="str">"type"</span>: <span class="str">"object"</span>,
+        <span class="str">"properties"</span>: {
+            <span class="str">"location"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"description"</span>: <span class="str">"City name"</span>},
+            <span class="str">"unit"</span>:     {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"enum"</span>: [<span class="str">"celsius"</span>, <span class="str">"fahrenheit"</span>]},
+        },
+        <span class="str">"required"</span>: [<span class="str">"location"</span>],
+    },
+}]
+
+resp = httpx.post(<span class="str">"https://api.promptolian.com/compress-tools"</span>, json={
+    <span class="str">"tools"</span>:      tools,
+    <span class="str">"session_id"</span>: <span class="str">"my-chat-session-123"</span>,
+    <span class="str">"api_key"</span>:    <span class="str">"YOUR_API_KEY"</span>,
+})
+data = resp.json()
+<span class="fn">print</span>(data[<span class="str">"dsl"</span>])             <span class="cmt"># compact DSL string</span>
+<span class="fn">print</span>(data[<span class="str">"tokens_saved"</span>])   <span class="cmt"># tokens saved vs raw JSON</span></code></pre>
+      </div>
+    </div>
+
+    <!-- ── GET /stats ── -->
+    <h2 id="stats">GET /stats</h2>
+    <p>Returns aggregate compression statistics across all API users.</p>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">https://api.promptolian.com/stats</span>
     </div>
 
     <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"status"</span>:       <span class="str">"ok"</span>,
-  <span class="str">"plan"</span>:         <span class="str">"developer"</span>,
-  <span class="str">"tokens_today"</span>: <span class="num">42310</span>,
-  <span class="str">"tokens_limit"</span>: <span class="num">1000000</span>,
-  <span class="str">"reset_at"</span>:     <span class="str">"2026-05-03T00:00:00Z"</span>
+  <span class="str">"total_compressions"</span>:  <span class="num">1482</span>,
+  <span class="str">"total_tokens_saved"</span>:  <span class="num">38291</span>,
+  <span class="str">"avg_compression_pct"</span>: <span class="num">9.4</span>,
+  <span class="str">"by_tier"</span>: <span class="kw">{</span>
+    <span class="str">"standard"</span>:  <span class="kw">{</span><span class="str">"count"</span>: <span class="num">1100</span>, <span class="str">"avg_pct"</span>: <span class="num">8.2</span><span class="kw">}</span>,
+    <span class="str">"pro"</span>:       <span class="kw">{</span><span class="str">"count"</span>: <span class="num">280</span>,  <span class="str">"avg_pct"</span>: <span class="num">10.1</span><span class="kw">}</span>,
+    <span class="str">"developer"</span>: <span class="kw">{</span><span class="str">"count"</span>: <span class="num">102</span>,  <span class="str">"avg_pct"</span>: <span class="num">11.4</span><span class="kw">}</span>
+  <span class="kw">}</span>
 <span class="kw">}</span></div>
 
-    <!-- ── Modes ── -->
-    <h2 id="modes">Compression modes</h2>
+    <!-- ── GET /health ── -->
+    <h2 id="health">GET /health</h2>
+    <p>Returns server status. Use this to check if the API is reachable and which tiers are available.</p>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">https://api.promptolian.com/health</span>
+    </div>
+
+    <div class="resp-block"><span class="kw">{</span>
+  <span class="str">"status"</span>:           <span class="str">"ok"</span>,
+  <span class="str">"service"</span>:          <span class="str">"Promptolian API"</span>,
+  <span class="str">"version"</span>:          <span class="str">"2.2.0"</span>,
+  <span class="str">"engine_v4"</span>:        <span class="kw">true</span>,
+  <span class="str">"tiers_available"</span>:  [<span class="str">"standard"</span>, <span class="str">"pro"</span>, <span class="str">"developer"</span>],
+  <span class="str">"endpoints"</span>:        [<span class="str">"/compress"</span>, <span class="str">"/compress-tools"</span>, <span class="str">"/optimize-context"</span>, <span class="str">"/stats"</span>, <span class="str">"/feedback"</span>],
+  <span class="str">"timestamp"</span>:        <span class="str">"2026-05-17T10:00:00Z"</span>
+<span class="kw">}</span></div>
+
+    <!-- ── Tiers ── -->
+    <h2 id="tiers">Compression tiers</h2>
     <table class="param-table">
-      <thead><tr><th>Mode</th><th>What it does</th><th>Typical CR</th></tr></thead>
+      <thead><tr><th>Tier</th><th>What it does</th><th>Avg CR</th><th>Plan required</th></tr></thead>
       <tbody>
-        <tr><td>standard</td><td>Applies all 180+ symbol substitution and grammar rules. Protects facts (numbers, names, URLs). Best balance of compression and readability.</td><td>12–22%</td></tr>
-        <tr><td>telegraphic</td><td>Standard rules + strips articles (the/a/an), copulas (is/are/was), and filler adverbs. Maximum compression; output may read like abbreviated notes.</td><td>17–36%</td></tr>
-        <tr><td>adaptive</td><td>Computes Protected Token Ratio (PTR = protected tokens / total). Uses <code class="inline">telegraphic</code> when PTR &gt; 0.65, otherwise <code class="inline">standard</code>.</td><td>12–36%</td></tr>
+        <tr><td>standard</td><td>Symbol substitution + grammar rules. Removes filler phrases, replaces verbose patterns with symbols (§EXP, →code, ∑, etc).</td><td>~9%</td><td>Free</td></tr>
+        <tr><td>pro</td><td>Standard + math operators, numeric abbreviations (5 million → 5M), verbose phrase removal.</td><td>~10%</td><td>Builder</td></tr>
+        <tr><td>developer</td><td>Pro + spaCy NLP deep pruning, domain-specific packs (code, finance, legal, medical), dependency parse.</td><td>~11%, up to 33%</td><td>Builder</td></tr>
       </tbody>
     </table>
 
-    <!-- ── Domains ── -->
-    <h2 id="domains">Domain packs</h2>
-    <p>Domain packs add vocabulary rules on top of the standard set. Active when the <code class="inline">domain</code> field is set.</p>
-    <table class="param-table">
-      <thead><tr><th>Pack</th><th>Rules added</th><th>Examples</th></tr></thead>
-      <tbody>
-        <tr><td>medical</td><td>39 rules</td><td>hypertension→HTN, myocardial infarction→MI, complete blood count→CBC, diagnosis→Dx</td></tr>
-        <tr><td>academic</td><td>33 rules</td><td>randomized controlled trial→RCT, confidence interval→CI, null hypothesis→H₀, peer-reviewed→peer-rev</td></tr>
-        <tr><td>legal_pro</td><td>25 rules</td><td>plaintiff→pltf, motion for summary judgment→MSJ, statute of limitations→SOL, deposition→depo</td></tr>
-        <tr><td>finance</td><td>28 rules</td><td>monthly recurring revenue→MRR, compound annual growth rate→CAGR, year-over-year→YoY</td></tr>
-        <tr><td>data_science</td><td>31 rules</td><td>convolutional neural network→CNN, exploratory data analysis→EDA, cross-validation→CV</td></tr>
-        <tr><td>social</td><td>20 rules</td><td>click-through rate→CTR, search engine optimization→SEO, call to action→CTA</td></tr>
-      </tbody>
-    </table>
+    <div class="alert alert-warn">
+      Token counts use BPE estimation via tiktoken (cl100k_base encoding — same as Claude and GPT-4). Both original and compressed counts are measured so you can verify savings independently.
+    </div>
 
     <!-- ── Errors ── -->
     <h2 id="errors">Errors</h2>
-    <p>All errors return a JSON body with <code class="inline">error.code</code> and <code class="inline">error.message</code>.</p>
+    <p>All errors return a JSON body with an <code class="inline">error</code> field.</p>
     <table class="status-table">
       <tbody>
         <tr><td class="status-ok">200</td><td>Success</td></tr>
-        <tr><td class="status-warn">400</td><td><code class="inline">invalid_request</code> — missing or malformed fields</td></tr>
-        <tr><td class="status-err">401</td><td><code class="inline">unauthorized</code> — missing or invalid API key</td></tr>
-        <tr><td class="status-warn">413</td><td><code class="inline">text_too_long</code> — input exceeds 32,000 characters</td></tr>
-        <tr><td class="status-warn">422</td><td><code class="inline">invalid_domain</code> — unrecognised domain pack name</td></tr>
-        <tr><td class="status-err">429</td><td><code class="inline">quota_exceeded</code> — daily token limit reached. Resets at midnight UTC.</td></tr>
-        <tr><td class="status-err">500</td><td><code class="inline">internal_error</code> — something went wrong on our end</td></tr>
+        <tr><td class="status-warn">400</td><td>Missing or malformed fields (e.g. no <code class="inline">text</code> field, invalid <code class="inline">mode</code>)</td></tr>
+        <tr><td class="status-warn">413</td><td>Input exceeds 50,000 characters</td></tr>
+        <tr><td class="status-err">429</td><td>Rate limit exceeded — free tier IP limit reached</td></tr>
+        <tr><td class="status-err">500</td><td>Internal server error</td></tr>
       </tbody>
     </table>
 
-    <div class="resp-block"><span class="cmt">// 429 example</span>
+    <div class="resp-block"><span class="cmt">// 400 example</span>
 <span class="kw">{</span>
-  <span class="str">"error"</span>: <span class="kw">{</span>
-    <span class="str">"code"</span>:    <span class="str">"quota_exceeded"</span>,
-    <span class="str">"message"</span>: <span class="str">"Daily token limit of 1,000,000 reached. Resets 2026-05-03T00:00:00Z."</span>,
-    <span class="str">"docs"</span>:    <span class="str">"https://promptly.so/docs#limits"</span>
-  <span class="kw">}</span>
+  <span class="str">"error"</span>: <span class="str">"text is required"</span>
 <span class="kw">}</span></div>
 
     <!-- ── Limits ── -->
     <h2 id="limits">Rate limits</h2>
     <table class="param-table">
-      <thead><tr><th>Plan</th><th>Tokens / day</th><th>Requests / min</th><th>Batch size</th></tr></thead>
+      <thead><tr><th>Plan</th><th>Tiers</th><th>Tokens / day</th><th>Auth</th></tr></thead>
       <tbody>
-        <tr><td>Developer ($19/mo)</td><td>1,000,000</td><td>120</td><td>100</td></tr>
-        <tr><td>Volume (custom)</td><td>Unlimited</td><td>Custom</td><td>1,000</td></tr>
+        <tr><td>Free</td><td>standard only</td><td>Unlimited standard (IP-based fair use)</td><td>None</td></tr>
+        <tr><td>Builder ($19/mo)</td><td>standard, pro, developer</td><td>2,000,000</td><td>API key</td></tr>
+        <tr><td>Custom</td><td>All</td><td>Custom</td><td>API key</td></tr>
       </tbody>
     </table>
-    <div class="alert alert-warn">
-      Token counts use a word-boundary approximation: <code class="inline">⌈words × 1.3⌉</code>. Both original and compressed token counts are measured so you can verify savings independently.
-    </div>
 
-    <!-- ── SDK Python ── -->
-    <h2 id="sdk-python">Python SDK</h2>
+    <!-- ── CLI ── -->
+    <h2 id="cli">CLI</h2>
+    <p>The <code class="inline">promptolian</code> CLI runs compression locally — no server needed for standard tier.</p>
 
     <h3>Install</h3>
     <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="fn">pip</span> install promptly-sdk</code></pre>
+<pre><code><span class="fn">pip</span> install promptolian
+
+<span class="cmt"># With NLP engine (pro/developer tiers):</span>
+<span class="fn">pip</span> install <span class="str">"promptolian[nlp]"</span>
+<span class="fn">python</span> -m spacy download en_core_web_sm</code></pre>
     </div>
 
     <h3>Usage</h3>
     <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="kw">import</span> promptly
-<span class="kw">import</span> os
+<pre><code><span class="cmt"># Compress a prompt (standard tier, no server needed)</span>
+<span class="fn">promptolian</span> compress <span class="str">"You are an expert Python developer. Return only the code."</span>
 
-client = promptly.<span class="type">Client</span>(api_key=os.environ[<span class="str">"PROMPTLY_API_KEY"</span>])
+<span class="cmt"># Pro tier with JSON output</span>
+<span class="fn">promptolian</span> compress <span class="str">"You are an expert Python developer."</span> --tier pro --json
 
-<span class="cmt"># Single compress</span>
-res = client.compress(<span class="str">"You are an expert data scientist. Analyze this dataset and return the results as a JSON object."</span>, mode=<span class="str">"standard"</span>, domain=<span class="str">"data_science"</span>)
-<span class="fn">print</span>(res.compressed)   <span class="cmt"># §EXP data scientist. ANLZ dataset →json.</span>
+<span class="cmt"># Compress from file</span>
+<span class="fn">promptolian</span> compress --file prompt.txt --tier developer --output compressed.txt
 
-<span class="cmt"># Pipeline integration — compress before every OpenAI call</span>
-<span class="kw">import</span> openai
+<span class="cmt"># Optimize conversation history</span>
+<span class="fn">promptolian</span> context --file chat.json --query <span class="str">"How do I add auth?"</span>
 
-<span class="kw">def</span> <span class="fn">chat</span>(prompt: str) -> str:
-    compressed = client.compress(prompt).compressed
-    <span class="kw">return</span> openai.chat.completions.create(
-        model=<span class="str">"gpt-4o"</span>,
-        messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: compressed}],
-    ).choices[<span class="num">0</span>].message.content</code></pre>
+<span class="cmt"># Show compression statistics</span>
+<span class="fn">promptolian</span> stats</code></pre>
     </div>
 
-    <!-- ── SDK JS ── -->
-    <h2 id="sdk-js">JavaScript / Node SDK</h2>
+    <!-- ── MCP ── -->
+    <h2 id="mcp">Claude Code MCP</h2>
+    <p>Install the Promptolian MCP server to compress prompts natively inside Claude Code — no copy-paste needed.</p>
 
-    <h3>Install</h3>
+    <h3>Setup</h3>
     <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="fn">npm</span> install promptly-sdk
-<span class="cmt"># or: npx promptly compress "your prompt here"  (CLI mode)</span></code></pre>
+<pre><code><span class="cmt"># 1. Install dependencies</span>
+<span class="fn">pip</span> install mcp httpx
+
+<span class="cmt"># 2. Start the API server (or use api.promptolian.com)</span>
+<span class="fn">python</span> public/api/api.py &
+
+<span class="cmt"># 3. Add to ~/.claude/settings.json</span>
+<span class="kw">{</span>
+  <span class="str">"mcpServers"</span>: <span class="kw">{</span>
+    <span class="str">"promptolian"</span>: <span class="kw">{</span>
+      <span class="str">"command"</span>: <span class="str">"python3"</span>,
+      <span class="str">"args"</span>: [<span class="str">"/path/to/tools/promptolian_mcp_server.py"</span>],
+      <span class="str">"env"</span>: <span class="kw">{</span>
+        <span class="str">"PROMPTOLIAN_URL"</span>: <span class="str">"http://localhost:3001"</span>,
+        <span class="str">"PROMPTOLIAN_KEY"</span>: <span class="str">"YOUR_API_KEY"</span>
+      <span class="kw">}</span>
+    <span class="kw">}</span>
+  <span class="kw">}</span>
+<span class="kw">}</span>
+
+<span class="cmt"># 4. Restart Claude Code — then use compress_prompt tool directly</span></code></pre>
     </div>
 
-    <h3>Usage</h3>
+    <!-- ── curl examples ── -->
+    <h2 id="curl-examples">curl examples</h2>
     <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="kw">import</span> { <span class="type">Promptly</span> } <span class="kw">from</span> <span class="str">'promptly-sdk'</span>;
+<pre><code><span class="cmt"># Health check</span>
+<span class="fn">curl</span> https://api.promptolian.com/health
 
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="type">Promptly</span>({ apiKey: process.env.<span class="var">PROMPTLY_API_KEY</span> });
+<span class="cmt"># Standard compression (free, no key)</span>
+<span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"text": "Please explain how to optimize Python code step by step", "tier": "standard"}'</span>
 
-<span class="cmt">// Single call</span>
-<span class="kw">const</span> { compressed, compressionRate } = <span class="kw">await</span> client.<span class="fn">compress</span>({
-  text: <span class="str">'You are an expert React developer. Refactor this component to use hooks.'</span>,
-  mode: <span class="str">'standard'</span>,
-});
-console.<span class="fn">log</span>(compressed);        <span class="cmt">// §EXP React developer. ∆ component → hooks.</span>
-console.<span class="fn">log</span>(compressionRate);   <span class="cmt">// 0.31</span>
+<span class="cmt"># Pro compression (Builder plan)</span>
+<span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"X-API-Key: YOUR_API_KEY"</span> \
+  -d <span class="str">'{"text": "The dataset grew from 100 to 5 million records. Please optimize the query.", "tier": "pro"}'</span>
 
-<span class="cmt">// CLI usage:</span>
-<span class="cmt">// $ npx promptly compress "You are an expert..." --mode telegraphic</span>
-<span class="cmt">// $ npx promptly compress --file prompt.txt --domain medical</span></code></pre>
-    </div>
+<span class="cmt"># Context optimization</span>
+<span class="fn">curl</span> -X POST https://api.promptolian.com/optimize-context \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "messages": [{"role":"user","content":"I am building a FastAPI app"},{"role":"assistant","content":"Great!"}],
+    "query": "How do I add authentication?",
+    "api_key": "YOUR_API_KEY"
+  }'</span>
 
-    <!-- ── SDK Rust ── -->
-    <h2 id="sdk-rust">Rust SDK</h2>
-
-    <h3>Cargo.toml</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code>[dependencies]
-promptly = <span class="str">"0.1"</span>
-tokio    = { version = <span class="str">"1"</span>, features = [<span class="str">"full"</span>] }</code></pre>
-    </div>
-
-    <h3>Usage</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="kw">use</span> promptly::{Client, CompressRequest, Mode};
-
-<span class="kw">#[tokio::main]</span>
-<span class="kw">async fn</span> <span class="fn">main</span>() -> <span class="type">Result</span>&lt;(), promptly::<span class="type">Error</span>&gt; {
-    <span class="kw">let</span> client = Client::from_env()?;  <span class="cmt">// reads PROMPTLY_API_KEY</span>
-
-    <span class="kw">let</span> res = client.compress(CompressRequest {
-        text:   <span class="str">"Analyze this legal contract for indemnification clauses and jurisdiction."</span>.into(),
-        mode:   Mode::Telegraphic,
-        domain: <span class="type">Some</span>(<span class="str">"legal_pro"</span>.into()),
-        ..Default::default()
-    }).await?;
-
-    <span class="fn">println!</span>(<span class="str">"Compressed: {}"</span>, res.compressed);
-    <span class="fn">println!</span>(<span class="str">"Saved {:.0}% of tokens"</span>, res.compression_rate * <span class="num">100.0</span>);
-    <span class="type">Ok</span>(())
-}</code></pre>
-    </div>
-
-    <!-- ── SDK C++ ── -->
-    <h2 id="sdk-cpp">C++ SDK</h2>
-    <p>The C++ SDK uses <code class="inline">libcurl</code> and <code class="inline">nlohmann/json</code>. Header-only, C++17.</p>
-
-    <h3>Install (CMake)</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="fn">FetchContent_Declare</span>(promptly
-  GIT_REPOSITORY https://github.com/promptly-so/promptly-cpp
-  GIT_TAG        v0.1.0
-)
-<span class="fn">FetchContent_MakeAvailable</span>(promptly)
-<span class="fn">target_link_libraries</span>(my_target PRIVATE promptly::promptly)</code></pre>
-    </div>
-
-    <h3>Usage</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="kw">#include</span> <span class="str">"promptly/client.h"</span>
-<span class="kw">#include</span> <span class="str">&lt;cstdlib&gt;</span>
-<span class="kw">#include</span> <span class="str">&lt;iostream&gt;</span>
-
-<span class="kw">int</span> <span class="fn">main</span>() {
-    Promptly::Client client(std::<span class="fn">getenv</span>(<span class="str">"PROMPTLY_API_KEY"</span>));
-
-    <span class="kw">auto</span> req = Promptly::CompressRequest{};
-    req.text   = <span class="str">"You are an expert at machine learning. Evaluate the model overfitting using cross-validation."</span>;
-    req.mode   = Promptly::Mode::Telegraphic;
-    req.domain = <span class="str">"data_science"</span>;
-
-    <span class="kw">try</span> {
-        <span class="kw">auto</span> res = client.compress(req);
-        std::cout &lt;&lt; <span class="str">"Compressed: "</span> &lt;&lt; res.compressed &lt;&lt; <span class="str">"\n"</span>;
-        std::cout &lt;&lt; <span class="str">"CR: "</span>         &lt;&lt; res.compression_rate * <span class="num">100</span> &lt;&lt; <span class="str">"%\n"</span>;
-    } <span class="kw">catch</span> (<span class="kw">const</span> Promptly::QuotaExceeded&amp; e) {
-        std::cerr &lt;&lt; <span class="str">"Quota exceeded: "</span> &lt;&lt; e.<span class="fn">what</span>() &lt;&lt; <span class="str">"\n"</span>;
-    }
-}</code></pre>
+<span class="cmt"># Stats</span>
+<span class="fn">curl</span> https://api.promptolian.com/stats</code></pre>
     </div>
 
   </main>
 </div>
 
 <script>
-function switchCodeTab(btn, group, lang) {
-  // hide all panes in this group
+function switchTab(btn, group, lang) {
   document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
-  // deactivate all buttons in this tab bar
   btn.closest('.code-tab-bar').querySelectorAll('.code-tab-btn').forEach(b => b.classList.remove('active'));
-  // activate
   document.getElementById(`${group}-${lang}`).classList.add('active');
   btn.classList.add('active');
 }
-
-// Sidebar active state on scroll
 const headings = document.querySelectorAll('h2[id]');
 const links    = document.querySelectorAll('.sidebar a');
 const observer = new IntersectionObserver(entries => {
