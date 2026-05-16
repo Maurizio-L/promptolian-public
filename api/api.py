@@ -511,7 +511,7 @@ _TOOL_SESSION_CACHE: dict[str, set] = {}
 def health():
     return jsonify({
         'status':           'ok',
-        'service':          'Promptly API',
+        'service':          'Promptolian API',
         'version':          '2.2.0',
         'engine_v4':        _ENGINE_AVAILABLE,
         'tiers_available':  ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
@@ -825,7 +825,7 @@ if __name__ == '__main__':
     _repo.init_schema(
         Path(__file__).parent.parent.parent / 'tools' / 'reports' / 'schema_local.sql'
     )
-    print('\n  Promptly API v2.2  (SOLID)')
+    print('\n  Promptolian API v2.2  (SOLID)')
     print('  ─────────────────────────────────────────')
     print(f'  engine_v4 : {"✓ loaded" if _ENGINE_AVAILABLE else "✗ not found (Standard only)"}')
     print(f'  tiers     : {"standard / pro / developer" if _ENGINE_AVAILABLE else "standard only"}')
