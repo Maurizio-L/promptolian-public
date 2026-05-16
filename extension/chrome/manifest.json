@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Promptly — Token Compressor",
+  "name": "Promptolian — Token Compressor",
   "version": "1.0.0",
-  "description": "Automatically compress your AI prompts to save 40–65% of tokens. Works on Claude, ChatGPT, Gemini, Copilot and more.",
+  "description": "Compress your AI prompts before sending to save tokens and reduce costs. Works on Claude, ChatGPT, Gemini and Copilot. Privacy-first — runs locally.",
   "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": [
     "https://claude.ai/*",
@@ -13,7 +13,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Promptly",
+    "default_title": "Promptolian",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
