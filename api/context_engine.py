@@ -1022,8 +1022,8 @@ class ContextEngine:
         content = message.get('content', '')
         sents   = _split_sentences(content)
 
-        if len(sents) <= 2:
-            return message
+        if len(sents) <= 1:
+            return message  # single sentence — nothing to drop
 
         # Pinned indices — always survive
         pinned_idx: set[int] = {0}
@@ -1185,10 +1185,16 @@ class ContextEngine:
         # be compressed away regardless of conversation length
         kv_pinned = ''
         if use_kv_geometry:
-            kv_pinned, _ = self.pin_constraints(pruned)
+            _kv_candidate, _ = self.pin_constraints(pruned)
             prefix, middle, tail = self.kv_layout(pruned, kv_prefix, kv_tail)
             if middle:
+                tokens_before_kv = sum(_tokens(m.get('content', '')) for m in middle)
                 compressed_middle = self.role_age_compress(middle, query, mode)
+                tokens_after_kv  = sum(_tokens(m.get('content', '')) for m in compressed_middle)
+                kv_savings = tokens_before_kv - tokens_after_kv
+                # Only inject constraints block when compression savings cover its overhead
+                if _kv_candidate and kv_savings > _tokens(_kv_candidate):
+                    kv_pinned = _kv_candidate
                 pruned = prefix + compressed_middle + tail
 
         # Step 5: summarise if history warranted it
@@ -1225,9 +1231,9 @@ class ContextEngine:
             )
 
         # Step 6: session Huffman — compress repeated phrases
-        # When KV geometry is on, only apply Huffman to the middle segment so
+        # When KV geometry is on, only Huffman the middle segment so
         # prefix and tail remain bit-for-bit verbatim for cache reuse.
-        if use_kv_geometry and kv_pinned:
+        if use_kv_geometry:
             prefix, middle, tail = self.kv_layout(pruned, kv_prefix, kv_tail)
             comp_middle, decode_table, huff_saved = self.apply_session_huffman(middle)
             table_tokens = _tokens(' '.join(f'{s}={p}' for s, p in decode_table.items()))
@@ -1257,7 +1263,13 @@ class ContextEngine:
             pruned, query, summary=effective_summary, mode=mode
         )
 
-        optimized_tokens = _tokens(ctx['optimized_prompt'])
+        # Measure savings on content only (apples-to-apples with original_tokens,
+        # which is also content-only — structural markers are constant overhead).
+        optimized_content = (
+            ' '.join(m.get('content', '') for m in ctx['messages'])
+            + ' ' + ctx['user']
+        )
+        optimized_tokens = _tokens(optimized_content)
         tokens_saved     = max(0, original_tokens - optimized_tokens)
 
         return {
