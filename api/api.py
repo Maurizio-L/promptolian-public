@@ -18,7 +18,7 @@ Endpoints:
   POST /compress          body: {"text":"...","tier":"standard|pro|developer","lang":"auto"}
   GET  /stats
   POST /feedback          body: {"original":"...","compressed":"...","rating":1-5}
-  POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless"}
+  POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless","use_kv_geometry":false}
   POST /compress-tools    body: {"tools":[...], "session_id":"optional-string"}
 """
 
@@ -637,10 +637,13 @@ def optimize_context():
     if not data:
         return jsonify({'error': 'request body required'}), 400
 
-    messages = data.get('messages')
-    query    = data.get('query', '').strip()
-    summary  = data.get('summary', '')
-    mode     = data.get('mode', 'lossless')
+    messages        = data.get('messages')
+    query           = data.get('query', '').strip()
+    summary         = data.get('summary', '')
+    mode            = data.get('mode', 'lossless')
+    use_kv_geometry = bool(data.get('use_kv_geometry', False))
+    kv_prefix       = int(data.get('kv_prefix', 2))
+    kv_tail         = int(data.get('kv_tail', 4))
 
     if not isinstance(messages, list):
         return jsonify({'error': '"messages" must be a JSON array'}), 400
@@ -661,7 +664,13 @@ def optimize_context():
     try:
         from context_engine import ContextEngine  # type: ignore
         ce     = ContextEngine()
-        result = ce.optimize(messages, query, summary=summary, mode=mode)
+        result = ce.optimize(
+            messages, query,
+            summary=summary, mode=mode,
+            use_kv_geometry=use_kv_geometry,
+            kv_prefix=kv_prefix,
+            kv_tail=kv_tail,
+        )
 
         summary_tokens = _count_tokens(result.get('new_summary', ''))
         _repo.log_context_event(

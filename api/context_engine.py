@@ -67,6 +67,76 @@ def _msg_tokens(msg: dict) -> int:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# BM25 sentence scoring — pure Python, no external deps
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _bm25_scores(
+    query: str,
+    sentences: list[str],
+    k1: float = 1.5,
+    b: float = 0.75,
+) -> list[float]:
+    """BM25 relevance of each sentence against query. No external deps."""
+    q_terms = re.sub(r'\W+', ' ', query.lower()).split()
+    if not q_terms or not sentences:
+        return [0.0] * len(sentences)
+
+    tokenized = [re.sub(r'\W+', ' ', s.lower()).split() for s in sentences]
+    N    = len(tokenized)
+    avgdl = sum(len(d) for d in tokenized) / max(N, 1)
+
+    df: dict[str, int] = {}
+    for doc in tokenized:
+        for term in set(doc):
+            df[term] = df.get(term, 0) + 1
+
+    scores: list[float] = []
+    for doc in tokenized:
+        tf_map: dict[str, int] = {}
+        for t in doc:
+            tf_map[t] = tf_map.get(t, 0) + 1
+        dl    = len(doc)
+        score = 0.0
+        for term in q_terms:
+            tf = tf_map.get(term, 0)
+            if tf == 0:
+                continue
+            idf     = math.log((N - df.get(term, 0) + 0.5) / (df.get(term, 0) + 0.5) + 1)
+            tf_norm = tf * (k1 + 1) / (tf + k1 * (1 - b + b * dl / max(avgdl, 1)))
+            score  += idf * tf_norm
+        scores.append(score)
+
+    return scores
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KV cache geometry constants
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Keep ratios per role before age-decay is applied
+_ROLE_KEEP: dict[str, float] = {
+    'system':    1.00,   # never filter — KV cached prefix
+    'user':      0.75,   # dense (intent + constraints) — light filter
+    'assistant': 0.42,   # verbose by design — aggressive filter
+}
+
+# Decay steepness: normalized_age ∈ [0,1] → keep *= exp(-λ * normalized_age)
+_DECAY_LAMBDA: dict[str, float] = {
+    'lossless':   0.8,
+    'aggressive': 1.6,
+}
+
+# Sentences matching this are always pinned (survive any compression)
+_PERMANENT_RE = re.compile(
+    r'\b(must|should not|do not|don\'t|never|always|required|important|'
+    r'ensure|make sure|constraint|requirement|rule|policy|'
+    r'stack|framework|version|using|built with|based on|architecture|'
+    r'the project|the system|the app|the service|the database|the api)\b',
+    re.I,
+)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Sentence scoring helpers for extractive summarisation
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -891,6 +961,161 @@ class ContextEngine:
             'optimized_prompt': optimized_prompt,
         }
 
+    # ── KV cache geometry ────────────────────────────────────────────────────
+
+    def pin_constraints(
+        self,
+        messages: list[dict],
+    ) -> tuple[str, list[dict]]:
+        """Extract permanent constraint sentences into a [CONSTRAINTS] header.
+
+        Scans all user/system turns and collects sentences that match
+        _PERMANENT_RE (rules, stack declarations, hard constraints).  These
+        are injected into the system prefix so they survive any compression
+        pass applied to the middle of the conversation.
+
+        Returns
+        -------
+        (constraints_block, messages)  — messages are returned unchanged;
+        the block is additive (inject into summary, not a replacement).
+        """
+        pinned: list[str] = []
+        seen_keys: set[str] = set()
+
+        for msg in messages:
+            if msg.get('role') not in ('system', 'user'):
+                continue
+            for sent in _split_sentences(msg.get('content', '')):
+                if not _PERMANENT_RE.search(sent):
+                    continue
+                key = re.sub(r'\W+', '', sent.lower())[:60]
+                if key not in seen_keys:
+                    pinned.append(sent)
+                    seen_keys.add(key)
+
+        if not pinned:
+            return '', messages
+
+        body = ' '.join(pinned)
+        return f'[CONSTRAINTS]\n{body}', messages
+
+    def sentence_filter(
+        self,
+        message: dict,
+        query: str,
+        keep_ratio: float,
+    ) -> dict:
+        """Filter sentences in one message by BM25 relevance to query.
+
+        Always keeps: first sentence + any sentence matching _PERMANENT_RE.
+        Drops the lowest-scoring (1 - keep_ratio) fraction of the remainder.
+
+        Parameters
+        ----------
+        message    : {role, content} dict
+        query      : current user query for BM25 scoring
+        keep_ratio : fraction of sentences to keep (0.0–1.0)
+        """
+        if keep_ratio >= 1.0:
+            return message
+
+        content = message.get('content', '')
+        sents   = _split_sentences(content)
+
+        if len(sents) <= 2:
+            return message
+
+        # Pinned indices — always survive
+        pinned_idx: set[int] = {0}
+        for i, sent in enumerate(sents):
+            if _PERMANENT_RE.search(sent):
+                pinned_idx.add(i)
+
+        # BM25-score every sentence
+        scores = _bm25_scores(query, sents)
+
+        # How many non-pinned slots can we keep?
+        total_keep     = max(len(pinned_idx), round(len(sents) * keep_ratio))
+        non_pinned_budget = max(0, total_keep - len(pinned_idx))
+
+        non_pinned = [(i, scores[i]) for i in range(len(sents)) if i not in pinned_idx]
+        non_pinned.sort(key=lambda x: x[1], reverse=True)
+        keep_non_pinned = {i for i, _ in non_pinned[:non_pinned_budget]}
+
+        keep_idx = pinned_idx | keep_non_pinned
+        filtered = [s for i, s in enumerate(sents) if i in keep_idx]
+        return {**message, 'content': ' '.join(filtered)}
+
+    def role_age_compress(
+        self,
+        messages: list[dict],
+        query: str,
+        mode: str = 'lossless',
+    ) -> list[dict]:
+        """Apply role-differentiated, age-decayed sentence filtering.
+
+        For each message:
+          normalized_age ∈ [0, 1]  — 0 = newest, 1 = oldest
+          keep_ratio = _ROLE_KEEP[role] * exp(-λ * normalized_age)
+
+        System messages are always returned verbatim.  keep_ratio is
+        floored at 0.10 so no message is blanked entirely.
+
+        Parameters
+        ----------
+        messages : list of {role, content} dicts (oldest → newest)
+        query    : current user query for BM25 scoring
+        mode     : 'lossless' | 'aggressive'
+        """
+        if not messages:
+            return messages
+
+        lam = _DECAY_LAMBDA.get(mode, _DECAY_LAMBDA['lossless'])
+        N   = len(messages)
+
+        result: list[dict] = []
+        for i, msg in enumerate(messages):
+            role = msg.get('role', 'user')
+            if role == 'system':
+                result.append(msg)
+                continue
+
+            # normalized_age: 0 = newest (i == N-1), 1 = oldest (i == 0)
+            norm_age   = (N - 1 - i) / max(N - 1, 1)
+            base_keep  = _ROLE_KEEP.get(role, 0.75)
+            keep_ratio = max(0.10, base_keep * math.exp(-lam * norm_age))
+
+            result.append(self.sentence_filter(msg, query, keep_ratio))
+
+        return result
+
+    def kv_layout(
+        self,
+        messages: list[dict],
+        kv_prefix: int = 2,
+        kv_tail: int = 4,
+    ) -> tuple[list[dict], list[dict], list[dict]]:
+        """Split messages into (prefix, middle, tail) for KV-cache sandwich.
+
+        The LLM's KV cache reuses attention computations for any verbatim
+        prefix and suffix.  Keeping prefix and tail bit-for-bit identical
+        across calls maximises cache hits; only the middle gets compressed.
+
+        Returns
+        -------
+        (prefix, middle, tail)
+        If total messages ≤ kv_prefix + kv_tail all messages are returned
+        as prefix with empty middle and tail.
+        """
+        n = len(messages)
+        if n <= kv_prefix + kv_tail:
+            return messages[:], [], []
+
+        prefix = messages[:kv_prefix]
+        tail   = messages[n - kv_tail:]
+        middle = messages[kv_prefix : n - kv_tail]
+        return prefix, middle, tail
+
     # ── 7. Full pipeline ─────────────────────────────────────────────────────
 
     def optimize(
@@ -900,17 +1125,23 @@ class ContextEngine:
         summary: str = '',
         mode: str = 'lossless',
         budget_tokens: Optional[int] = None,
+        use_kv_geometry: bool = False,
+        kv_prefix: int = 2,
+        kv_tail: int = 4,
     ) -> dict:
         """Full pipeline: delta_prune → entity_register → relevance_prune
-                         → summarize → session_huffman → build_context.
+                         → [kv_geometry] → summarize → session_huffman → build_context.
 
         Parameters
         ----------
-        messages      : raw conversation history [{role, content}, ...]
-        query         : current user query
-        summary       : existing rolling summary ('' on first call)
-        mode          : 'lossless' | 'aggressive'
-        budget_tokens : override token budget
+        messages         : raw conversation history [{role, content}, ...]
+        query            : current user query
+        summary          : existing rolling summary ('' on first call)
+        mode             : 'lossless' | 'aggressive'
+        budget_tokens    : override token budget
+        use_kv_geometry  : enable KV-cache sandwich + role/age compression
+        kv_prefix        : verbatim messages to keep at the start (default 2)
+        kv_tail          : verbatim messages to keep at the end   (default 4)
 
         Returns
         -------
@@ -924,6 +1155,7 @@ class ContextEngine:
             delta_dropped        : int — messages dropped by delta_prune
             huffman_tokens_saved : int — tokens saved by session Huffman
             entity_register      : str — entity register block (injected in system)
+            kv_pinned            : str — constraint block pinned to system prefix
         """
         budget = budget_tokens or self.budget_tokens
 
@@ -947,7 +1179,19 @@ class ContextEngine:
         pruned    = self.prune(after_delta, budget_tokens=budget, query=query)
         n_dropped = len(messages) - len(pruned)
 
-        # Step 4: summarise if history warranted it
+        # Step 4 (optional): KV cache geometry
+        # sandwich = verbatim prefix + role/age-compressed middle + verbatim tail
+        # constraints block is pinned into the system prefix so it can never
+        # be compressed away regardless of conversation length
+        kv_pinned = ''
+        if use_kv_geometry:
+            kv_pinned, _ = self.pin_constraints(pruned)
+            prefix, middle, tail = self.kv_layout(pruned, kv_prefix, kv_tail)
+            if middle:
+                compressed_middle = self.role_age_compress(middle, query, mode)
+                pruned = prefix + compressed_middle + tail
+
+        # Step 5: summarise if history warranted it
         new_summary = summary
         should_summarize = (
             len(messages) >= self.summarize_threshold
@@ -965,7 +1209,6 @@ class ContextEngine:
         effective_summary = new_summary
         if register_str:
             reg_overhead = _tokens(register_str)
-            # Count tokens saved in pruned messages from entity substitution
             reg_savings  = sum(
                 _tokens(m.get('content','')) for m in pruned
                 if any(sym in m.get('content','') for sym in entity_map.values())
@@ -975,23 +1218,43 @@ class ContextEngine:
                     f"{new_summary}\n{register_str}" if new_summary else register_str
                 )
 
-        # Step 5: session Huffman — compress repeated phrases
-        compressed_msgs, decode_table, huff_saved = self.apply_session_huffman(pruned)
-
-        # Inject Huffman decode table only when net-positive
-        if decode_table and huff_saved > _tokens(' '.join(f'{s}={p}' for s,p in decode_table.items())):
-            pairs = ', '.join(f'{sym}={phrase}' for sym, phrase in decode_table.items())
-            huff_block = f'SYMBOLS: {{{pairs}}}'
+        # Inject pinned constraints at the top of the system block (highest priority)
+        if kv_pinned:
             effective_summary = (
-                f"{effective_summary}\n{huff_block}" if effective_summary else huff_block
+                f"{kv_pinned}\n{effective_summary}" if effective_summary else kv_pinned
             )
-        else:
-            compressed_msgs = pruned  # revert if not net-positive
-            huff_saved = 0
 
-        # Step 6: build context
+        # Step 6: session Huffman — compress repeated phrases
+        # When KV geometry is on, only apply Huffman to the middle segment so
+        # prefix and tail remain bit-for-bit verbatim for cache reuse.
+        if use_kv_geometry and kv_pinned:
+            prefix, middle, tail = self.kv_layout(pruned, kv_prefix, kv_tail)
+            comp_middle, decode_table, huff_saved = self.apply_session_huffman(middle)
+            table_tokens = _tokens(' '.join(f'{s}={p}' for s, p in decode_table.items()))
+            if decode_table and huff_saved > table_tokens:
+                pairs = ', '.join(f'{sym}={phrase}' for sym, phrase in decode_table.items())
+                huff_block = f'SYMBOLS: {{{pairs}}}'
+                effective_summary = (
+                    f"{effective_summary}\n{huff_block}" if effective_summary else huff_block
+                )
+                pruned = prefix + comp_middle + tail
+            else:
+                huff_saved = 0
+        else:
+            compressed_msgs, decode_table, huff_saved = self.apply_session_huffman(pruned)
+            if decode_table and huff_saved > _tokens(' '.join(f'{s}={p}' for s, p in decode_table.items())):
+                pairs = ', '.join(f'{sym}={phrase}' for sym, phrase in decode_table.items())
+                huff_block = f'SYMBOLS: {{{pairs}}}'
+                effective_summary = (
+                    f"{effective_summary}\n{huff_block}" if effective_summary else huff_block
+                )
+                pruned = compressed_msgs
+            else:
+                huff_saved = 0
+
+        # Step 7: build context
         ctx = self.build_context(
-            compressed_msgs, query, summary=effective_summary, mode=mode
+            pruned, query, summary=effective_summary, mode=mode
         )
 
         optimized_tokens = _tokens(ctx['optimized_prompt'])
@@ -1010,4 +1273,5 @@ class ContextEngine:
             'delta_dropped':         delta_dropped,
             'huffman_tokens_saved':  huff_saved,
             'entity_register':       register_str,
+            'kv_pinned':             kv_pinned,
         }
