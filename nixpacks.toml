@@ -1,4 +1,2 @@
-[phases.install]
-cmds = [
-  "python -m pip install -r requirements.txt && python -m spacy download en_core_web_sm"
-]
+[phases.build]
+cmds = ["python -m spacy download en_core_web_sm"]
