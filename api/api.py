@@ -50,6 +50,13 @@ class CompressionRepository:
     """Single responsibility: persist and query compression events and feedback."""
 
     _INLINE_SCHEMA = """
+        CREATE TABLE IF NOT EXISTS chat_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT,
+            user_message TEXT NOT NULL,
+            bot_response TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS compression_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER, api_key TEXT,
@@ -103,6 +110,15 @@ class CompressionRepository:
     def _init_pg_schema(self) -> None:
         conn = self._connect()
         cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS chat_events (
+                id SERIAL PRIMARY KEY,
+                session_id TEXT,
+                user_message TEXT NOT NULL,
+                bot_response TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS compression_events (
                 id SERIAL PRIMARY KEY,
@@ -343,6 +359,34 @@ class CompressionRepository:
         )
         conn.commit()
         conn.close()
+
+    def log_chat(self, session_id: str, user_message: str, bot_response: str) -> None:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = f'INSERT INTO chat_events (session_id, user_message, bot_response) VALUES ({p},{p},{p})'
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, (session_id, user_message, bot_response)); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, (session_id, user_message, bot_response)); conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    def count_chat_in_window(self, session_id: str, window_minutes: int = 60) -> int:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            if self._is_pg():
+                sql = f"SELECT COUNT(*) FROM chat_events WHERE session_id={p} AND created_at > NOW() - INTERVAL '{window_minutes} minutes'"
+                cur = conn.cursor(); cur.execute(sql, (session_id,)); row = cur.fetchone(); cur.close()
+            else:
+                sql = f"SELECT COUNT(*) FROM chat_events WHERE session_id={p} AND created_at > datetime('now', {p})"
+                row = conn.execute(sql, (session_id, f'-{window_minutes} minutes')).fetchone()
+            conn.close()
+            return row[0] if row else 0
+        except Exception:
+            return 0
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -730,7 +774,97 @@ _STRIPE_PRICES   = {
     'builder_monthly':   os.getenv('STRIPE_BUILDER_MONTHLY', ''),
     'builder_annual':    os.getenv('STRIPE_BUILDER_ANNUAL', ''),
 }
-_BASE_URL = os.getenv('BASE_URL', 'https://promptolian.com')
+_BASE_URL   = os.getenv('BASE_URL', 'https://promptolian.com')
+_GROQ_KEY   = os.getenv('GROQ_API_KEY', '')
+
+_CHAT_SYSTEM = """You are the Promptolian assistant — a concise support bot for Promptolian (promptolian.com).
+
+Key facts:
+- Promptolian compresses AI prompts 15–33%, saving API costs. Runs privately on device.
+- Plans: Free (Standard, browser JS), Pro $7/mo (grammar engine, domain packs), Builder $19/mo (REST API, context engine, MCP)
+- Browser extension: works on Claude, ChatGPT, Gemini, Copilot, Perplexity. All compression is local — prompts never leave the device.
+- REST API at api.promptolian.com. CLI: pip install promptolian then: promptolian compress "..."
+- Context Engine (Builder): compresses conversation history — 33% combined savings, 101K tokens/month
+- Tool schema compression: 69% first turn, 92% across session
+- Languages: English, Spanish, Italian, French, German (auto-detected)
+- Self-hosted option: docker compose up (from github.com/Maurizio-L/promptolian-public)
+- Privacy: extension = 100% local. REST API = processed but never stored.
+- 98.4% fact accuracy across 200 test prompts. Works deterministically — no external AI calls.
+
+STRICT RULES:
+1. Only answer questions about Promptolian — features, pricing, privacy, API, CLI, self-hosting, browser extension.
+2. For anything outside this scope reply EXACTLY: "I can only help with Promptolian questions. See the docs at promptolian.com/docs.html or email hello@promptolian.com"
+3. Keep answers to 2–3 sentences. Plain text only, no markdown."""
+
+_CHAT_FAQ = [
+    (['price','cost','plan','free','pro','builder','paid','cheap','subscription'],
+     "Free forever for Standard compression. Pro is $7/mo — grammar engine and domain packs. Builder is $19/mo — full REST API, context engine, and Claude Code MCP."),
+    (['private','privacy','data','store','track','gdpr','safe','secure'],
+     "The browser extension runs 100% locally — your prompts never leave your device. The REST API processes prompts server-side but never writes them to disk."),
+    (['install','start','begin','setup','extension','chrome','firefox'],
+     "Install the free browser extension from the Chrome or Firefox store — no account needed. It adds a Compress button directly on ChatGPT, Claude, Gemini and Copilot."),
+    (['api','developer','rest','endpoint','curl','key'],
+     "The REST API lives at api.promptolian.com. See full docs at promptolian.com/docs.html. No API key needed for Standard tier."),
+    (['cli','command','terminal','pip','install'],
+     "Install with: pip install promptolian — then run: promptolian compress \"your prompt here\". Works offline, fully local."),
+    (['docker','self.host','self-host','own server','on.premise','on premise'],
+     "Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs on your machine with zero data leaving your network."),
+    (['context','memory','history','conversation','session'],
+     "The Context Engine (Builder plan) compresses old conversation turns automatically — saving 33% combined across a session without losing any facts."),
+    (['language','spanish','italian','french','german','multilingual'],
+     "Five languages are supported: English, Spanish, Italian, French, German. Language is detected automatically — no setup needed."),
+    (['how','work','compression','token','shrink'],
+     "Promptolian replaces common phrases with symbols, removes filler words, and (on Pro/Developer) does grammar analysis — cutting 15–33% of tokens before the prompt reaches the AI."),
+]
+
+def _faq_fallback(message: str) -> str:
+    msg = message.lower()
+    for keywords, answer in _CHAT_FAQ:
+        if any(k.replace('.', ' ') in msg for k in keywords):
+            return answer
+    return "Good question! Check the full docs at promptolian.com/docs.html or email hello@promptolian.com and we'll help."
+
+def _groq_response(message: str) -> str:
+    if not _GROQ_KEY:
+        return _faq_fallback(message)
+    try:
+        import httpx
+        r = httpx.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            headers={'Authorization': f'Bearer {_GROQ_KEY}', 'Content-Type': 'application/json'},
+            json={
+                'model': 'llama-3.1-8b-instant',
+                'max_tokens': 200,
+                'temperature': 0.3,
+                'messages': [
+                    {'role': 'system', 'content': _CHAT_SYSTEM},
+                    {'role': 'user',   'content': message[:500]},
+                ],
+            },
+            timeout=12,
+        )
+        r.raise_for_status()
+        return r.json()['choices'][0]['message']['content'].strip()
+    except Exception:
+        return _faq_fallback(message)
+
+_CHAT_RATE_LIMIT = 30  # messages per session per hour
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data       = request.json or {}
+    message    = (data.get('message') or '').strip()[:500]
+    session_id = (data.get('session_id') or 'anon')[:64]
+
+    if not message:
+        return jsonify({'error': 'message required'}), 400
+
+    if _repo.count_chat_in_window(session_id) >= _CHAT_RATE_LIMIT:
+        return jsonify({'reply': "You've sent a lot of messages — please wait a bit before trying again."}), 429
+
+    reply = _groq_response(message)
+    _repo.log_chat(session_id, message, reply)
+    return jsonify({'reply': reply})
 
 
 @app.route('/billing/checkout', methods=['POST'])
