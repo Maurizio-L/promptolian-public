@@ -1,6 +1,8 @@
 services:
   promptolian-api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.selfhost
     image: promptolian/api:latest
     ports:
       - "${PORT:-3001}:3001"
