@@ -1,0 +1,26 @@
+services:
+  promptolian-api:
+    build: .
+    image: promptolian/api:latest
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      - promptolian_data:/data
+    environment:
+      PORT: "3001"
+      HOST: "0.0.0.0"
+      FLASK_DEBUG: "0"
+      DB_PATH: "/data/promptolian.db"
+      # DATABASE_URL: postgresql://user:pass@host:5432/promptolian
+      # STRIPE_SECRET_KEY: sk_live_...   (only needed if enabling billing)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3001/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  promptolian_data:
+    driver: local

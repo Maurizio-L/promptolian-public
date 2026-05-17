@@ -109,6 +109,7 @@ h2,h3{scroll-margin-top:80px}
       <a href="#cli">CLI</a>
       <a href="#mcp">Claude Code MCP</a>
       <a href="#curl-examples">curl examples</a>
+      <a href="#self-hosted">Self-hosted</a>
     </div>
   </nav>
 
@@ -555,6 +556,71 @@ data = resp.json()
 
 <span class="cmt"># Stats</span>
 <span class="fn">curl</span> https://api.promptolian.com/stats</code></pre>
+    </div>
+
+    <h2 id="self-hosted">Self-hosted</h2>
+    <p>Run the Promptolian API on your own machine or infrastructure. Prompts are processed locally — nothing is sent to <code>api.promptolian.com</code>.</p>
+
+    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option A — Docker (recommended)</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">One command. SQLite data persisted in a Docker volume. No account needed.</p>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
+<pre><code><span class="cmt"># Clone the public repo</span>
+git clone https://github.com/Maurizio-L/promptolian-public
+<span class="fn">cd</span> promptolian-public
+
+<span class="cmt"># Start (builds image on first run, ~2 min)</span>
+docker compose up
+
+<span class="cmt"># Test it</span>
+<span class="fn">curl</span> http://localhost:3001/health
+<span class="fn">curl</span> -X POST http://localhost:3001/compress \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"text": "Please explain step by step", "tier": "pro"}'</span></code></pre>
+    </div>
+
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Then in your code, change one line: <code>API_BASE = "http://localhost:3001"</code> instead of <code>https://api.promptolian.com</code>. All endpoints work identically.</p>
+
+    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option B — Python (from repo)</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
+<pre><code>git clone https://github.com/Maurizio-L/promptolian-public
+<span class="fn">cd</span> promptolian-public
+pip install -r public/requirements-selfhost.txt
+python -m spacy download en_core_web_sm
+
+<span class="cmt"># Start on default port 3001</span>
+python -m promptolian.server
+
+<span class="cmt"># Or on a custom port</span>
+python -m promptolian.server --port 8080</code></pre>
+    </div>
+
+    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option C — pip install</h3>
+    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
+<pre><code>pip install <span class="str">"promptolian[self-hosted]"</span>
+python -m spacy download en_core_web_sm
+promptolian-server              <span class="cmt"># starts on localhost:3001</span>
+promptolian-server --port 8080  <span class="cmt"># custom port</span></code></pre>
+    </div>
+
+    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Environment variables</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:var(--soft)">
+        <th style="padding:8px 12px;text-align:left;font-weight:600">Variable</th>
+        <th style="padding:8px 12px;text-align:left;font-weight:600">Default</th>
+        <th style="padding:8px 12px;text-align:left;font-weight:600">Description</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>PORT</code></td><td style="padding:8px 12px"><code>3001</code></td><td style="padding:8px 12px;color:var(--muted)">Port to listen on</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>HOST</code></td><td style="padding:8px 12px"><code>127.0.0.1</code></td><td style="padding:8px 12px;color:var(--muted)">Bind address. Use <code>0.0.0.0</code> to expose on network</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>DB_PATH</code></td><td style="padding:8px 12px"><code>/data/promptolian.db</code></td><td style="padding:8px 12px;color:var(--muted)">SQLite file path (Docker) or custom location</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>DATABASE_URL</code></td><td style="padding:8px 12px">—</td><td style="padding:8px 12px;color:var(--muted)">PostgreSQL connection string — overrides SQLite</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>FLASK_DEBUG</code></td><td style="padding:8px 12px"><code>0</code></td><td style="padding:8px 12px;color:var(--muted)">Set to <code>1</code> for hot-reload during development</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;font-size:13px;line-height:1.7">
+      <strong style="color:#15803d">Privacy guarantee</strong><br>
+      When self-hosted, every compression happens inside your own process. No data is sent to <code>api.promptolian.com</code> or any external service. The SQLite database (or your PostgreSQL instance) stays on your infrastructure.
     </div>
 
   </main>
