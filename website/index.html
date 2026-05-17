@@ -1108,6 +1108,41 @@ footer a:hover{color:#aaa}
     localStorage.setItem('_pto_sid', sessionId);
   }
 
+  // Local FAQ — used when API is unreachable
+  var FAQ = [
+    [['price','cost','plan','free','pro','builder','paid','cheap','subscription','how much'],
+     'Free plan is forever free — Standard compression in the browser. Pro is $7/mo and adds the grammar engine and domain packs. Builder is $19/mo and includes the REST API, context engine, and Claude Code MCP.'],
+    [['private','privacy','data','store','track','gdpr','safe','secure','leave'],
+     'The browser extension runs 100% locally — your prompts never leave your device. The REST API processes prompts server-side but never writes them to disk.'],
+    [['install','extension','chrome','firefox','start','begin','download','add'],
+     'Install the free browser extension from the Chrome or Firefox store — no account needed. It adds a Compress button directly on ChatGPT, Claude, Gemini and Copilot.'],
+    [['api','rest','endpoint','curl','developer','key','token'],
+     'The REST API is at api.promptolian.com. Standard compression is free with no key. See full docs at promptolian.com/docs.html'],
+    [['cli','command','terminal','pip','install promptolian'],
+     'Run: pip install promptolian — then: promptolian compress "your prompt". Works fully offline on your machine.'],
+    [['docker','self.host','self-host','own server','on premise','local server'],
+     'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
+    [['context','memory','history','conversation','session'],
+     'The Context Engine (Builder plan) compresses old conversation turns automatically — 33% combined savings across a session, 101K tokens saved per developer per month.'],
+    [['language','spanish','italian','french','german','multilingual'],
+     'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
+    [['how','work','compress','token','shrink','shorter','save'],
+     'Promptolian replaces common phrases with symbols, removes filler words, and does grammar analysis — cutting 15–33% of tokens before your prompt reaches the AI. Facts and numbers are always preserved.'],
+    [['tool','schema','function','json','agent','mcp'],
+     'Tool schema compression reduces JSON function definitions from ~120 tokens to ~37 on the first call, then to a 3-token reference on repeat calls — 69% turn-1 savings, 92% across a session.'],
+  ];
+
+  function localFAQ(msg) {
+    msg = msg.toLowerCase();
+    for (var i = 0; i < FAQ.length; i++) {
+      var keys = FAQ[i][0], ans = FAQ[i][1];
+      for (var j = 0; j < keys.length; j++) {
+        if (msg.indexOf(keys[j]) !== -1) return ans;
+      }
+    }
+    return null;
+  }
+
   window.toggleChat = function() {
     var p = document.getElementById('chat-panel');
     p.classList.toggle('open');
@@ -1119,21 +1154,35 @@ footer a:hover{color:#aaa}
     var msg = inp.value.trim();
     if (!msg) return;
     inp.value = '';
+    document.getElementById('chat-send').disabled = true;
     addMsg(msg, 'user');
     var dot = addTyping();
+
     fetch(CHAT_API, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: msg, session_id: sessionId})
+      body: JSON.stringify({message: msg, session_id: sessionId}),
+      signal: AbortSignal.timeout(10000)
     })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      dot.remove();
-      addMsg(d.reply || 'Sorry, something went wrong. Try again!', 'bot');
+    .then(function(r) {
+      if (!r.ok) throw new Error('api_error');
+      return r.json();
     })
-    .catch(function(){
+    .then(function(d) {
       dot.remove();
-      addMsg('Sorry, I\'m having trouble connecting. Check the docs at promptolian.com/docs.html', 'bot');
+      document.getElementById('chat-send').disabled = false;
+      addMsg(d.reply || 'Something went wrong — try again!', 'bot');
+    })
+    .catch(function() {
+      dot.remove();
+      document.getElementById('chat-send').disabled = false;
+      // fall back to local FAQ before showing error
+      var local = localFAQ(msg);
+      if (local) {
+        addMsg(local, 'bot');
+      } else {
+        addMsg('I can answer questions about pricing, privacy, the API, CLI, and how compression works. What would you like to know?', 'bot');
+      }
     });
   };
 
