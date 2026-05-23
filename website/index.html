@@ -324,16 +324,15 @@ footer a:hover{color:#aaa}
 
 <!-- NAV -->
 <nav>
-  <a class="logo" href="/">
-    <div class="logo-icon">∑→</div>Promptolian
+  <a class="logo" href="index.html">
+    <div class="logo-icon">&#x2211;&#x2192;</div>Promptolian
   </a>
   <ul class="nav-links">
     <li><a href="#demo">Demo</a></li>
-    <li><a href="#tool-schema">Tool schema</a></li>
-    <li><a href="#api-sandbox">API</a></li>
-    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="how-it-works.html">How it works</a></li>
+    <li><a href="pricing.html">Pricing</a></li>
     <li><a href="docs.html">API docs</a></li>
-    <li><a href="#" class="nav-cta">Install free →</a></li>
+    <li><a href="#" class="nav-cta">Install free &#x2192;</a></li>
   </ul>
 </nav>
 
@@ -447,223 +446,6 @@ footer a:hover{color:#aaa}
   </div>
 </section>
 
-<!-- TOOL SCHEMA DEMO -->
-<section class="section" id="tool-schema" style="padding-top:72px">
-  <div class="section-label">Layer 3 · Developer / API</div>
-  <div class="section-title">Tool schemas: 69% smaller on call 1, 97% on call 2+</div>
-  <p class="section-sub">Every agent call sends full JSON tool definitions — 120 tokens per tool, every single turn. Promptolian compiles them to a compact DSL once, then replaces the whole block with a 3-token reference on repeat calls. No other tool does this.</p>
-
-  <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:32px">
-    <!-- turn toggle -->
-    <div style="display:flex;align-items:center;gap:0;border-bottom:1px solid var(--border)">
-      <button id="ts-turn1" onclick="setTurn(1)"
-        style="flex:1;padding:12px;border:none;background:var(--lime);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);border-right:1px solid var(--border)">
-        Turn 1 — first call (69% CR)
-      </button>
-      <button id="ts-turn2" onclick="setTurn(2)"
-        style="flex:1;padding:12px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted)">
-        Turn 2+ — cached (97% CR)
-      </button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr">
-      <div style="padding:20px 24px;border-right:1px solid var(--border)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Before — raw JSON (120 tok/tool)</div>
-        <pre id="ts-before" style="font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink);white-space:pre-wrap;margin:0;overflow:auto;max-height:320px"></pre>
-      </div>
-      <div style="padding:20px 24px;background:#f9fef0">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#16a34a;margin-bottom:10px">After — Promptolian DSL</div>
-        <pre id="ts-after" style="font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink);white-space:pre-wrap;margin:0;overflow:auto;max-height:320px"></pre>
-        <div id="ts-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #bbf7d0;color:#16a34a;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600"></div>
-      </div>
-    </div>
-    <div style="padding:14px 24px;border-top:1px solid var(--border);background:var(--soft);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:gap 8px">
-      <span>Fully deterministic · no LLM calls · sub-millisecond · 100% reversible</span>
-      <a href="docs.html#tool-schema" class="btn btn-outline" style="padding:6px 14px;font-size:12px">API docs →</a>
-    </div>
-  </div>
-</section>
-
-<!-- CONTEXT ENGINE SHOWCASE -->
-<section class="section" id="context-engine" style="padding-top:72px">
-  <div class="section-label">Context Engine · Builder plan</div>
-  <div class="section-title">Stop paying for everything your AI remembers</div>
-  <p class="section-sub">In a long conversation, every old message gets resent to the AI on every reply — even the parts it barely needs. The Context Engine compresses old turns automatically, so you only pay for what still matters.</p>
-
-  <div class="ctx-demo">
-
-    <div class="ctx-panel" id="ctx-panel-before" style="--meter-w:74%">
-      <div class="ctx-panel-label bad">✗ Without Promptolian — turn 5</div>
-      <div class="ctx-turns">
-        <div class="ctx-turn" style="--bar-w:88%"><span class="ctx-turn-label">Turn 1</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">420 tok</span></div>
-        <div class="ctx-turn" style="--bar-w:78%"><span class="ctx-turn-label">Turn 2</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">380 tok</span></div>
-        <div class="ctx-turn" style="--bar-w:73%"><span class="ctx-turn-label">Turn 3</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">350 tok</span></div>
-        <div class="ctx-turn" style="--bar-w:79%"><span class="ctx-turn-label">Turn 4</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-old"></div></div><span class="ctx-tok">380 tok</span></div>
-        <div class="ctx-turn is-active" style="--bar-w:67%"><span class="ctx-turn-label">Now ◀</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-active"></div></div><span class="ctx-tok">320 tok</span></div>
-      </div>
-      <div class="ctx-window-lbl">Context window used</div>
-      <div class="ctx-meter-wrap"><div class="ctx-meter-fill bad"></div></div>
-      <div class="ctx-total-txt bad">1,850 tokens per reply · $0.006 / msg</div>
-    </div>
-
-    <div class="ctx-arrow-col">
-      <div class="ctx-arrow-inner">→</div>
-      <div class="ctx-savings-badge">64%<br>cheaper</div>
-    </div>
-
-    <div class="ctx-panel" id="ctx-panel-after" style="--meter-w:27%">
-      <div class="ctx-panel-label good">✓ With Promptolian — same turn 5</div>
-      <div class="ctx-turns">
-        <div class="ctx-turn" style="--bar-w:20%"><span class="ctx-turn-label">Summary</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-summary"></div></div><span class="ctx-tok">95 tok</span></div>
-        <div class="ctx-turn" style="--bar-w:52%"><span class="ctx-turn-label">Turn 4</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-comp"></div></div><span class="ctx-tok">248 tok</span></div>
-        <div class="ctx-turn is-active" style="--bar-w:67%"><span class="ctx-turn-label">Now ◀</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-active"></div></div><span class="ctx-tok">320 tok</span></div>
-      </div>
-      <div style="height:31px"></div>
-      <div class="ctx-window-lbl">Context window used</div>
-      <div class="ctx-meter-wrap"><div class="ctx-meter-fill good"></div></div>
-      <div class="ctx-total-txt good">663 tokens per reply · $0.002 / msg</div>
-    </div>
-
-  </div>
-
-  <!-- compounding savings chart -->
-  <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;padding:24px 28px;margin-top:28px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">Cost compounds turn by turn</div>
-    <div style="font-size:15px;font-weight:600;margin-bottom:18px">Token cost per API call as your conversation grows</div>
-    <svg id="compound-chart" viewBox="0 0 560 180" style="width:100%;height:auto;display:block" aria-label="Compounding savings chart">
-      <!-- grid lines -->
-      <line x1="60" y1="20"  x2="540" y2="20"  stroke="#eee" stroke-width="1"/>
-      <line x1="60" y1="60"  x2="540" y2="60"  stroke="#eee" stroke-width="1"/>
-      <line x1="60" y1="100" x2="540" y2="100" stroke="#eee" stroke-width="1"/>
-      <line x1="60" y1="140" x2="540" y2="140" stroke="#eee" stroke-width="1"/>
-      <!-- y-axis labels -->
-      <text x="55" y="24"  font-size="9" fill="#999" text-anchor="end">2000 tok</text>
-      <text x="55" y="64"  font-size="9" fill="#999" text-anchor="end">1500 tok</text>
-      <text x="55" y="104" font-size="9" fill="#999" text-anchor="end">1000 tok</text>
-      <text x="55" y="144" font-size="9" fill="#999" text-anchor="end">500 tok</text>
-      <!-- x-axis labels -->
-      <text x="100" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 1</text>
-      <text x="180" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 3</text>
-      <text x="260" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 5</text>
-      <text x="340" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 8</text>
-      <text x="420" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 12</text>
-      <text x="500" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 20</text>
-      <!-- Without Promptolian (red) - linearly growing -->
-      <polyline points="100,128 180,108 260,88 340,62 420,38 500,22"
-        fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linejoin="round"/>
-      <!-- With Promptolian (lime) - stays flat -->
-      <polyline points="100,120 180,112 260,106 340,98 420,88 500,76"
-        fill="none" stroke="#84cc16" stroke-width="2.5" stroke-linejoin="round"/>
-      <!-- shade between lines -->
-      <polygon points="100,128 180,108 260,88 340,62 420,38 500,22 500,76 420,88 340,98 260,106 180,112 100,120"
-        fill="#c8f135" fill-opacity="0.12"/>
-      <!-- dots without -->
-      <circle cx="100" cy="128" r="3.5" fill="#ef4444"/>
-      <circle cx="180" cy="108" r="3.5" fill="#ef4444"/>
-      <circle cx="260" cy="88"  r="3.5" fill="#ef4444"/>
-      <circle cx="340" cy="62"  r="3.5" fill="#ef4444"/>
-      <circle cx="420" cy="38"  r="3.5" fill="#ef4444"/>
-      <circle cx="500" cy="22"  r="3.5" fill="#ef4444"/>
-      <!-- dots with -->
-      <circle cx="100" cy="120" r="3.5" fill="#84cc16"/>
-      <circle cx="180" cy="112" r="3.5" fill="#84cc16"/>
-      <circle cx="260" cy="106" r="3.5" fill="#84cc16"/>
-      <circle cx="340" cy="98"  r="3.5" fill="#84cc16"/>
-      <circle cx="420" cy="88"  r="3.5" fill="#84cc16"/>
-      <circle cx="500" cy="76"  r="3.5" fill="#84cc16"/>
-      <!-- legend -->
-      <line x1="64" y1="155" x2="80" y2="155" stroke="#ef4444" stroke-width="2.5"/>
-      <text x="83" y="159" font-size="9.5" fill="#666">Without Promptolian</text>
-      <line x1="180" y1="155" x2="196" y2="155" stroke="#84cc16" stroke-width="2.5"/>
-      <text x="199" y="159" font-size="9.5" fill="#666">With Promptolian</text>
-      <!-- annotation at turn 20 -->
-      <text x="500" y="50" font-size="9" fill="#ef4444" text-anchor="middle">1,850 tok</text>
-      <text x="500" y="68" font-size="9" fill="#84cc16" text-anchor="middle">663 tok</text>
-    </svg>
-    <div style="font-size:12px;color:var(--muted);margin-top:4px">By turn 20, you're paying for <strong style="color:var(--ink)">1,850 tokens</strong> per reply without compression vs <strong style="color:#16a34a">663 tokens</strong> with Promptolian — a 64% cost reduction that grows every turn.</div>
-  </div>
-
-  <div class="ctx-stats-row">
-    <div class="ctx-stat">
-      <span class="ctx-stat-val">52.9%</span>
-      <div class="ctx-stat-lbl">history compression on<br>20-turn sessions (KV geometry)</div>
-    </div>
-    <div class="ctx-stat">
-      <span class="ctx-stat-val">101K</span>
-      <div class="ctx-stat-lbl">tokens saved per developer<br>per month (estimated)</div>
-    </div>
-    <div class="ctx-stat">
-      <span class="ctx-stat-val" title="verified across 41 benchmark runs — every number, entity, and named term preserved">100% <span style="font-size:14px;border-bottom:1px dashed var(--muted);cursor:help">FPR</span></span>
-      <div class="ctx-stat-lbl">fact preservation across<br>all tiers · 41 benchmark runs</div>
-    </div>
-  </div>
-
-  <div style="text-align:center;margin-top:28px">
-    <a href="#api-sandbox" class="btn btn-primary">Try the API →</a>
-    <a href="docs.html" class="btn btn-outline" style="margin-left:12px">See the docs →</a>
-  </div>
-</section>
-
-<!-- API SANDBOX -->
-<section class="section" id="api-sandbox" style="padding-top:72px">
-  <div class="section-label">API sandbox · No signup needed</div>
-  <div class="section-title">Hit the API right now</div>
-  <p class="section-sub">Ten free calls — no key, no account. See the JSON response live.</p>
-
-  <div style="background:var(--ink);border-radius:20px;overflow:hidden;margin-top:32px">
-    <!-- request -->
-    <div style="padding:20px 24px;border-bottom:1px solid #333">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <span style="background:#333;color:#84cc16;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;font-family:'DM Mono',monospace">POST</span>
-        <span style="font-family:'DM Mono',monospace;font-size:12px;color:#aaa">https://api.promptolian.com/compress-prompt</span>
-      </div>
-      <textarea id="sandbox-input" rows="3"
-        style="width:100%;background:#1a1a2e;border:1px solid #444;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:13px;color:#f5f4ef;resize:vertical;outline:none;margin-bottom:10px"
-        placeholder="You are an expert Python developer. Debug the function on line 47 and return only the corrected code."
-      ></textarea>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <select id="sandbox-tier"
-          style="background:#333;color:#f5f4ef;border:1px solid #444;border-radius:8px;padding:6px 12px;font-size:13px;font-family:inherit;cursor:pointer">
-          <option value="standard">standard</option>
-          <option value="pro" selected>pro</option>
-          <option value="developer">developer</option>
-        </select>
-        <button onclick="runSandbox()"
-          style="background:var(--lime);color:var(--ink);border:none;border-radius:8px;padding:7px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-          Send request →
-        </button>
-        <span id="sandbox-count" style="font-size:11px;color:#666">10 free calls remaining</span>
-      </div>
-    </div>
-    <!-- response -->
-    <div style="padding:20px 24px">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:10px">Response</div>
-      <pre id="sandbox-output" style="font-family:'DM Mono',monospace;font-size:12px;color:#84cc16;margin:0;white-space:pre-wrap;min-height:60px">{
-  "compressed": "...",
-  "tokens_saved_pct": 0,
-  "elapsed_ms": 0
-}</pre>
-    </div>
-  </div>
-  <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-    The same endpoint used by the browser extension, CLI, and Claude Code MCP server.
-    <a href="docs.html" style="color:var(--ink)">Full API reference →</a>
-  </div>
-</section>
-
-<script>
-(function(){
-  function animateCtx(){
-    document.querySelectorAll('.ctx-turn').forEach(function(el){el.classList.add('animate')});
-    document.querySelectorAll('.ctx-panel').forEach(function(el){el.classList.add('animate')});
-  }
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting){ animateCtx(); obs.disconnect(); } });
-  }, {threshold:0.3});
-  var sec = document.getElementById('context-engine');
-  if(sec) obs.observe(sec);
-})();
-</script>
-
 <!-- HOW IT WORKS — 3 numbers only -->
 <section style="max-width:900px;margin:0 auto;padding:72px 48px 0">
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
@@ -689,41 +471,12 @@ footer a:hover{color:#aaa}
   </div>
 </section>
 
-<!-- PRICING -->
+<!-- PRICING TEASE -->
 <section class="section" id="pricing" style="padding-top:64px">
   <div class="section-label">Pricing</div>
-  <div class="section-title">Simple, transparent pricing</div>
-  <p class="section-sub">Start free — no credit card, no account required. Upgrade when you need more compression power or API access.</p>
-
-  <!-- BILLING TOGGLE -->
-  <div class="billing-toggle">
-    <div class="billing-pill">
-      <button class="billing-opt active" id="btn-monthly" onclick="setBilling(false)">Monthly</button>
-      <button class="billing-opt" id="btn-annual" onclick="setBilling(true)">Annual</button>
-    </div>
-    <span class="billing-save" id="annual-badge" style="opacity:0">Save 28%</span>
-  </div>
-
-  <!-- CALCULATOR -->
-  <div class="calc-box">
-    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px">Your API savings estimate</p>
-    <div class="calc-inputs">
-      <label class="calc-label">Prompts / day
-        <input class="calc-input" id="calc-prompts" type="number" min="1" max="100000" value="100">
-      </label>
-      <label class="calc-label">Avg tokens / prompt
-        <input class="calc-input" id="calc-tokens" type="number" min="10" max="50000" value="500">
-      </label>
-      <label class="calc-label">Price per 1M tokens ($)
-        <input class="calc-input" id="calc-price" type="number" min="0.01" max="100" step="0.01" value="3.00">
-      </label>
-    </div>
-    <div class="calc-results" id="calc-results"></div>
-    <p style="font-size:11px;color:var(--muted);margin-top:14px">Based on benchmarks: Standard 9% CR avg · Pro 10% · Builder 11% avg / up to 33% with context engine. Results vary by prompt type.</p>
-  </div>
-
-  <!-- PLAN CARDS -->
+  <div class="section-title">Start free. Pay when you need more.</div>
   <div class="pricing-grid">
+<div class="pricing-grid">
 
     <!-- FREE -->
     <div class="price-card">
@@ -744,7 +497,7 @@ footer a:hover{color:#aaa}
         <li><span class="price-dim">✗ Domain packs</span></li>
         <li><span class="price-dim">✗ REST API</span></li>
       </ul>
-      <button class="price-btn">Install free</button>
+      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Get started free</a>
     </div>
 
     <!-- PRO -->
@@ -766,7 +519,7 @@ footer a:hover{color:#aaa}
         <li><span class="price-dim">✗ REST API access</span></li>
         <li><span class="price-dim">✗ Tool schema compiler</span></li>
       </ul>
-      <button class="price-btn" id="pro-btn" onclick="startCheckout('pro', window._annual ? 'annual' : 'monthly')">Start 7-day free trial</button>
+      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Start 7-day free trial</a>
     </div>
 
     <!-- BUILDER -->
@@ -787,75 +540,15 @@ footer a:hover{color:#aaa}
         <li><span class="check">✓</span>2M tokens / day</li>
         <li><span class="check">✓</span>Priority support</li>
       </ul>
-      <button class="price-btn" onclick="startCheckout('builder', window._annual ? 'annual' : 'monthly')">Get API access</button>
+      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Get API access</a>
     </div>
 
   </div>
-  <p class="price-note">All plans include Chrome &amp; Firefox extensions. Need more than 2M tokens/day or a team plan? <a href="mailto:hello@promptolian.com" style="color:var(--ink);font-weight:500">Contact us →</a></p>
+  </div>
+  <div style="text-align:center;margin-top:20px">
+    <a href="pricing.html" style="font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)">See full pricing, calculator and annual discount &#x2192;</a>
+  </div>
 </section>
-
-<script>
-(function(){
-  var _annual = false;
-  window._annual = false;
-  var PRICES = { pro: {mo:7, yr:5}, dev: {mo:19, yr:15} };
-  var CRS    = { standard:0.092, pro:0.099, builder:0.11 };
-  var PLANS  = [
-    {label:'Free',    key:'standard', cost:0,  featured:false},
-    {label:'Pro',     key:'pro',      cost:7,  featured:true},
-    {label:'Builder', key:'builder',  cost:19, featured:false},
-  ];
-
-  window.setBilling = function(annual){
-    _annual = annual;
-    window._annual = annual;
-    document.getElementById('btn-monthly').classList.toggle('active', !annual);
-    document.getElementById('btn-annual').classList.toggle('active', annual);
-    document.getElementById('annual-badge').style.opacity = annual ? '1' : '0';
-    var pa = PRICES.pro,  da = PRICES.dev;
-    document.getElementById('pro-amount').textContent  = annual ? '$'+pa.yr : '$'+pa.mo;
-    document.getElementById('pro-period').textContent  = annual ? 'per month · billed $'+(pa.yr*12)+'/year' : 'per month · cancel anytime';
-    document.getElementById('dev-amount').textContent  = annual ? '$'+da.yr : '$'+da.mo;
-    document.getElementById('dev-period').textContent  = annual ? 'per month · billed $'+(da.yr*12)+'/year' : 'per month · cancel anytime';
-    PLANS[1].cost = annual ? pa.yr : pa.mo;
-    PLANS[2].cost = annual ? da.yr : da.mo;
-    updateCalc();
-  };
-
-  function fmt(n){
-    if(n>=1000) return '$'+(n/1000).toFixed(1)+'K';
-    return '$'+n.toFixed(2);
-  }
-
-  function updateCalc(){
-    var prompts = Math.max(1, parseInt(document.getElementById('calc-prompts').value)||100);
-    var tokens  = Math.max(1, parseInt(document.getElementById('calc-tokens').value)||500);
-    var price   = Math.max(0.001, parseFloat(document.getElementById('calc-price').value)||3);
-    var rawMo   = prompts * 30 * tokens;
-    var costRaw = rawMo / 1e6 * price;
-
-    var html = PLANS.map(function(p){
-      var cr      = CRS[p.key] || 0;
-      var costAI  = rawMo * (1-cr) / 1e6 * price;
-      var saved   = costRaw - costAI;
-      var net     = saved - p.cost;
-      var best    = p.featured;
-      return '<div class="calc-result'+(best?' best':'')+'">'
-        +'<div class="calc-plan-lbl">'+p.label+'</div>'
-        +'<div class="calc-ai-cost">'+fmt(costAI)+'/mo</div>'
-        +(cr>0 ? '<div class="calc-saving">Save '+fmt(saved)+'/mo</div>' : '<div class="calc-saving" style="opacity:0">—</div>')
-        +(p.cost>0 ? '<div class="calc-net">Plan $'+p.cost+' · Net '+fmt(net)+'</div>' : '<div class="calc-net">free forever</div>')
-        +'</div>';
-    }).join('');
-    document.getElementById('calc-results').innerHTML = html;
-  }
-
-  ['calc-prompts','calc-tokens','calc-price'].forEach(function(id){
-    document.getElementById(id).addEventListener('input', updateCalc);
-  });
-  updateCalc();
-})();
-</script>
 
 <!-- GET STARTED -->
 <section style="max-width:900px;margin:0 auto;padding:64px 48px 0;text-align:center">
@@ -1030,20 +723,6 @@ footer a:hover{color:#aaa}
   }
 })();
 </script>
-
-<!-- FOOTER -->
-<footer>
-  <strong>Promptolian</strong><br>
-  Shorter prompts. Lower costs. Same results.
-  <div class="footer-links">
-    <a href="docs.html">API Docs</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="terms.html">Terms</a>
-    <a href="mailto:hello@promptolian.com">Contact</a>
-    <a href="mailto:hello@promptolian.com">hello@promptolian.com</a>
-  </div>
-  © 2026 Promptolian · Built with ⚡ in Zürich
-</footer>
 
 <script>
 // ── v4 engine: SIMPLIFY → RULES → LEAN → (TELEGRAPHIC) → ABBREV ───────────
@@ -1792,5 +1471,19 @@ async function startCheckout(plan, billing) {
   } catch(e) { alert('Could not reach payment server. Try again shortly.'); }
 }
 </script>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Promptolian</strong><br>
+  Shorter prompts. Lower costs. Same results.
+  <div class="footer-links">
+    <a href="docs.html">API Docs</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms</a>
+    <a href="mailto:hello@promptolian.com">Contact</a>
+    <a href="mailto:hello@promptolian.com">hello@promptolian.com</a>
+  </div>
+  © 2026 Promptolian · Built with ⚡ in Zürich
+</footer>
 </body>
 </html>
