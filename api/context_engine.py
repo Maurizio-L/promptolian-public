@@ -1125,7 +1125,7 @@ class ContextEngine:
         summary: str = '',
         mode: str = 'lossless',
         budget_tokens: Optional[int] = None,
-        use_kv_geometry: bool = False,
+        use_kv_geometry: bool = True,
         kv_prefix: int = 2,
         kv_tail: int = 4,
     ) -> dict:

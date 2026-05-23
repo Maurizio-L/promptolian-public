@@ -18,7 +18,7 @@ Endpoints:
   POST /compress          body: {"text":"...","tier":"standard|pro|developer","lang":"auto"}
   GET  /stats
   POST /feedback          body: {"original":"...","compressed":"...","rating":1-5}
-  POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless","use_kv_geometry":false}
+  POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless","use_kv_geometry":true}
   POST /compress-tools    body: {"tools":[...], "session_id":"optional-string"}
 """
 
@@ -273,6 +273,25 @@ class CompressionRepository:
             conn.close()
         except Exception:
             pass
+
+    def get_mcp_tool_session_names(self, session_id: str) -> Optional[set]:
+        """Return the set of tool names seen in a previous session, or None if not found."""
+        try:
+            conn = self._connect()
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute('SELECT tool_names FROM mcp_tool_sessions WHERE session_id = %s', (session_id,))
+                row = cur.fetchone(); cur.close()
+            else:
+                row = conn.execute(
+                    'SELECT tool_names FROM mcp_tool_sessions WHERE session_id = ?', (session_id,)
+                ).fetchone()
+            conn.close()
+            if row is None:
+                return None
+            return set(json.loads(row[0] if self._is_pg() else row['tool_names']))
+        except Exception:
+            return None
 
     def upsert_mcp_tool_session(
         self,
@@ -641,7 +660,7 @@ def optimize_context():
     query           = data.get('query', '').strip()
     summary         = data.get('summary', '')
     mode            = data.get('mode', 'lossless')
-    use_kv_geometry = bool(data.get('use_kv_geometry', False))
+    use_kv_geometry = bool(data.get('use_kv_geometry', True))
     kv_prefix       = int(data.get('kv_prefix', 2))
     kv_tail         = int(data.get('kv_tail', 4))
 
@@ -718,13 +737,14 @@ def compress_tools_route():
     try:
         from context_engine import compress_tools  # type: ignore
 
-        is_first_turn = True
         seen: Optional[set] = None
         if session_id:
-            is_first_turn = session_id not in _TOOL_SESSION_CACHE
-            if is_first_turn:
-                _TOOL_SESSION_CACHE[session_id] = set()
+            if session_id not in _TOOL_SESSION_CACHE:
+                # Restore from DB so turn-2+ savings survive server restarts
+                persisted = _repo.get_mcp_tool_session_names(session_id)
+                _TOOL_SESSION_CACHE[session_id] = persisted if persisted is not None else set()
             seen = _TOOL_SESSION_CACHE[session_id]
+        is_first_turn = seen is not None and len(seen) == 0
 
         dsl, meta = compress_tools(tools, session_seen=seen)
 
