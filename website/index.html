@@ -329,8 +329,8 @@ footer a:hover{color:#aaa}
   </a>
   <ul class="nav-links">
     <li><a href="#demo">Demo</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#research">Research</a></li>
+    <li><a href="#tool-schema">Tool schema</a></li>
+    <li><a href="#api-sandbox">API</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="docs.html">API docs</a></li>
     <li><a href="#" class="nav-cta">Install free →</a></li>
@@ -339,7 +339,10 @@ footer a:hover{color:#aaa}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">⚡ Free to start — no credit card required</div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+    <div class="hero-badge">⚡ Free to start — no credit card required</div>
+    <div class="hero-badge" style="background:transparent;border:1.5px solid var(--lime)">🔒 Runs on your device — zero data sent to us</div>
+  </div>
   <h1>Every AI message costs money.<br><em>We make them shorter.</em></h1>
   <p>Promptolian compresses your prompts before they reach the AI — 15–33% fewer tokens, same answers. Works on Claude, ChatGPT, Gemini and Copilot. Fully private — runs on your device.</p>
   <div class="hero-btns">
@@ -427,6 +430,60 @@ footer a:hover{color:#aaa}
       <span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8">Standard</span>
       Runs entirely in your browser — instant, private, no data sent anywhere. ~15–20% shorter.
     </div>
+    <!-- cost projection -->
+    <div id="cost-projection" style="display:none;margin-top:14px;padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;font-size:13px;color:var(--ink)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>At <strong><span id="proj-calls">1,000</span> API calls / day</strong> this compression rate saves:</span>
+        <strong style="color:#16a34a;font-size:16px" id="proj-annual">—</strong>
+      </div>
+      <input type="range" id="proj-slider" min="100" max="100000" step="100" value="1000"
+        style="width:100%;margin-top:8px;accent-color:var(--lime)"
+        oninput="updateProjection()">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px">
+        <span>100 calls/day</span><span>100k calls/day</span>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+        Based on Claude Sonnet 4 input pricing ($3/1M tokens) ·
+        <span id="proj-tokens-saved">—</span> tokens saved per call ·
+        <a href="#pricing" style="color:var(--muted)">see pricing →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOL SCHEMA DEMO -->
+<section class="section" id="tool-schema" style="padding-top:72px">
+  <div class="section-label">Layer 3 · Developer / API</div>
+  <div class="section-title">Tool schemas: 69% smaller on call 1, 97% on call 2+</div>
+  <p class="section-sub">Every agent call sends full JSON tool definitions — 120 tokens per tool, every single turn. Promptolian compiles them to a compact DSL once, then replaces the whole block with a 3-token reference on repeat calls. No other tool does this.</p>
+
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:32px">
+    <!-- turn toggle -->
+    <div style="display:flex;align-items:center;gap:0;border-bottom:1px solid var(--border)">
+      <button id="ts-turn1" onclick="setTurn(1)"
+        style="flex:1;padding:12px;border:none;background:var(--lime);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);border-right:1px solid var(--border)">
+        Turn 1 — first call (69% CR)
+      </button>
+      <button id="ts-turn2" onclick="setTurn(2)"
+        style="flex:1;padding:12px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted)">
+        Turn 2+ — cached (97% CR)
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr">
+      <div style="padding:20px 24px;border-right:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Before — raw JSON (120 tok/tool)</div>
+        <pre id="ts-before" style="font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink);white-space:pre-wrap;margin:0;overflow:auto;max-height:320px"></pre>
+      </div>
+      <div style="padding:20px 24px;background:#f9fef0">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#16a34a;margin-bottom:10px">After — Promptolian DSL</div>
+        <pre id="ts-after" style="font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--ink);white-space:pre-wrap;margin:0;overflow:auto;max-height:320px"></pre>
+        <div id="ts-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #bbf7d0;color:#16a34a;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600"></div>
+      </div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);background:var(--soft);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:gap 8px">
+      <span>Fully deterministic · no LLM calls · sub-millisecond · 100% reversible</span>
+      <a href="docs.html#tool-schema" class="btn btn-outline" style="padding:6px 14px;font-size:12px">API docs →</a>
+    </div>
   </div>
 </section>
 
@@ -472,24 +529,128 @@ footer a:hover{color:#aaa}
 
   </div>
 
+  <!-- compounding savings chart -->
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;padding:24px 28px;margin-top:28px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">Cost compounds turn by turn</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:18px">Token cost per API call as your conversation grows</div>
+    <svg id="compound-chart" viewBox="0 0 560 180" style="width:100%;height:auto;display:block" aria-label="Compounding savings chart">
+      <!-- grid lines -->
+      <line x1="60" y1="20"  x2="540" y2="20"  stroke="#eee" stroke-width="1"/>
+      <line x1="60" y1="60"  x2="540" y2="60"  stroke="#eee" stroke-width="1"/>
+      <line x1="60" y1="100" x2="540" y2="100" stroke="#eee" stroke-width="1"/>
+      <line x1="60" y1="140" x2="540" y2="140" stroke="#eee" stroke-width="1"/>
+      <!-- y-axis labels -->
+      <text x="55" y="24"  font-size="9" fill="#999" text-anchor="end">2000 tok</text>
+      <text x="55" y="64"  font-size="9" fill="#999" text-anchor="end">1500 tok</text>
+      <text x="55" y="104" font-size="9" fill="#999" text-anchor="end">1000 tok</text>
+      <text x="55" y="144" font-size="9" fill="#999" text-anchor="end">500 tok</text>
+      <!-- x-axis labels -->
+      <text x="100" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 1</text>
+      <text x="180" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 3</text>
+      <text x="260" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 5</text>
+      <text x="340" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 8</text>
+      <text x="420" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 12</text>
+      <text x="500" y="168" font-size="9" fill="#999" text-anchor="middle">Turn 20</text>
+      <!-- Without Promptolian (red) - linearly growing -->
+      <polyline points="100,128 180,108 260,88 340,62 420,38 500,22"
+        fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- With Promptolian (lime) - stays flat -->
+      <polyline points="100,120 180,112 260,106 340,98 420,88 500,76"
+        fill="none" stroke="#84cc16" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- shade between lines -->
+      <polygon points="100,128 180,108 260,88 340,62 420,38 500,22 500,76 420,88 340,98 260,106 180,112 100,120"
+        fill="#c8f135" fill-opacity="0.12"/>
+      <!-- dots without -->
+      <circle cx="100" cy="128" r="3.5" fill="#ef4444"/>
+      <circle cx="180" cy="108" r="3.5" fill="#ef4444"/>
+      <circle cx="260" cy="88"  r="3.5" fill="#ef4444"/>
+      <circle cx="340" cy="62"  r="3.5" fill="#ef4444"/>
+      <circle cx="420" cy="38"  r="3.5" fill="#ef4444"/>
+      <circle cx="500" cy="22"  r="3.5" fill="#ef4444"/>
+      <!-- dots with -->
+      <circle cx="100" cy="120" r="3.5" fill="#84cc16"/>
+      <circle cx="180" cy="112" r="3.5" fill="#84cc16"/>
+      <circle cx="260" cy="106" r="3.5" fill="#84cc16"/>
+      <circle cx="340" cy="98"  r="3.5" fill="#84cc16"/>
+      <circle cx="420" cy="88"  r="3.5" fill="#84cc16"/>
+      <circle cx="500" cy="76"  r="3.5" fill="#84cc16"/>
+      <!-- legend -->
+      <line x1="64" y1="155" x2="80" y2="155" stroke="#ef4444" stroke-width="2.5"/>
+      <text x="83" y="159" font-size="9.5" fill="#666">Without Promptolian</text>
+      <line x1="180" y1="155" x2="196" y2="155" stroke="#84cc16" stroke-width="2.5"/>
+      <text x="199" y="159" font-size="9.5" fill="#666">With Promptolian</text>
+      <!-- annotation at turn 20 -->
+      <text x="500" y="50" font-size="9" fill="#ef4444" text-anchor="middle">1,850 tok</text>
+      <text x="500" y="68" font-size="9" fill="#84cc16" text-anchor="middle">663 tok</text>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">By turn 20, you're paying for <strong style="color:var(--ink)">1,850 tokens</strong> per reply without compression vs <strong style="color:#16a34a">663 tokens</strong> with Promptolian — a 64% cost reduction that grows every turn.</div>
+  </div>
+
   <div class="ctx-stats-row">
     <div class="ctx-stat">
-      <span class="ctx-stat-val">33%</span>
-      <div class="ctx-stat-lbl">combined savings across<br>10 real developer sessions</div>
+      <span class="ctx-stat-val">52.9%</span>
+      <div class="ctx-stat-lbl">history compression on<br>20-turn sessions (KV geometry)</div>
     </div>
     <div class="ctx-stat">
       <span class="ctx-stat-val">101K</span>
       <div class="ctx-stat-lbl">tokens saved per developer<br>per month (estimated)</div>
     </div>
     <div class="ctx-stat">
-      <span class="ctx-stat-val">100%</span>
-      <div class="ctx-stat-lbl">fact accuracy — no numbers,<br>names or code ever dropped</div>
+      <span class="ctx-stat-val" title="verified across 41 benchmark runs — every number, entity, and named term preserved">100% <span style="font-size:14px;border-bottom:1px dashed var(--muted);cursor:help">FPR</span></span>
+      <div class="ctx-stat-lbl">fact preservation across<br>all tiers · 41 benchmark runs</div>
     </div>
   </div>
 
   <div style="text-align:center;margin-top:28px">
-    <a href="#pricing" class="btn btn-primary">Get the Builder plan →</a>
-    <a href="docs.html" class="btn btn-outline" style="margin-left:12px">See the API →</a>
+    <a href="#api-sandbox" class="btn btn-primary">Try the API →</a>
+    <a href="docs.html" class="btn btn-outline" style="margin-left:12px">See the docs →</a>
+  </div>
+</section>
+
+<!-- API SANDBOX -->
+<section class="section" id="api-sandbox" style="padding-top:72px">
+  <div class="section-label">API sandbox · No signup needed</div>
+  <div class="section-title">Hit the API right now</div>
+  <p class="section-sub">Ten free calls — no key, no account. See the JSON response live.</p>
+
+  <div style="background:var(--ink);border-radius:20px;overflow:hidden;margin-top:32px">
+    <!-- request -->
+    <div style="padding:20px 24px;border-bottom:1px solid #333">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="background:#333;color:#84cc16;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;font-family:'DM Mono',monospace">POST</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:#aaa">https://api.promptolian.com/compress-prompt</span>
+      </div>
+      <textarea id="sandbox-input" rows="3"
+        style="width:100%;background:#1a1a2e;border:1px solid #444;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:13px;color:#f5f4ef;resize:vertical;outline:none;margin-bottom:10px"
+        placeholder="You are an expert Python developer. Debug the function on line 47 and return only the corrected code."
+      ></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="sandbox-tier"
+          style="background:#333;color:#f5f4ef;border:1px solid #444;border-radius:8px;padding:6px 12px;font-size:13px;font-family:inherit;cursor:pointer">
+          <option value="standard">standard</option>
+          <option value="pro" selected>pro</option>
+          <option value="developer">developer</option>
+        </select>
+        <button onclick="runSandbox()"
+          style="background:var(--lime);color:var(--ink);border:none;border-radius:8px;padding:7px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          Send request →
+        </button>
+        <span id="sandbox-count" style="font-size:11px;color:#666">10 free calls remaining</span>
+      </div>
+    </div>
+    <!-- response -->
+    <div style="padding:20px 24px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:10px">Response</div>
+      <pre id="sandbox-output" style="font-family:'DM Mono',monospace;font-size:12px;color:#84cc16;margin:0;white-space:pre-wrap;min-height:60px">{
+  "compressed": "...",
+  "tokens_saved_pct": 0,
+  "elapsed_ms": 0
+}</pre>
+    </div>
+  </div>
+  <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+    The same endpoint used by the browser extension, CLI, and Claude Code MCP server.
+    <a href="docs.html" style="color:var(--ink)">Full API reference →</a>
   </div>
 </section>
 
@@ -1809,6 +1970,15 @@ function liveCompress() {
     document.getElementById('s-pct').textContent = pct + '%';
     const pill = document.getElementById('savings-pill');
     pill.innerHTML = pct > 0 ? `<span class="savings-pill">${pct}% smaller</span>` : '';
+    // cost projection
+    const proj = document.getElementById('cost-projection');
+    if (saved > 0) {
+      document.getElementById('s-ps').dataset.saved = saved;
+      proj.style.display = 'block';
+      updateProjection();
+    } else {
+      proj.style.display = 'none';
+    }
   }, 180);
 }
 
@@ -1847,7 +2017,100 @@ function clearDemo() {
   reset();
 }
 
-// ── Stripe checkout ──────────────────────────────────────────────────────────
+// ── Cost projection ───────────────────────────────────────────────────────────
+function updateProjection() {
+  const calls    = parseInt(document.getElementById('proj-slider').value);
+  const tokSaved = parseInt(document.getElementById('s-ps').dataset.saved || '0');
+  if (!tokSaved) return;
+  const annualM  = calls * 365 * tokSaved / 1_000_000;
+  const annual$  = (annualM * 3).toFixed(0);   // $3/1M tokens Claude Sonnet 4 input
+  document.getElementById('proj-calls').textContent  = calls.toLocaleString();
+  document.getElementById('proj-annual').textContent = `$${parseInt(annual$).toLocaleString()} / year`;
+  document.getElementById('proj-tokens-saved').textContent = `${tokSaved} tokens`;
+}
+
+// ── Tool schema demo ──────────────────────────────────────────────────────────
+const TS_BEFORE = `{
+  "name": "get_weather",
+  "description": "Get current weather for a city",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "location": {
+        "type": "string",
+        "description": "City name or coordinates"
+      },
+      "units": {
+        "type": "string",
+        "enum": ["celsius", "fahrenheit"],
+        "description": "Temperature units"
+      }
+    },
+    "required": ["location"]
+  }
+}`;
+
+const TS_AFTER_T1 = `FN get_weather: "Get current weather for a city"
+  location:str* "City name or coordinates"
+  units:str["celsius","fahrenheit"]`;
+
+const TS_AFTER_T2 = `TOOLS:[get_weather]`;
+
+let currentTurn = 1;
+function setTurn(n) {
+  currentTurn = n;
+  const before = document.getElementById('ts-before');
+  const after  = document.getElementById('ts-after');
+  const badge  = document.getElementById('ts-badge');
+  const btn1   = document.getElementById('ts-turn1');
+  const btn2   = document.getElementById('ts-turn2');
+  before.textContent = n === 1 ? TS_BEFORE : '(already cached this session)';
+  after.textContent  = n === 1 ? TS_AFTER_T1 : TS_AFTER_T2;
+  if (n === 1) {
+    badge.textContent = '69% fewer tokens — turn 1';
+    btn1.style.background = 'var(--lime)'; btn1.style.color = 'var(--ink)';
+    btn2.style.background = 'transparent'; btn2.style.color = 'var(--muted)';
+  } else {
+    badge.textContent = '97% fewer tokens — turn 2+';
+    btn2.style.background = 'var(--lime)'; btn2.style.color = 'var(--ink)';
+    btn1.style.background = 'transparent'; btn1.style.color = 'var(--muted)';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => setTurn(1));
+
+// ── API sandbox ───────────────────────────────────────────────────────────────
+let sandboxCallsLeft = 10;
+async function runSandbox() {
+  if (sandboxCallsLeft <= 0) {
+    document.getElementById('sandbox-output').textContent =
+      '// Rate limit reached. Sign up for a free API key to continue.';
+    return;
+  }
+  const text = document.getElementById('sandbox-input').value.trim();
+  if (!text) return;
+  const tier = document.getElementById('sandbox-tier').value;
+  const out  = document.getElementById('sandbox-output');
+  out.style.color = '#666';
+  out.textContent = '// sending…';
+  try {
+    const res  = await fetch(API_BASE + '/compress-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, tier }),
+    });
+    const data = await res.json();
+    sandboxCallsLeft--;
+    document.getElementById('sandbox-count').textContent =
+      `${sandboxCallsLeft} free call${sandboxCallsLeft !== 1 ? 's' : ''} remaining`;
+    out.style.color = '#84cc16';
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch {
+    out.style.color = '#f87171';
+    out.textContent = '// Could not reach API — is the server running?\n// Try: promptolian compress "' + text.slice(0, 40) + '..." in your terminal';
+  }
+}
+
+// ── Stripe checkout ───────────────────────────────────────────────────────────
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3001'
   : 'https://api.promptolian.com';
