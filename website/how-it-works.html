@@ -524,7 +524,7 @@ footer a:hover{color:#aaa}
     <div style="padding:20px 24px;border-bottom:1px solid #333">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <span style="background:#333;color:#84cc16;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;font-family:'DM Mono',monospace">POST</span>
-        <span style="font-family:'DM Mono',monospace;font-size:12px;color:#aaa">https://api.promptolian.com/compress-prompt</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:#aaa">https://api.promptolian.com/compress</span>
       </div>
       <textarea id="sandbox-input" rows="3"
         style="width:100%;background:#1a1a2e;border:1px solid #444;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:13px;color:#f5f4ef;resize:vertical;outline:none;margin-bottom:10px"
@@ -805,7 +805,7 @@ async function runSandbox() {
   out.style.color = '#666';
   out.textContent = '// sending…';
   try {
-    const res  = await fetch(API_BASE + '/compress-prompt', {
+    const res  = await fetch(API_BASE + '/compress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, tier }),

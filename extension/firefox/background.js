@@ -1,4 +1,4 @@
-// Promptly — background service worker
+// Promptolian — background service worker
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({

@@ -1434,7 +1434,7 @@ async function runSandbox() {
   out.style.color = '#666';
   out.textContent = '// sending…';
   try {
-    const res  = await fetch(API_BASE + '/compress-prompt', {
+    const res  = await fetch(API_BASE + '/compress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, tier }),

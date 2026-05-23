@@ -853,7 +853,7 @@
     bar.id = 'promptly-bar';
     bar.innerHTML = `
       <span class="p-logo">P→</span>
-      <span class="p-stats" id="p-stats">Promptly ready</span>
+      <span class="p-stats" id="p-stats">Promptolian ready</span>
       <span class="p-lang" id="p-lang" title="Detected language" style="display:none"></span>
       <div class="p-actions">
         <button class="p-btn p-compress" id="p-compress">⚡ Compress</button>
@@ -931,7 +931,7 @@
       document.getElementById('p-compress').textContent = '⚡ Compress';
       document.getElementById('p-compress').style.opacity = '1';
       document.getElementById('p-undo').style.display = 'none';
-      document.getElementById('p-stats').textContent = 'Promptly ready';
+      document.getElementById('p-stats').textContent = 'Promptolian ready';
     });
 
     document.getElementById('p-toggle').addEventListener('click', () => {
