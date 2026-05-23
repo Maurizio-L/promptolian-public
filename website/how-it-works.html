@@ -650,13 +650,13 @@ footer a:hover{color:#aaa}
     [['docker','self.host','self-host','own server','on premise','local server'],
      'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
     [['context','memory','history','conversation','session'],
-     'The Context Engine (Builder plan) compresses old conversation turns automatically — 33% combined savings across a session, 101K tokens saved per developer per month.'],
+     'The Context Engine (Builder plan) compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim.'],
     [['language','spanish','italian','french','german','multilingual'],
      'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
     [['how','work','compress','token','shrink','shorter','save'],
-     'Promptolian replaces common phrases with symbols, removes filler words, and does grammar analysis — cutting 15–33% of tokens before your prompt reaches the AI. Facts and numbers are always preserved.'],
+     'Promptolian replaces common phrases with symbols, removes filler words, and applies grammar analysis — cutting 10–35% of tokens for typical prompts (median ~20% in our benchmark across 20 real-world prompts). Facts and numbers are always preserved.'],
     [['tool','schema','function','json','agent','mcp'],
-     'Tool schema compression reduces JSON function definitions from ~120 tokens to ~37 on the first call, then to a 3-token reference on repeat calls — 69% turn-1 savings, 92% across a session.'],
+     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward (97% smaller). Session average is ~93% savings.'],
   ];
 
   function localFAQ(msg) {

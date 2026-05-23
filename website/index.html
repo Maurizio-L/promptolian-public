@@ -342,11 +342,11 @@ footer a:hover{color:#aaa}
     <div class="hero-badge">⚡ Free to start — no credit card required</div>
     <div class="hero-badge" style="background:transparent;border:1.5px solid var(--lime)">🔒 Runs on your device — zero data sent to us</div>
   </div>
-  <h1>Every AI message costs money.<br><em>We make them shorter.</em></h1>
-  <p>Promptolian compresses your prompts before they reach the AI — 15–33% fewer tokens, same answers. Works on Claude, ChatGPT, Gemini and Copilot. Fully private — runs on your device.</p>
+  <h1>Your agent sends the same<br>tool list every call.<br><em>We collapse it to 3 tokens.</em></h1>
+  <p>From call 2 onward, Promptolian replaces your entire tool schema block with <code style="background:#1e2030;color:var(--lime);padding:1px 7px;border-radius:5px;font-size:15px">TOOLS:[name1,name2]</code> — <strong>97% smaller</strong>. No other tool does this. Works on any LLM API.</p>
   <div class="hero-btns">
-    <a href="#demo" class="btn btn-primary">Try the live demo →</a>
-    <a href="#context-engine" class="btn btn-secondary">Context Engine</a>
+    <a href="how-it-works.html#tool-schema" class="btn btn-primary">See the tool schema demo →</a>
+    <a href="#agent-calc" class="btn btn-secondary">Calculate your savings</a>
     <a href="docs.html" class="btn btn-outline">API docs</a>
   </div>
   <div class="hero-audiences">
@@ -358,9 +358,9 @@ footer a:hover{color:#aaa}
     </div>
     <div class="hero-aud-sep"></div>
     <div class="hero-aud">
-      <div class="hero-aud-label">Developer / API user</div>
-      <div class="hero-aud-title">REST API + Claude Code MCP.</div>
-      <div class="hero-aud-text">Compress prompts, tool schemas (69% savings), and conversation history via API. Drop-in integration — no prompt changes needed.</div>
+      <div class="hero-aud-label">Agent developer</div>
+      <div class="hero-aud-title">97% tool schema · 52.9% context.</div>
+      <div class="hero-aud-text">One API call per session to cache your schemas. Turn 2 onward costs 3 tokens instead of hundreds. Stacks on top of provider-level prompt caching.</div>
       <a href="docs.html" class="hero-aud-cta">Read the API docs →</a>
     </div>
   </div>
@@ -468,6 +468,58 @@ footer a:hover{color:#aaa}
       <div style="font-size:13px;color:var(--muted);line-height:1.6">Every number, entity, file path and named term survives unchanged — verified across 41 benchmark runs. Zero LLM calls. Sub-millisecond latency.</div>
     </div>
 
+  </div>
+</section>
+
+<!-- AGENT COST CALCULATOR -->
+<section class="section" id="agent-calc" style="padding-top:64px">
+  <div class="section-label">ROI calculator</div>
+  <div class="section-title">What does your agent spend on tool schemas?</div>
+  <p class="section-sub">Adjust the sliders to match your setup. Savings are calculated using Claude Sonnet 4 input pricing ($3 / 1M tokens).</p>
+
+  <div style="max-width:680px;margin:0 auto;background:var(--white);border:1px solid var(--border);border-radius:20px;padding:32px">
+
+    <!-- Sliders -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <label style="font-weight:600;font-size:14px">Number of tools in schema</label>
+        <span id="calc-tools-val" style="font-weight:700;font-size:18px;color:var(--lime)">10</span>
+      </div>
+      <input type="range" id="calc-tools" min="1" max="64" value="10"
+        style="width:100%;accent-color:var(--lime)" oninput="updateAgentCalc()">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>1 tool</span><span>64 tools</span></div>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <label style="font-weight:600;font-size:14px">API calls per day</label>
+        <span id="calc-calls-val" style="font-weight:700;font-size:18px;color:var(--lime)">1,000</span>
+      </div>
+      <input type="range" id="calc-calls" min="100" max="100000" step="100" value="1000"
+        style="width:100%;accent-color:var(--lime)" oninput="updateAgentCalc()">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>100/day</span><span>100k/day</span></div>
+    </div>
+
+    <!-- Results grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+      <div style="background:var(--soft);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tokens saved / day</div>
+        <div id="calc-tok-day" style="font-size:22px;font-weight:700;color:var(--ink)">—</div>
+      </div>
+      <div style="background:var(--soft);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Saved / month</div>
+        <div id="calc-usd-month" style="font-size:22px;font-weight:700;color:#16a34a">—</div>
+      </div>
+      <div style="background:var(--ink);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Saved / year</div>
+        <div id="calc-usd-year" style="font-size:22px;font-weight:700;color:var(--lime)">—</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:16px">
+      Assumes ~120 tokens per tool definition. Turn 1: 69% saved. Turn 2+: 97% saved. Session average used: <strong>~93%</strong>.
+      <a href="how-it-works.html#tool-schema" style="color:var(--muted)">How does this work? →</a>
+    </div>
   </div>
 </section>
 
@@ -639,13 +691,13 @@ footer a:hover{color:#aaa}
     [['docker','self.host','self-host','own server','on premise','local server'],
      'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
     [['context','memory','history','conversation','session'],
-     'The Context Engine (Builder plan) compresses old conversation turns automatically — 33% combined savings across a session, 101K tokens saved per developer per month.'],
+     'The Context Engine (Builder plan) compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim.'],
     [['language','spanish','italian','french','german','multilingual'],
      'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
     [['how','work','compress','token','shrink','shorter','save'],
-     'Promptolian replaces common phrases with symbols, removes filler words, and does grammar analysis — cutting 15–33% of tokens before your prompt reaches the AI. Facts and numbers are always preserved.'],
+     'Promptolian replaces common phrases with symbols, removes filler words, and applies grammar analysis — cutting 10–35% of tokens for typical prompts (median ~20% in our benchmark across 20 real-world prompts). Facts and numbers are always preserved.'],
     [['tool','schema','function','json','agent','mcp'],
-     'Tool schema compression reduces JSON function definitions from ~120 tokens to ~37 on the first call, then to a 3-token reference on repeat calls — 69% turn-1 savings, 92% across a session.'],
+     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward (97% smaller). Session average is ~93% savings.'],
   ];
 
   function localFAQ(msg) {
@@ -1359,6 +1411,26 @@ function clearDemo() {
 }
 
 // ── Cost projection ───────────────────────────────────────────────────────────
+function updateAgentCalc() {
+  const tools     = parseInt(document.getElementById('calc-tools').value);
+  const calls     = parseInt(document.getElementById('calc-calls').value);
+  const tokPerTool = 120;                       // avg tokens per JSON tool definition
+  const tokSchema  = tools * tokPerTool;
+  const avgSavedPct = 0.93;                     // session avg: turn1 69% + turn2+ 97%
+  const tokSavedPerCall = Math.round(tokSchema * avgSavedPct);
+  const tokSavedPerDay  = tokSavedPerCall * calls;
+  const pricePerTok     = 3 / 1_000_000;        // Claude Sonnet 4 input $3/1M
+  const usdMonth        = tokSavedPerDay * 30 * pricePerTok;
+  const usdYear         = tokSavedPerDay * 365 * pricePerTok;
+
+  document.getElementById('calc-tools-val').textContent  = tools;
+  document.getElementById('calc-calls-val').textContent  = calls.toLocaleString();
+  document.getElementById('calc-tok-day').textContent    = (tokSavedPerDay / 1000).toFixed(1) + 'k';
+  document.getElementById('calc-usd-month').textContent  = '$' + usdMonth.toFixed(usdMonth < 10 ? 2 : 0);
+  document.getElementById('calc-usd-year').textContent   = '$' + Math.round(usdYear).toLocaleString();
+}
+updateAgentCalc();
+
 function updateProjection() {
   const calls    = parseInt(document.getElementById('proj-slider').value);
   const tokSaved = parseInt(document.getElementById('s-ps').dataset.saved || '0');
