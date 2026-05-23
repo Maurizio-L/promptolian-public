@@ -473,16 +473,16 @@ footer a:hover{color:#aaa}
 
 <!-- AGENT COST CALCULATOR -->
 <section class="section" id="agent-calc" style="padding-top:64px">
-  <div class="section-label">ROI calculator</div>
-  <div class="section-title">What does your agent spend on tool schemas?</div>
-  <p class="section-sub">Adjust the sliders to match your setup. Savings are calculated using Claude Sonnet 4 input pricing ($3 / 1M tokens).</p>
+  <div class="section-label">Cost calculator</div>
+  <div class="section-title">Your agent re-sends its full tool list on every call. That adds up.</div>
+  <p class="section-sub">Every time your agent talks to the AI, it re-explains what tools it can use — search, read file, call API, whatever. That description is hundreds of words, sent thousands of times a day. Move the sliders to see what it costs.</p>
 
   <div style="max-width:680px;margin:0 auto;background:var(--white);border:1px solid var(--border);border-radius:20px;padding:32px">
 
     <!-- Sliders -->
     <div style="margin-bottom:24px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <label style="font-weight:600;font-size:14px">Number of tools in schema</label>
+        <label style="font-weight:600;font-size:14px">How many tools does your agent have?</label>
         <span id="calc-tools-val" style="font-weight:700;font-size:18px;color:var(--lime)">10</span>
       </div>
       <input type="range" id="calc-tools" min="1" max="64" value="10"
@@ -492,12 +492,12 @@ footer a:hover{color:#aaa}
 
     <div style="margin-bottom:28px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-        <label style="font-weight:600;font-size:14px">API calls per day</label>
+        <label style="font-weight:600;font-size:14px">How many times does it call the AI per day?</label>
         <span id="calc-calls-val" style="font-weight:700;font-size:18px;color:var(--lime)">1,000</span>
       </div>
       <input type="range" id="calc-calls" min="100" max="100000" step="100" value="1000"
         style="width:100%;accent-color:var(--lime)" oninput="updateAgentCalc()">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>100/day</span><span>100k/day</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px"><span>100 calls/day</span><span>100,000 calls/day</span></div>
     </div>
 
     <!-- Results grid -->
@@ -517,7 +517,7 @@ footer a:hover{color:#aaa}
     </div>
 
     <div style="font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:16px">
-      Assumes ~120 tokens per tool definition. Turn 1: 69% saved. Turn 2+: 97% saved. Session average used: <strong>~93%</strong>.
+      Each tool definition is ~120 words sent to the AI. Pricing based on Claude Sonnet 4 (~$3 per million words). First call: 69% smaller. Every call after: 97% smaller. Average across a session: ~93%.
       <a href="how-it-works.html#tool-schema" style="color:var(--muted)">How does this work? →</a>
     </div>
   </div>
