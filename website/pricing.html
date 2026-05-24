@@ -300,7 +300,7 @@ footer a:hover{color:#aaa}
           <span class="calc-stat-lbl">saved per month</span>
         </div>
         <div class="calc-net-row">
-          <div class="calc-net-lbl">Solo plan ($19/mo) net savings</div>
+          <div class="calc-net-lbl">Solo plan ($9/mo) net savings</div>
           <div class="calc-net-val" id="c-net">—</div>
         </div>
       </div>
@@ -337,7 +337,7 @@ footer a:hover{color:#aaa}
     <!-- SOLO -->
     <div class="price-card featured">
       <div class="price-tier">Solo <span class="price-badge">Popular</span></div>
-      <div class="price-amount">$19</div>
+      <div class="price-amount">$9</div>
       <div class="price-period">per month · cancel anytime</div>
       <div class="price-blurb">
         <strong>One line to production.</strong> We run the proxy. Your sessions survive restarts. Your savings are tracked.
@@ -358,7 +358,7 @@ footer a:hover{color:#aaa}
     <!-- TEAM -->
     <div class="price-card">
       <div class="price-tier">Team</div>
-      <div class="price-amount">$49</div>
+      <div class="price-amount">$29</div>
       <div class="price-period">per month · cancel anytime</div>
       <div class="price-blurb">
         <strong>For 2–10 developers.</strong> One account, separate keys per project, per-project cost analytics.
@@ -389,8 +389,8 @@ footer a:hover{color:#aaa}
       <tr>
         <th>Feature</th>
         <th>Free</th>
-        <th style="background:#c8f135;color:#0e0e0e">Solo $19</th>
-        <th>Team $49</th>
+        <th style="background:#c8f135;color:#0e0e0e">Solo $9</th>
+        <th>Team $29</th>
       </tr>
     </thead>
     <tbody>
@@ -522,7 +522,7 @@ footer a:hover{color:#aaa}
     var costBefore = tokBefore / 1e6 * price;
     var costAfter  = tokAfter  / 1e6 * price;
     var saved      = costBefore - costAfter;
-    var net        = saved - 19;
+    var net        = saved - 9;
 
     document.getElementById('c-cost-before').textContent  = fmt(costBefore);
     document.getElementById('c-tokens-before').textContent = fmtTok(tokBefore) + ' tok';
@@ -616,7 +616,7 @@ async function submitSignup(){
 (function(){
   var FAQ = [
     [['price','cost','plan','free','solo','team','paid','subscription','how much','cheap'],
-     'Free plan is forever free — self-hosted proxy with SQLite sessions. Solo is $19/mo: hosted proxy at proxy.promptolian.com with PostgreSQL sessions, 1 API key, and a savings dashboard. Team is $49/mo and adds up to 10 project keys with per-project breakdown.'],
+     'Free plan is forever free — self-hosted proxy with SQLite sessions. Solo is $9/mo: hosted proxy at proxy.promptolian.com with PostgreSQL sessions, 1 API key, and a savings dashboard. Team is $29/mo and adds up to 10 project keys with per-project breakdown.'],
     [['private','privacy','data','store','track','gdpr','safe','secure'],
      'The proxy only sees your API requests in transit — it never stores prompt content. Sessions store only tool schemas (not your messages). Your data is not used for training.'],
     [['install','start','begin','how do i','setup','configure'],
@@ -630,7 +630,7 @@ async function submitSignup(){
     [['dashboard','usage','analytics','savings'],
      'Paid plans include a dashboard at promptolian.com/dashboard.html. Log in with your API key to see tokens saved, dollar saved, cache hit rate, and active sessions.'],
     [['team','project','multiple','keys'],
-     'Team plan ($49/mo) lets you create up to 10 project API keys — one per agent, environment, or developer. Each key tracks its own usage so you can do per-project cost attribution.'],
+     'Team plan ($29/mo) lets you create up to 10 project API keys — one per agent, environment, or developer. Each key tracks its own usage so you can do per-project cost attribution.'],
     [['rotate','rotation','new key','regenerate'],
      'You can rotate any API key from the dashboard. Your old key is invalidated immediately; a new one is issued. The plan and project stay the same.'],
     [['cli','command','terminal','pip'],
