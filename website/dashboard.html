@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promptolian — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--border:#e8e7e0;--red:#ef4444;--green:#4ade80}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.6;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:var(--soft);border-bottom:1px solid var(--border)}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;background:var(--lime);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:500}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-right a{font-size:13px;color:var(--muted);text-decoration:none}
+
+/* ── Login screen ── */
+#login-screen{max-width:460px;margin:80px auto;padding:0 24px}
+.login-card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:36px}
+.login-title{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:8px}
+.login-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:6px}
+.field input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Mono',monospace;background:var(--soft);outline:none;color:var(--ink)}
+.field input:focus{border-color:#999}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none;width:100%;margin-top:16px}
+.btn-primary{background:var(--ink);color:var(--white)}
+.btn-primary:hover{opacity:.88}
+.err{color:var(--red);font-size:13px;margin-top:10px;display:none}
+
+/* ── Dashboard ── */
+#dash-screen{display:none;max-width:900px;margin:0 auto;padding:48px 24px}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;flex-wrap:wrap;gap:12px}
+.dash-title{font-family:'DM Serif Display',serif;font-size:28px}
+.dash-meta{font-size:13px;color:var(--muted)}
+.plan-badge{display:inline-block;background:var(--lime);color:var(--ink);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:20px;margin-left:8px}
+.logout-btn{font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;text-decoration:underline}
+
+/* ── KPI cards ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:22px}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:32px;line-height:1;margin-bottom:4px}
+.kpi-val.green{color:#16a34a}
+.kpi-lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── Sessions ── */
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+.session-list{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:28px}
+.session-row{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--border);font-size:13px}
+.session-row:last-child{border-bottom:none}
+.session-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-warm{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-cold{background:#fef9ee;color:#b45309;border:1px solid #fde68a}
+.empty-state{padding:32px;text-align:center;color:var(--muted);font-size:14px}
+
+/* ── Projects (Team) ── */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px}
+.project-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:22px}
+.project-name{font-weight:600;font-size:15px;margin-bottom:4px}
+.project-key{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px}
+.project-stat{font-size:22px;font-weight:600;color:#16a34a}
+.project-stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── Key management ── */
+.key-mgmt{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:28px}
+.key-mgmt-title{font-weight:600;margin-bottom:16px}
+.key-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.key-row input{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;background:var(--soft);color:var(--ink)}
+.key-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink);transition:all .15s;white-space:nowrap}
+.key-btn:hover{background:var(--soft)}
+.key-btn.danger{border-color:#fca5a5;color:var(--red)}
+.key-btn.danger:hover{background:#fef2f2}
+.key-btn.primary{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.new-key-form{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.new-key-form input{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--soft);color:var(--ink);font-family:'DM Sans',sans-serif}
+.msg{font-size:13px;padding:10px 14px;border-radius:8px;margin-top:10px;display:none}
+.msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.msg.error{background:#fef2f2;color:var(--red);border:1px solid #fca5a5}
+
+@media(max-width:600px){
+  nav{padding:14px 20px}
+  #dash-screen{padding:28px 16px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .session-row{grid-template-columns:1fr auto}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-icon">P→</div>
+    Promptolian
+  </a>
+  <div class="nav-right">
+    <a href="pricing.html">Pricing</a>
+    <a href="https://github.com/Maurizio-L/promptolian-public" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-title">Your dashboard</div>
+    <div class="login-sub">Enter the API key you received by email after subscribing.</div>
+    <div class="field">
+      <label>API key</label>
+      <input type="text" id="key-input" placeholder="pk_..." autocomplete="off" spellcheck="false">
+    </div>
+    <button class="btn btn-primary" onclick="login()">Open dashboard</button>
+    <div class="err" id="login-err">Invalid or expired key. Check your email or <a href="pricing.html">subscribe</a>.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash-screen">
+
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Dashboard <span class="plan-badge" id="plan-label">solo</span></div>
+      <div class="dash-meta" id="dash-email">—</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-val green" id="kpi-dollars">—</div>
+      <div class="kpi-lbl">Saved this account ($)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-tokens">—</div>
+      <div class="kpi-lbl">Tokens saved (lifetime)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-sessions">—</div>
+      <div class="kpi-lbl">Active sessions</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val" id="kpi-keys">—</div>
+      <div class="kpi-lbl">API keys used</div>
+    </div>
+  </div>
+
+  <!-- Key management -->
+  <div class="key-mgmt">
+    <div class="key-mgmt-title">Your API key</div>
+    <div class="key-row">
+      <input type="text" id="current-key-display" readonly>
+      <button class="key-btn" onclick="copyKey()">Copy</button>
+      <button class="key-btn danger" onclick="rotateKey()">Rotate key</button>
+    </div>
+    <div class="msg" id="key-msg"></div>
+  </div>
+
+  <!-- Per-project cards (Team only) -->
+  <div id="projects-section" style="display:none">
+    <div class="section-title">Projects</div>
+    <div class="project-grid" id="project-grid"></div>
+
+    <div class="key-mgmt">
+      <div class="key-mgmt-title">Add a project key <span style="font-size:12px;color:var(--muted);font-weight:400" id="key-limit-hint"></span></div>
+      <div class="new-key-form">
+        <input type="text" id="new-project-name" placeholder="project name (e.g. my-agent)" maxlength="40">
+        <button class="key-btn primary" onclick="createProjectKey()">Create key</button>
+      </div>
+      <div class="msg" id="new-key-msg"></div>
+    </div>
+  </div>
+
+  <!-- Active sessions -->
+  <div class="section-title">Active sessions</div>
+  <div class="session-list" id="session-list">
+    <div class="empty-state">Loading sessions…</div>
+  </div>
+
+</div>
+
+<script>
+const PROXY = 'https://proxy.promptolian.com';
+const LS_KEY = 'promptolian_api_key';
+let _currentKey = '';
+let _plan = 'solo';
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function login() {
+  const key = document.getElementById('key-input').value.trim();
+  if (!key) return;
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  try {
+    const data = await apiFetch('/proxy/dashboard', key);
+    if (data.error) { err.style.display = 'block'; return; }
+    localStorage.setItem(LS_KEY, key);
+    _currentKey = key;
+    showDash(data);
+  } catch(e) { err.style.display = 'block'; }
+}
+
+function logout() {
+  localStorage.removeItem(LS_KEY);
+  _currentKey = '';
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('dash-screen').style.display = 'none';
+  document.getElementById('key-input').value = '';
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function apiFetch(path, key, opts = {}) {
+  const res = await fetch(PROXY + path, {
+    headers: { 'X-Promptolian-Key': key, 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return res.json();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function showDash(data) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dash-screen').style.display = 'block';
+
+  _plan = data.plan || 'solo';
+  document.getElementById('plan-label').textContent = _plan;
+  document.getElementById('dash-email').textContent = data.email || '';
+  document.getElementById('kpi-dollars').textContent = '$' + (data.dollar_saved || 0).toFixed(2);
+  document.getElementById('kpi-tokens').textContent = fmtNum(data.tokens_saved || 0);
+  document.getElementById('kpi-sessions').textContent = data.sessions_active || 0;
+  document.getElementById('kpi-keys').textContent = (data.keys_used || 1) + ' / ' + (data.key_limit || 1);
+  document.getElementById('current-key-display').value = _currentKey;
+
+  // Projects (Team)
+  if (_plan === 'team' && data.projects && data.projects.length > 0) {
+    document.getElementById('projects-section').style.display = 'block';
+    document.getElementById('key-limit-hint').textContent =
+      `(${data.keys_used}/${data.key_limit} used)`;
+    renderProjects(data.projects);
+  }
+
+  loadSessions();
+}
+
+function renderProjects(projects) {
+  const grid = document.getElementById('project-grid');
+  grid.innerHTML = projects.map(p => `
+    <div class="project-card">
+      <div class="project-name">${esc(p.project_name)}</div>
+      <div class="project-key">${esc(p.api_key_hint)}</div>
+      <div class="project-stat">$${p.dollar_saved.toFixed(2)}</div>
+      <div class="project-stat-lbl">${fmtNum(p.tokens_saved)} tokens saved</div>
+    </div>
+  `).join('');
+}
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
+async function loadSessions() {
+  const list = document.getElementById('session-list');
+  try {
+    const data = await apiFetch('/proxy/sessions', _currentKey);
+    const entries = Object.entries(data);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">No active sessions. Start using the proxy to see data here.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(([id, s]) => `
+      <div class="session-row">
+        <div class="session-id">${esc(id)}</div>
+        <div>${s.tool_names ? s.tool_names.slice(0,3).map(n=>`<code style="font-size:11px;background:var(--soft);padding:1px 6px;border-radius:4px">${esc(n)}</code>`).join(' ') : ''}</div>
+        <div style="font-size:12px;color:var(--muted)">${fmtNum(s.tokens_cached)} tok cached</div>
+        <div><span class="badge ${s.cache_warm ? 'badge-warm' : 'badge-cold'}">${s.cache_warm ? 'warm' : 'cold'}</span></div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Could not load sessions.</div>';
+  }
+}
+
+// ── Key management ────────────────────────────────────────────────────────────
+function copyKey() {
+  navigator.clipboard.writeText(_currentKey).then(() => showMsg('key-msg', 'Copied to clipboard', 'success'));
+}
+
+async function rotateKey() {
+  if (!confirm('Rotate your API key? The current key will stop working immediately.')) return;
+  try {
+    const data = await apiFetch('/proxy/keys/rotate', _currentKey, {method: 'POST'});
+    if (data.error) { showMsg('key-msg', data.error, 'error'); return; }
+    _currentKey = data.api_key;
+    localStorage.setItem(LS_KEY, _currentKey);
+    document.getElementById('current-key-display').value = _currentKey;
+    showMsg('key-msg', 'Key rotated. Update your agent config with the new key above.', 'success');
+  } catch(e) { showMsg('key-msg', 'Rotation failed', 'error'); }
+}
+
+async function createProjectKey() {
+  const name = document.getElementById('new-project-name').value.trim();
+  if (!name) return;
+  try {
+    const data = await apiFetch('/proxy/keys/new', _currentKey, {
+      method: 'POST',
+      body: JSON.stringify({project_name: name}),
+    });
+    if (data.error) { showMsg('new-key-msg', data.error, 'error'); return; }
+    showMsg('new-key-msg',
+      `New key for "${name}": <strong style="font-family:monospace">${data.api_key}</strong> — save it now, it won't be shown again.`,
+      'success');
+    document.getElementById('new-project-name').value = '';
+    setTimeout(() => { apiFetch('/proxy/dashboard', _currentKey).then(showDash); }, 500);
+  } catch(e) { showMsg('new-key-msg', 'Failed to create key', 'error'); }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n/1_000).toFixed(1) + 'k';
+  return String(n);
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.innerHTML = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async function init() {
+  // Success redirect from Stripe checkout
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('checkout') === 'success') {
+    document.querySelector('.login-sub').textContent =
+      'Payment successful! Check your email for your API key, then enter it below.';
+  }
+
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    _currentKey = saved;
+    try {
+      const data = await apiFetch('/proxy/dashboard', saved);
+      if (!data.error) { showDash(data); return; }
+    } catch(e) {}
+    localStorage.removeItem(LS_KEY);
+  }
+  document.getElementById('key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+})();
+</script>
+</body>
+</html>
