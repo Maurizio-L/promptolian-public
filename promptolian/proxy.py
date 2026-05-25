@@ -797,18 +797,25 @@ def proxy_webhook():
     etype = event['type']
     obj   = event['data']['object']
 
+    def _get(o, key, default=''):
+        try:
+            v = o[key]
+            return v if v is not None else default
+        except (KeyError, TypeError):
+            return default
+
     if etype == 'checkout.session.completed':
-        email    = obj.get('customer_email', '')
-        sub_id   = obj.get('subscription', '')
-        metadata = obj.get('metadata', {})
-        if email and metadata.get('product') == 'proxy_cloud':
-            plan = metadata.get('plan', 'solo')
+        email    = _get(obj, 'customer_email')
+        sub_id   = _get(obj, 'subscription')
+        metadata = _get(obj, 'metadata') or {}
+        if email and _get(metadata, 'product') == 'proxy_cloud':
+            plan = _get(metadata, 'plan') or 'solo'
             _provision_user(email, sub_id, plan)
 
     elif etype in ('customer.subscription.deleted', 'customer.subscription.updated'):
-        status = obj.get('status', '')
+        status = _get(obj, 'status')
         if status in ('canceled', 'unpaid', 'past_due'):
-            _deprovision_user(obj.get('id', ''))
+            _deprovision_user(_get(obj, 'id'))
 
     return jsonify({'received': True})
 
