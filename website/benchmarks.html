@@ -239,7 +239,7 @@ a:hover{text-decoration:underline}
       </ul>
     </div>
     <div class="tier-card featured">
-      <div class="tier-badge badge-pro">Pro · $9/mo</div>
+      <div class="tier-badge badge-pro">Pro · Solo $9/mo</div>
       <div class="tier-cr">~10%</div>
       <div class="tier-cr-lbl">avg CR (up to 18% on long prompts)</div>
       <ul class="tier-facts">
@@ -251,15 +251,15 @@ a:hover{text-decoration:underline}
       </ul>
     </div>
     <div class="tier-card">
-      <div class="tier-badge badge-dev">Developer · $29/mo</div>
+      <div class="tier-badge badge-dev">Developer · Team $29/mo</div>
       <div class="tier-cr">~11%</div>
-      <div class="tier-cr-lbl">avg CR on prompts · up to 92% on tool schemas</div>
+      <div class="tier-cr-lbl">avg CR on prompts · ~90% session avg on tool schemas</div>
       <ul class="tier-facts">
         <li>Everything in Pro</li>
         <li>Domain packs (finance, legal, medical, code)</li>
         <li>spaCy clause pruning</li>
         <li>Context engine (multi-turn delta pruning)</li>
-        <li>Tool schema DSL compiler (69–97% per session)</li>
+        <li>Tool schema DSL compiler (69% turn-1 / ~90% session avg)</li>
         <li>100% local — no external API calls</li>
       </ul>
     </div>
@@ -343,9 +343,9 @@ a:hover{text-decoration:underline}
       <div class="ov-lbl">JSON → DSL compilation</div>
     </div>
     <div class="ov-card" style="border-color:#a78bfa44">
-      <div class="ov-val" style="color:#a78bfa">97.5%</div>
-      <div class="ov-unit">Turn 2+ CR</div>
-      <div class="ov-lbl">session cache reference</div>
+      <div class="ov-val" style="color:#a78bfa">~90%</div>
+      <div class="ov-unit">Session avg CR</div>
+      <div class="ov-lbl">across all turns (cache hits)</div>
     </div>
     <div class="ov-card" style="border-color:#a78bfa44">
       <div class="ov-val" style="color:#a78bfa">91.9%</div>
@@ -368,7 +368,7 @@ a:hover{text-decoration:underline}
         &nbsp;&nbsp;# Search the web for up-to-date information…<br><br>
         <span style="color:#555"># Turn 2+:</span><br>
         TOOLS:[search_web,get_user,create_order,…]<br>
-        <span style="color:#555"># → 30 tokens (97.5% CR)</span>
+        <span style="color:#555"># → 30 tokens (~90% session avg CR)</span>
       </div>
     </div>
   </div>

@@ -287,7 +287,7 @@ footer a:hover{color:#aaa}
     We use <strong>no tracking cookies</strong>. This site loads Google Fonts (a third-party service)
     which may set cookies. By continuing you accept our
     <a href="privacy.html">Privacy Policy</a>.
-    All prompt compression runs <strong>locally in your browser</strong> — nothing is sent to our servers without your action.
+    All prompt compression runs <strong>in your agent's pipeline</strong> — nothing is sent to our servers without your action.
   </p>
   <div class="gdpr-btns">
     <button class="gdpr-btn gdpr-decline" onclick="gdprDecline()">Decline non-essential</button>
@@ -332,7 +332,7 @@ footer a:hover{color:#aaa}
     <li><a href="how-it-works.html" style="color:var(--ink);font-weight:600">How it works</a></li>
     <li><a href="pricing.html">Pricing</a></li>
     <li><a href="docs.html">API docs</a></li>
-    <li><a href="#" class="nav-cta">Install free &#x2192;</a></li>
+    <li><a href="index.html#get-started" class="nav-cta">Get started &#x2192;</a></li>
   </ul>
 </nav>
 
@@ -346,7 +346,7 @@ footer a:hover{color:#aaa}
 <!-- TOOL SCHEMA DEMO -->
 <section class="section" id="tool-schema" style="padding-top:72px">
   <div class="section-label">Layer 3 · Developer / API</div>
-  <div class="section-title">Tool schemas: 69% smaller on call 1, 97% on call 2+</div>
+  <div class="section-title">Tool schemas: 69% smaller on call 1, ~90% session average</div>
   <p class="section-sub">Every agent call sends full JSON tool definitions — 120 tokens per tool, every single turn. Promptolian compiles them to a compact DSL once, then replaces the whole block with a 3-token reference on repeat calls. No other tool does this.</p>
 
   <div style="background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:32px">
@@ -358,7 +358,7 @@ footer a:hover{color:#aaa}
       </button>
       <button id="ts-turn2" onclick="setTurn(2)"
         style="flex:1;padding:12px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted)">
-        Turn 2+ — cached (97% CR)
+        Turn 2+ — cached (~90% session avg)
       </button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr">
@@ -381,7 +381,7 @@ footer a:hover{color:#aaa}
 
 <!-- CONTEXT ENGINE SHOWCASE -->
 <section class="section" id="context-engine" style="padding-top:72px">
-  <div class="section-label">Context Engine · Builder plan</div>
+  <div class="section-label">Context Engine · Solo / Team plan</div>
   <div class="section-title">Stop paying for everything your AI remembers</div>
   <p class="section-sub">In a long conversation, every old message gets resent to the AI on every reply — even the parts it barely needs. The Context Engine compresses old turns automatically, so you only pay for what still matters.</p>
 
@@ -555,7 +555,7 @@ footer a:hover{color:#aaa}
     </div>
   </div>
   <div style="margin-top:12px;font-size:12px;color:var(--muted)">
-    The same endpoint used by the browser extension, CLI, and Claude Code MCP server.
+    The same endpoint used by the CLI, proxy, and Claude Code MCP server.
     <a href="docs.html" style="color:var(--ink)">Full API reference →</a>
   </div>
 </section>
@@ -637,12 +637,12 @@ footer a:hover{color:#aaa}
 
   // Local FAQ — used when API is unreachable
   var FAQ = [
-    [['price','cost','plan','free','pro','builder','paid','cheap','subscription','how much'],
-     'Free plan is forever free — Standard compression in the browser. Pro is $7/mo and adds the grammar engine and domain packs. Builder is $19/mo and includes the REST API, context engine, and Claude Code MCP.'],
+    [['price','cost','plan','free','solo','team','paid','cheap','subscription','how much'],
+     'Free plan is self-hosted (pip install "promptolian[proxy]"). Solo is $9/mo: hosted proxy at proxy.promptolian.com, 1 API key, savings dashboard. Team is $29/mo: up to 10 project keys plus per-project breakdown.'],
     [['private','privacy','data','store','track','gdpr','safe','secure','leave'],
-     'The browser extension runs 100% locally — your prompts never leave your device. The REST API processes prompts server-side but never writes them to disk.'],
-    [['install','extension','chrome','firefox','start','begin','download','add'],
-     'Install the free browser extension from the Chrome or Firefox store — no account needed. It adds a Compress button directly on ChatGPT, Claude, Gemini and Copilot.'],
+     'The self-hosted proxy runs 100% locally — your prompts never leave your machine. The hosted proxy (Solo/Team) forwards requests to Anthropic/OpenAI but does not log or store prompt content.'],
+    [['install','start','begin','pip','proxy','setup'],
+     'Run: pip install "promptolian[proxy]" then: promptolian proxy — then point your agent at http://localhost:3002. Works with any language or HTTP client.'],
     [['api','rest','endpoint','curl','developer','key','token'],
      'The REST API is at api.promptolian.com. Standard compression is free with no key. See full docs at promptolian.com/docs.html'],
     [['cli','command','terminal','pip','install promptolian'],
@@ -656,7 +656,7 @@ footer a:hover{color:#aaa}
     [['how','work','compress','token','shrink','shorter','save'],
      'Promptolian replaces common phrases with symbols, removes filler words, and applies grammar analysis — cutting 10–35% of tokens for typical prompts (median ~20% in our benchmark across 20 real-world prompts). Facts and numbers are always preserved.'],
     [['tool','schema','function','json','agent','mcp'],
-     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward (97% smaller). Session average is ~93% savings.'],
+     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward. Session average is ~90% savings.'],
   ];
 
   function localFAQ(msg) {
@@ -778,7 +778,7 @@ function setTurn(n) {
     btn1.style.background = 'var(--lime)'; btn1.style.color = 'var(--ink)';
     btn2.style.background = 'transparent'; btn2.style.color = 'var(--muted)';
   } else {
-    badge.textContent = '97% fewer tokens — turn 2+';
+    badge.textContent = '~90% session avg — turn 2+';
     btn2.style.background = 'var(--lime)'; btn2.style.color = 'var(--ink)';
     btn1.style.background = 'transparent'; btn1.style.color = 'var(--muted)';
   }

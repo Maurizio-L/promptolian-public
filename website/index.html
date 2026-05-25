@@ -199,7 +199,7 @@ footer a:hover{color:#aaa}
 .divider{border:none;border-top:1px solid var(--border);margin:0}
 
 /* ── HERO AUDIENCES ── */
-.hero-audiences{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-top:40px;background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;text-align:left;max-width:660px;margin-left:auto;margin-right:auto}
+.hero-audiences{display:grid;grid-template-columns:1fr;gap:0;margin-top:40px;background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;text-align:left;max-width:660px;margin-left:auto;margin-right:auto}
 .hero-aud{padding:20px 24px}
 .hero-aud-sep{background:var(--border)}
 .hero-aud-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
@@ -287,7 +287,7 @@ footer a:hover{color:#aaa}
     We use <strong>no tracking cookies</strong>. This site loads Google Fonts (a third-party service)
     which may set cookies. By continuing you accept our
     <a href="privacy.html">Privacy Policy</a>.
-    All prompt compression runs <strong>locally in your browser</strong> — nothing is sent to our servers without your action.
+    All prompt compression runs <strong>in your agent's pipeline</strong> — nothing is sent to our servers without your action.
   </p>
   <div class="gdpr-btns">
     <button class="gdpr-btn gdpr-decline" onclick="gdprDecline()">Decline non-essential</button>
@@ -332,7 +332,7 @@ footer a:hover{color:#aaa}
     <li><a href="how-it-works.html">How it works</a></li>
     <li><a href="pricing.html">Pricing</a></li>
     <li><a href="docs.html">API docs</a></li>
-    <li><a href="#" class="nav-cta">Install free &#x2192;</a></li>
+    <li><a href="#get-started" class="nav-cta">Get started &#x2192;</a></li>
   </ul>
 </nav>
 
@@ -343,7 +343,7 @@ footer a:hover{color:#aaa}
     <div class="hero-badge" style="background:transparent;border:1.5px solid var(--lime)">🔒 Runs on your device — zero data sent to us</div>
   </div>
   <h1>Your agent sends the same<br>tool list every call.<br><em>We collapse it to 3 tokens.</em></h1>
-  <p>From call 2 onward, Promptolian replaces your entire tool schema block with <code style="background:#1e2030;color:var(--lime);padding:1px 7px;border-radius:5px;font-size:15px">TOOLS:[name1,name2]</code> — <strong>97% smaller</strong>. No other tool does this. Works on any LLM API.</p>
+  <p>From call 2 onward, Promptolian replaces your entire tool schema block with <code style="background:#1e2030;color:var(--lime);padding:1px 7px;border-radius:5px;font-size:15px">TOOLS:[name1,name2]</code> — <strong>~90% smaller</strong> on session average. No other tool does this. Works on any LLM API.</p>
   <div class="hero-btns">
     <a href="how-it-works.html#tool-schema" class="btn btn-primary">See the tool schema demo →</a>
     <a href="#agent-calc" class="btn btn-secondary">Calculate your savings</a>
@@ -351,16 +351,9 @@ footer a:hover{color:#aaa}
   </div>
   <div class="hero-audiences">
     <div class="hero-aud">
-      <div class="hero-aud-label">Everyday user</div>
-      <div class="hero-aud-title">No setup. Free forever.</div>
-      <div class="hero-aud-text">Install the browser extension and click Compress before sending. Works on ChatGPT, Claude, Gemini and more. Your prompts never leave your device.</div>
-      <a href="#production" class="hero-aud-cta">Install extension →</a>
-    </div>
-    <div class="hero-aud-sep"></div>
-    <div class="hero-aud">
-      <div class="hero-aud-label">Agent developer</div>
-      <div class="hero-aud-title">97% tool schema · 52.9% context.</div>
-      <div class="hero-aud-text">One API call per session to cache your schemas. Turn 2 onward costs 3 tokens instead of hundreds. Stacks on top of provider-level prompt caching.</div>
+      <div class="hero-aud-label">Build AI agents</div>
+      <div class="hero-aud-title">~90% tool schema · 52.9% context.</div>
+      <div class="hero-aud-text">pip install, point your agent at the proxy, and every tool schema is cached automatically. Works with any language or HTTP client.</div>
       <a href="docs.html" class="hero-aud-cta">Read the API docs →</a>
     </div>
   </div>
@@ -368,7 +361,7 @@ footer a:hover{color:#aaa}
 
 <!-- PROOF BAR -->
 <div class="proof">
-  <div class="proof-item"><strong>97%</strong> tool schema compression — turn 2+</div>
+  <div class="proof-item"><strong>~90%</strong> tool schema savings — session avg</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>52.9%</strong> history compression — 20-turn session</div>
   <div class="dot"></div>
@@ -457,8 +450,8 @@ footer a:hover{color:#aaa}
     </div>
 
     <div style="background:var(--ink);border-radius:20px;padding:28px;color:var(--white);border-top:3px solid var(--lime)">
-      <div style="font-size:36px;font-weight:700;color:var(--lime);line-height:1">97%</div>
-      <div style="font-weight:600;font-size:15px;margin:8px 0 6px;color:var(--white)">Tool schema — turn 2+</div>
+      <div style="font-size:36px;font-weight:700;color:var(--lime);line-height:1">~90%</div>
+      <div style="font-weight:600;font-size:15px;margin:8px 0 6px;color:var(--white)">Tool schema — session avg</div>
       <div style="font-size:13px;color:#aaa;line-height:1.6">The full JSON block collapses to <code style="background:#333;padding:1px 5px;border-radius:4px;font-size:12px">TOOLS:[name1,name2]</code> on every subsequent call. No other tool does this.</div>
     </div>
 
@@ -517,7 +510,7 @@ footer a:hover{color:#aaa}
     </div>
 
     <div style="font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:16px">
-      Each tool definition is ~120 words sent to the AI. Pricing based on Claude Sonnet 4 (~$3 per million words). First call: 69% smaller. Every call after: 97% smaller. Average across a session: ~93%.
+      Each tool definition is ~120 tokens sent to the AI. Pricing based on Claude Sonnet 4 (~$3 per million tokens). First call: 69% smaller. Every call after: ~97% smaller. Session average: ~90%.
       <a href="how-it-works.html#tool-schema" style="color:var(--muted)">How does this work? →</a>
     </div>
   </div>
@@ -528,74 +521,68 @@ footer a:hover{color:#aaa}
   <div class="section-label">Pricing</div>
   <div class="section-title">Start free. Pay when you need more.</div>
   <div class="pricing-grid">
-<div class="pricing-grid">
 
     <!-- FREE -->
     <div class="price-card">
       <div class="price-tier">Free</div>
       <div class="price-amount">$0</div>
-      <div class="price-period">forever</div>
+      <div class="price-period">forever · self-hosted</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px;background:var(--soft);border-radius:8px;padding:8px 12px;line-height:1.6">
-        <strong style="color:var(--ink)">~15–20% shorter</strong> — runs entirely in your browser. No server, no account, fully private.
+        <strong style="color:var(--ink)">Self-hosted proxy</strong> — runs on your machine. SQLite sessions, no account required.
       </div>
       <ul class="price-features">
-        <li><span class="check">✓</span><strong>Unlimited</strong> Standard compressions</li>
-        <li><span class="check">✓</span>180+ symbol shortcuts</li>
-        <li><span class="check">✓</span>Phrase simplification</li>
-        <li><span class="check">✓</span>Language auto-detection (EN/IT/FR/DE/ES)</li>
-        <li><span class="check">✓</span>Claude, ChatGPT, Gemini, Copilot</li>
-        <li><span class="check">✓</span>Fully local — zero data sent anywhere</li>
-        <li><span class="price-dim">✗ Grammar engine</span></li>
-        <li><span class="price-dim">✗ Domain packs</span></li>
-        <li><span class="price-dim">✗ REST API</span></li>
+        <li><span class="check">✓</span><code>pip install "promptolian[proxy]"</code></li>
+        <li><span class="check">✓</span>Tool schema caching (~90% session avg)</li>
+        <li><span class="check">✓</span>Text compression (~20% rule-based)</li>
+        <li><span class="check">✓</span>Context compression (52.9% NLP-based)</li>
+        <li><span class="check">✓</span>SQLite sessions — local</li>
+        <li><span class="check">✓</span>Works with any language or HTTP client</li>
+        <li><span class="price-dim">✗ Hosted proxy</span></li>
+        <li><span class="price-dim">✗ Savings dashboard</span></li>
       </ul>
-      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Get started free</a>
+      <a href="docs.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Read the docs</a>
     </div>
 
-    <!-- PRO -->
+    <!-- SOLO -->
     <div class="price-card featured">
-      <div class="price-tier">Pro <span class="price-badge">Popular</span></div>
-      <div class="price-amount" id="pro-amount">$7</div>
-      <div class="price-period" id="pro-period">per month · cancel anytime</div>
+      <div class="price-tier">Solo <span class="price-badge">Popular</span></div>
+      <div class="price-amount">$9</div>
+      <div class="price-period">per month · cancel anytime</div>
       <div style="font-size:12px;color:#aaa;margin-bottom:16px;background:#1e2030;border-radius:8px;padding:8px 12px;line-height:1.6">
-        <strong style="color:var(--lime)">More compression, faster workflow.</strong> Grammar engine + domain packs + auto-compress on send.
+        <strong style="color:var(--lime)">Hosted at proxy.promptolian.com.</strong> PostgreSQL sessions, 1 project API key, savings dashboard.
       </div>
       <ul class="price-features">
         <li><span class="check">✓</span>Everything in Free</li>
-        <li><span class="check">✓</span><strong>Grammar engine</strong> — removes filler words &amp; weak structure</li>
-        <li><span class="check">✓</span><strong>All domain packs</strong> — finance, legal, medical, code, devops</li>
-        <li><span class="check">✓</span><strong>Custom shorthand rules</strong> — teach it your vocabulary</li>
-        <li><span class="check">✓</span>Auto-compress on send</li>
-        <li><span class="check">✓</span>Savings history &amp; 7-day chart</li>
-        <li><span class="check">✓</span>Priority support</li>
-        <li><span class="price-dim">✗ REST API access</span></li>
-        <li><span class="price-dim">✗ Tool schema compiler</span></li>
+        <li><span class="check">✓</span><strong>Hosted proxy</strong> — proxy.promptolian.com</li>
+        <li><span class="check">✓</span><strong>PostgreSQL sessions</strong> — persistent across restarts</li>
+        <li><span class="check">✓</span><strong>1 project API key</strong></li>
+        <li><span class="check">✓</span><strong>Savings dashboard</strong></li>
+        <li><span class="check">✓</span>&lt;10ms proxy overhead</li>
+        <li><span class="price-dim">✗ Per-project breakdown</span></li>
+        <li><span class="price-dim">✗ Multiple project keys</span></li>
       </ul>
-      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Start 7-day free trial</a>
+      <button class="price-btn" onclick="openSignup('solo')">Get started →</button>
     </div>
 
-    <!-- BUILDER -->
+    <!-- TEAM -->
     <div class="price-card">
-      <div class="price-tier">Builder</div>
-      <div class="price-amount" id="dev-amount">$19</div>
-      <div class="price-period" id="dev-period">per month · cancel anytime</div>
+      <div class="price-tier">Team</div>
+      <div class="price-amount">$29</div>
+      <div class="price-period">per month · cancel anytime</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px;background:var(--soft);border-radius:8px;padding:8px 12px;line-height:1.6">
-        <strong style="color:var(--ink)">For developers &amp; API users.</strong> Full REST API, tool schema compiler (69% CR), context engine, Claude Code MCP.
+        <strong style="color:var(--ink)">Everything in Solo</strong> — up to 10 project API keys plus per-project savings breakdown.
       </div>
       <ul class="price-features">
-        <li><span class="check">✓</span>Everything in Pro</li>
-        <li><span class="check">✓</span><strong>Tool schema compiler</strong> — JSON→DSL, 69% turn-1 / 97% cached</li>
-        <li><span class="check">✓</span><strong>Context engine</strong> — prune, summarise &amp; compress conversation history</li>
-        <li><span class="check">✓</span><strong>REST API</strong> — <code>/compress</code>, <code>/compress-tools</code>, <code>/optimize-context</code></li>
-        <li><span class="check">✓</span><strong>Claude Code MCP</strong> — native tool integration</li>
-        <li><span class="check">✓</span>CLI — <code>promptolian compress "..."</code></li>
-        <li><span class="check">✓</span>2M tokens / day</li>
+        <li><span class="check">✓</span>Everything in Solo</li>
+        <li><span class="check">✓</span><strong>Up to 10 project API keys</strong></li>
+        <li><span class="check">✓</span><strong>Per-project savings breakdown</strong></li>
+        <li><span class="check">✓</span>Hosted proxy — proxy.promptolian.com</li>
+        <li><span class="check">✓</span>PostgreSQL sessions</li>
         <li><span class="check">✓</span>Priority support</li>
       </ul>
-      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">Get API access</a>
+      <a href="pricing.html" class="price-btn" style="text-align:center;text-decoration:none;display:block">See full pricing →</a>
     </div>
 
-  </div>
   </div>
   <div style="text-align:center;margin-top:20px">
     <a href="pricing.html" style="font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)">See full pricing, calculator and annual discount &#x2192;</a>
@@ -716,12 +703,12 @@ promptolian mcp install
 
   // Local FAQ — used when API is unreachable
   var FAQ = [
-    [['price','cost','plan','free','pro','builder','paid','cheap','subscription','how much'],
-     'Free plan is forever free — Standard compression in the browser. Pro is $7/mo and adds the grammar engine and domain packs. Builder is $19/mo and includes the REST API, context engine, and Claude Code MCP.'],
+    [['price','cost','plan','free','solo','team','paid','cheap','subscription','how much'],
+     'Free plan is self-hosted (pip install "promptolian[proxy]"). Solo is $9/mo: hosted proxy at proxy.promptolian.com, 1 API key, savings dashboard. Team is $29/mo: up to 10 project keys plus per-project breakdown.'],
     [['private','privacy','data','store','track','gdpr','safe','secure','leave'],
-     'The browser extension runs 100% locally — your prompts never leave your device. The REST API processes prompts server-side but never writes them to disk.'],
-    [['install','extension','chrome','firefox','start','begin','download','add'],
-     'Install the free browser extension from the Chrome or Firefox store — no account needed. It adds a Compress button directly on ChatGPT, Claude, Gemini and Copilot.'],
+     'The self-hosted proxy runs 100% locally — your prompts never leave your machine. The hosted proxy (Solo/Team) forwards requests to Anthropic/OpenAI but does not log or store prompt content.'],
+    [['install','start','begin','pip','proxy','setup'],
+     'Run: pip install "promptolian[proxy]" then: promptolian proxy — then point your agent at http://localhost:3002. Works with any language or HTTP client.'],
     [['api','rest','endpoint','curl','developer','key','token'],
      'The REST API is at api.promptolian.com. Standard compression is free with no key. See full docs at promptolian.com/docs.html'],
     [['cli','command','terminal','pip','install promptolian'],
@@ -735,7 +722,7 @@ promptolian mcp install
     [['how','work','compress','token','shrink','shorter','save'],
      'Promptolian replaces common phrases with symbols, removes filler words, and applies grammar analysis — cutting 10–35% of tokens for typical prompts (median ~20% in our benchmark across 20 real-world prompts). Facts and numbers are always preserved.'],
     [['tool','schema','function','json','agent','mcp'],
-     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward (97% smaller). Session average is ~93% savings.'],
+     'Tool schema compression compiles JSON definitions to a compact DSL on call 1 (69% smaller), then collapses the entire block to TOOLS:[name1,name2] — about 3 tokens — from call 2 onward. Session average is ~90% savings.'],
   ];
 
   function localFAQ(msg) {
@@ -1454,7 +1441,7 @@ function updateAgentCalc() {
   const calls     = parseInt(document.getElementById('calc-calls').value);
   const tokPerTool = 120;                       // avg tokens per JSON tool definition
   const tokSchema  = tools * tokPerTool;
-  const avgSavedPct = 0.93;                     // session avg: turn1 69% + turn2+ 97%
+  const avgSavedPct = 0.90;                     // session avg: ~90% (turn1 69% + turn2+ cache hits)
   const tokSavedPerCall = Math.round(tokSchema * avgSavedPct);
   const tokSavedPerDay  = tokSavedPerCall * calls;
   const pricePerTok     = 3 / 1_000_000;        // Claude Sonnet 4 input $3/1M
@@ -1522,7 +1509,7 @@ function setTurn(n) {
     btn1.style.background = 'var(--lime)'; btn1.style.color = 'var(--ink)';
     btn2.style.background = 'transparent'; btn2.style.color = 'var(--muted)';
   } else {
-    badge.textContent = '97% fewer tokens — turn 2+';
+    badge.textContent = '~90% session avg — turn 2+';
     btn2.style.background = 'var(--lime)'; btn2.style.color = 'var(--ink)';
     btn1.style.background = 'transparent'; btn1.style.color = 'var(--muted)';
   }
@@ -1561,24 +1548,8 @@ async function runSandbox() {
   }
 }
 
-// ── Stripe checkout ───────────────────────────────────────────────────────────
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:3001'
-  : 'https://api.promptolian.com';
-
-async function startCheckout(plan, billing) {
-  const email = prompt('Your email address for the subscription:');
-  if (!email || !email.includes('@')) return;
-  try {
-    const res  = await fetch(API_BASE + '/billing/checkout', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ plan, billing, email }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else alert('Error: ' + (data.error || 'unknown'));
-  } catch(e) { alert('Could not reach payment server. Try again shortly.'); }
+function openSignup(plan) {
+  window.location.href = 'pricing.html#signup-' + plan;
 }
 </script>
 

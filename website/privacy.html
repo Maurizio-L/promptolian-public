@@ -24,7 +24,7 @@ a{color:#0066cc}
 <h2>2. What data we collect</h2>
 <p>We collect the minimum necessary to operate the service:</p>
 <ul>
-  <li><strong>Browser extension:</strong> All compression runs locally in your browser. We do not transmit your prompts to any server unless you explicitly click "Compress via API" (Pro/Builder tiers only).</li>
+  <li><strong>Proxy:</strong> The hosted proxy (Solo/Team plans) forwards API requests to Anthropic/OpenAI. Your prompt content is not logged or stored. Only tool schemas are cached (as anonymised JSON) for session continuity.</li>
   <li><strong>Website:</strong> Anonymous usage counters (total compressions, average compression ratio). No personal data is stored.</li>
   <li><strong>API users:</strong> Compression event logs tied to your API key — token counts and tier used. No prompt content is stored.</li>
   <li><strong>Subscribers:</strong> Email address and Stripe customer ID for billing. Payment data is handled entirely by Stripe and never touches our servers.</li>

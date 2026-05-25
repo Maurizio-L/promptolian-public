@@ -126,12 +126,12 @@ h2,h3{scroll-margin-top:80px}
 
     <!-- ── Overview ── -->
     <h2 id="overview">Overview</h2>
-    <p>The Promptolian REST API exposes the same compression engine used in the browser extension and CLI. You send plain text; you get back compressed text plus token savings metrics.</p>
-    <p><strong>Base URL:</strong> <code class="inline">https://api.promptolian.com</code></p>
-    <p>All requests and responses use JSON. The free tier requires no authentication — rate limits apply per IP. The Builder plan ($19/mo) requires an API key for 2M tokens/day.</p>
+    <p>The Promptolian REST API exposes the same compression engine used in the CLI and transparent proxy. You send plain text; you get back compressed text plus token savings metrics.</p>
+    <p><strong>REST API base URL:</strong> <code class="inline">https://api.promptolian.com</code> · <strong>Hosted proxy:</strong> <code class="inline">https://proxy.promptolian.com</code></p>
+    <p>All requests and responses use JSON. The free tier (self-hosted) requires no authentication. Solo ($9/mo) and Team ($29/mo) plans include a hosted proxy and project API keys.</p>
 
     <div class="alert alert-info">
-      Builder plan ($19/mo) — 2M tokens/day, all tiers, REST API + MCP access. Need more? <a href="mailto:hello@promptolian.com">Contact us</a>.
+      Solo plan ($9/mo) — hosted proxy, PostgreSQL sessions, 1 project API key, savings dashboard. Team plan ($29/mo) — up to 10 project keys plus per-project breakdown. Need more? <a href="mailto:hello@promptolian.com">Contact us</a>.
     </div>
 
     <!-- ── Auth ── -->
@@ -226,7 +226,7 @@ console.<span class="fn">log</span>(<span class="str">`Saved ${data.tokens_saved
       <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
         <tr><td>text<span class="required">*</span></td><td>string</td><td>The prompt text to compress. Max 50,000 characters.</td></tr>
-        <tr><td>tier<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">pro</code>, or <code class="inline">developer</code>. Higher tiers apply more aggressive NLP-based compression. Pro/developer require Builder plan.</td></tr>
+        <tr><td>tier<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">pro</code>, or <code class="inline">developer</code>. Higher tiers apply more aggressive NLP-based compression. Pro/developer require Solo or Team plan.</td></tr>
         <tr><td>lang<span class="optional">opt</span></td><td>string</td><td>Language hint: <code class="inline">auto</code> (default), <code class="inline">en</code>, <code class="inline">es</code>, <code class="inline">fr</code>, <code class="inline">de</code>, <code class="inline">it</code>.</td></tr>
         <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Your API key. Alternatively pass as <code class="inline">X-API-Key</code> header. Required for pro/developer tiers.</td></tr>
       </tbody>
@@ -247,7 +247,7 @@ console.<span class="fn">log</span>(<span class="str">`Saved ${data.tokens_saved
 
     <!-- ── POST /optimize-context ── -->
     <h2 id="optimize-context">POST /optimize-context</h2>
-    <p>Prune and compress a multi-turn conversation history before sending it to an LLM. Removes off-topic messages, compresses retained ones, and optionally produces a rolling summary. Requires Builder plan.</p>
+    <p>Prune and compress a multi-turn conversation history before sending it to an LLM. Removes off-topic messages, compresses retained ones, and optionally produces a rolling summary. Requires Solo or Team plan.</p>
 
     <div class="endpoint">
       <span class="method">POST</span>
@@ -262,7 +262,7 @@ console.<span class="fn">log</span>(<span class="str">`Saved ${data.tokens_saved
         <tr><td>query<span class="required">*</span></td><td>string</td><td>The current user query. Used to score relevance of past messages.</td></tr>
         <tr><td>summary<span class="optional">opt</span></td><td>string</td><td>Rolling summary from a previous call. Injected as context.</td></tr>
         <tr><td>mode<span class="optional">opt</span></td><td>string</td><td><code class="inline">lossless</code> (default) — removes only clearly off-topic messages. <code class="inline">aggressive</code> — prunes more heavily.</td></tr>
-        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Builder plan key required.</td></tr>
+        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Solo or Team plan key required.</td></tr>
       </tbody>
     </table>
 
@@ -317,7 +317,7 @@ data = resp.json()
 
     <!-- ── POST /compress-tools ── -->
     <h2 id="compress-tools">POST /compress-tools</h2>
-    <p>Compress a JSON tool schema array (OpenAI / Anthropic format) into a compact DSL. Achieves ~69% compression on first call, ~97% on subsequent calls via session caching. Requires Builder plan.</p>
+    <p>Compress a JSON tool schema array (OpenAI / Anthropic format) into a compact DSL. Achieves ~69% compression on first call, ~90% session average via session caching. Requires Solo or Team plan.</p>
 
     <div class="endpoint">
       <span class="method">POST</span>
@@ -328,8 +328,8 @@ data = resp.json()
       <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
         <tr><td>tools<span class="required">*</span></td><td>array</td><td>Array of tool objects in OpenAI or Anthropic format.</td></tr>
-        <tr><td>session_id<span class="optional">opt</span></td><td>string</td><td>Unique ID for this conversation session. Enables cache-hit compression (~97% CR) on repeated calls.</td></tr>
-        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Builder plan key required.</td></tr>
+        <tr><td>session_id<span class="optional">opt</span></td><td>string</td><td>Unique ID for this conversation session. Enables cache-hit compression (~90% session avg CR) on repeated calls.</td></tr>
+        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Solo or Team plan key required.</td></tr>
       </tbody>
     </table>
 
@@ -429,9 +429,9 @@ data = resp.json()
     <table class="param-table">
       <thead><tr><th>Tier</th><th>What it does</th><th>Avg CR</th><th>Plan required</th></tr></thead>
       <tbody>
-        <tr><td>standard</td><td>Symbol substitution + grammar rules. Removes filler phrases, replaces verbose patterns with symbols (§EXP, →code, ∑, etc).</td><td>~9%</td><td>Free</td></tr>
-        <tr><td>pro</td><td>Standard + math operators, numeric abbreviations (5 million → 5M), verbose phrase removal.</td><td>~10%</td><td>Builder</td></tr>
-        <tr><td>developer</td><td>Pro + spaCy NLP deep pruning, domain-specific packs (code, finance, legal, medical), dependency parse.</td><td>~11%, up to 33%</td><td>Builder</td></tr>
+        <tr><td>standard</td><td>Symbol substitution + grammar rules. Removes filler phrases, replaces verbose patterns with symbols (§EXP, →code, ∑, etc).</td><td>~9%</td><td>Free / Solo / Team</td></tr>
+        <tr><td>pro</td><td>Standard + math operators, numeric abbreviations (5 million → 5M), verbose phrase removal.</td><td>~10%</td><td>Solo / Team</td></tr>
+        <tr><td>developer</td><td>Pro + spaCy NLP deep pruning, domain-specific packs (code, finance, legal, medical), dependency parse.</td><td>~11%, up to 33%</td><td>Solo / Team</td></tr>
       </tbody>
     </table>
 
@@ -462,8 +462,9 @@ data = resp.json()
     <table class="param-table">
       <thead><tr><th>Plan</th><th>Tiers</th><th>Tokens / day</th><th>Auth</th></tr></thead>
       <tbody>
-        <tr><td>Free</td><td>standard only</td><td>Unlimited standard (IP-based fair use)</td><td>None</td></tr>
-        <tr><td>Builder ($19/mo)</td><td>standard, pro, developer</td><td>2,000,000</td><td>API key</td></tr>
+        <tr><td>Free (self-hosted)</td><td>all</td><td>Unlimited (self-hosted — no limit)</td><td>None</td></tr>
+        <tr><td>Solo ($9/mo)</td><td>standard, pro, developer</td><td>Unlimited (hosted proxy)</td><td>Project API key</td></tr>
+        <tr><td>Team ($29/mo)</td><td>All</td><td>Unlimited (hosted proxy)</td><td>Project API key</td></tr>
         <tr><td>Custom</td><td>All</td><td>Custom</td><td>API key</td></tr>
       </tbody>
     </table>
