@@ -151,6 +151,72 @@ flowchart LR
 
 ---
 
+## Sensitive data detection
+
+The proxy scans every message for credentials and data-dump patterns before forwarding. Events are stored per account and exposed only to the account holder — never aggregated.
+
+| Category | Risk | Detects |
+|---|---|---|
+| `CONNECTION_STRING` | **HIGH** | `postgres://`, `mysql://`, `mongodb://`, `redis://` URIs with credentials |
+| `API_KEY` | **HIGH** | OpenAI `sk-`, AWS `AKIA`, GitHub `ghp_`/`gho_`, Slack `xoxb-`, Google `AIza` |
+| `PRIVATE_KEY` | **HIGH** | RSA / EC / OPENSSH private key PEM blocks |
+| `JWT` | **HIGH** | Three-part `eyXXX.eyXXX.XXX` bearer tokens |
+| `ENV_FILE` | **HIGH** | 3+ consecutive `KEY=value` lines (.env pastes) |
+| `SQL_DUMP` | MEDIUM | 3+ consecutive `INSERT INTO` statements |
+| `STACK_TRACE` | MEDIUM | Python `Traceback (most recent call last)` |
+| `CSV_DATA` | MEDIUM | 3+ rows × 5+ columns of comma-separated data |
+| `LARGE_JSON` | MEDIUM | Array of 10+ JSON objects |
+
+When a pattern fires the response includes a diagnostic header:
+```http
+X-Promptolian-Sensitive: HIGH
+```
+
+Retrieve your account's event log:
+```bash
+curl https://proxy.promptolian.com/proxy/pii-events \
+  -H "X-Promptolian-Key: pk_..."
+```
+```json
+{
+  "count": 2,
+  "events": [
+    {
+      "session_id": "a3f9c1d2",
+      "risk_level": "HIGH",
+      "categories": ["CONNECTION_STRING"],
+      "timestamp": 1748131200.0,
+      "preview": "postgres://admin:secret@db.internal:5432/prod"
+    }
+  ]
+}
+```
+
+### What is and isn't stored (GDPR)
+
+**Cloud proxy — `proxy.promptolian.com`**
+
+| Data | Stored server-side? | Who can access? | Retention |
+|---|---|---|---|
+| Message content (prompts, chat history) | **No** — processed in RAM, discarded after forwarding | Nobody | 0 |
+| LLM responses | **No** — forwarded only | Nobody | 0 |
+| Your Anthropic / OpenAI API key | **No** — forwarded in-flight only, never written to disk | Nobody | 0 |
+| Tool schemas | **Yes** — stored for session caching | You (account holder) | Session TTL (~5 min) |
+| Detection event: category name(s) | **Yes** — when a pattern fires | You only via `/proxy/pii-events` | Until account deletion |
+| Detection event: preview (≤200 chars around match) | **Yes** — when a pattern fires | You + server admin (Maurizio) | Until account deletion |
+| Tokens saved counter | **Yes** | You | Subscription lifetime |
+| Email address | **Yes** — via Stripe at signup | Maurizio (billing only) | Subscription duration |
+
+> The `preview` field stores up to 200 characters of the text that triggered the pattern — it may include a fragment of the matched credential or data. This is what powers the `/proxy/pii-events` log. If you prefer zero server-side storage of any matched text, use the self-hosted proxy instead.
+
+**Self-hosted proxy — `promptolian proxy` (local / SQLite)**
+
+| Data | Where it goes |
+|---|---|
+| Everything | Stays in your local SQLite file (`~/.promptolian/sessions.db`). Nothing is sent to Promptolian's servers. |
+
+---
+
 ## Response headers
 
 Every proxied response includes diagnostic headers:
@@ -160,6 +226,7 @@ X-Promptolian-Cache-Hit: true
 X-Promptolian-Tokens-Saved: 540
 X-Promptolian-Session: a3f9c1d2
 X-Promptolian-Note: Tools re-injected from session cache. ~540 tokens billed at 10%.
+X-Promptolian-Sensitive: HIGH
 ```
 
 ---

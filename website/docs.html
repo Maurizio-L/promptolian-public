@@ -97,6 +97,7 @@ h2,h3{scroll-margin-top:80px}
       <a href="#compress-tools">POST /compress-tools</a>
       <a href="#stats">GET /stats</a>
       <a href="#health">GET /health</a>
+      <a href="#pii-events">GET /proxy/pii-events</a>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-label">Reference</div>
@@ -116,7 +117,7 @@ h2,h3{scroll-margin-top:80px}
   <!-- Main -->
   <main class="main">
 
-    <div class="badge">Promptolian API · v2.2</div>
+    <div class="badge">Promptolian API · v2.3</div>
     <h1>Promptolian API</h1>
     <p class="lead">
       Compress AI prompts programmatically. Send text, get back shorter text and token metrics.
@@ -557,6 +558,99 @@ data = resp.json()
 
 <span class="cmt"># Stats</span>
 <span class="fn">curl</span> https://api.promptolian.com/stats</code></pre>
+    </div>
+
+    <!-- ── GET /proxy/pii-events ── -->
+    <h2 id="pii-events">GET /proxy/pii-events</h2>
+    <p>Returns the sensitive-data detection event log for your account. The proxy scans every message for credentials and data-dump patterns before forwarding — events are stored per account and visible only to the account holder.</p>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">https://proxy.promptolian.com/proxy/pii-events</span>
+    </div>
+
+    <h3>Detection categories</h3>
+    <table class="param-table">
+      <thead><tr><th>Category</th><th>Risk</th><th>What it matches</th></tr></thead>
+      <tbody>
+        <tr><td>CONNECTION_STRING</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>postgres://, mysql://, mongodb://, redis:// URIs with credentials embedded</td></tr>
+        <tr><td>API_KEY</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>OpenAI sk-, AWS AKIA, GitHub ghp_/gho_, Slack xoxb-, Google AIza keys</td></tr>
+        <tr><td>PRIVATE_KEY</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>RSA / EC / OPENSSH PEM private key headers</td></tr>
+        <tr><td>JWT</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>Three-part eyXXX.eyXXX.XXX bearer tokens</td></tr>
+        <tr><td>ENV_FILE</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>3+ consecutive KEY=value lines (.env file pastes)</td></tr>
+        <tr><td>SQL_DUMP</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>3+ consecutive INSERT INTO statements (database dump pastes)</td></tr>
+        <tr><td>STACK_TRACE</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>Python Traceback (most recent call last)</td></tr>
+        <tr><td>CSV_DATA</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>3+ rows × 5+ columns of comma-separated data</td></tr>
+        <tr><td>LARGE_JSON</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>Array of 10+ JSON objects (possible database record dump)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="alert alert-warn">
+      When a HIGH or MEDIUM pattern fires, the proxy attaches <code class="inline">X-Promptolian-Sensitive: HIGH|MEDIUM</code> to the response so you can observe it in real time — before checking the dashboard.
+    </div>
+
+    <h3>Query parameters</h3>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>limit<span class="optional">opt</span></td><td>integer</td><td>Max events to return. Default 100, max 500.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Authentication</h3>
+    <p>Pass your Promptolian API key in the <code class="inline">X-Promptolian-Key</code> header. Events are scoped to all API keys on your account — you only see your own data.</p>
+
+    <div class="code-tabs">
+      <div class="code-tab-bar">
+        <button class="code-tab-btn active" onclick="switchTab(this,'pii','curl')">curl</button>
+        <button class="code-tab-btn" onclick="switchTab(this,'pii','python')">Python</button>
+      </div>
+      <div class="code-pane active" id="pii-curl">
+<pre><code><span class="fn">curl</span> https://proxy.promptolian.com/proxy/pii-events \
+  -H <span class="str">"X-Promptolian-Key: pk_..."</span>
+
+<span class="cmt"># Local proxy (no auth needed):</span>
+<span class="fn">curl</span> http://localhost:3002/proxy/pii-events</code></pre>
+      </div>
+      <div class="code-pane" id="pii-python">
+<pre><code><span class="kw">import</span> httpx
+
+resp = httpx.get(
+    <span class="str">"https://proxy.promptolian.com/proxy/pii-events"</span>,
+    headers={<span class="str">"X-Promptolian-Key"</span>: <span class="str">"pk_..."</span>},
+    params={<span class="str">"limit"</span>: <span class="num">50</span>},
+)
+events = resp.json()[<span class="str">"events"</span>]
+<span class="kw">for</span> e <span class="kw">in</span> events:
+    <span class="fn">print</span>(e[<span class="str">"risk_level"</span>], e[<span class="str">"categories"</span>], e[<span class="str">"preview"</span>][:<span class="num">80</span>])</code></pre>
+      </div>
+    </div>
+
+    <h3>Response</h3>
+    <div class="resp-block"><span class="kw">{</span>
+  <span class="str">"count"</span>: <span class="num">2</span>,
+  <span class="str">"events"</span>: [
+    <span class="kw">{</span>
+      <span class="str">"session_id"</span>:   <span class="str">"a3f9c1d2"</span>,
+      <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
+      <span class="str">"timestamp"</span>:    <span class="num">1748131200.0</span>,
+      <span class="str">"risk_level"</span>:   <span class="str">"HIGH"</span>,
+      <span class="str">"categories"</span>:  [<span class="str">"CONNECTION_STRING"</span>],
+      <span class="str">"preview"</span>:     <span class="str">"postgres://admin:secret@db.internal:5432/prod"</span>
+    <span class="kw">}</span>,
+    <span class="kw">{</span>
+      <span class="str">"session_id"</span>:   <span class="str">"b7e2a051"</span>,
+      <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
+      <span class="str">"timestamp"</span>:    <span class="num">1748130900.0</span>,
+      <span class="str">"risk_level"</span>:   <span class="str">"MEDIUM"</span>,
+      <span class="str">"categories"</span>:  [<span class="str">"SQL_DUMP"</span>, <span class="str">"CSV_DATA"</span>],
+      <span class="str">"preview"</span>:     <span class="str">"INSERT INTO users (id, name, email) VALUES (1, 'alice'..."</span>
+    <span class="kw">}</span>
+  ]
+<span class="kw">}</span></div>
+
+    <div class="alert alert-info">
+      Detection adds &lt;1 ms overhead per request. It never blocks a request — HIGH and MEDIUM events are flagged and logged, but the request is always forwarded to the LLM. Detection runs locally on the proxy; no data is sent to any third party.
     </div>
 
     <h2 id="self-hosted">Self-hosted</h2>
