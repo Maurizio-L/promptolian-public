@@ -510,7 +510,7 @@ footer a:hover{color:#aaa}
     </div>
 
     <div style="font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:16px">
-      Each tool definition is ~120 tokens sent to the AI. Pricing based on Claude Sonnet 4 (~$3 per million tokens). First call: 69% smaller. Every call after: ~97% smaller. Session average: ~90%.
+      Each tool definition is ~120 tokens sent to the AI. Pricing based on Claude Sonnet 4 (~$3 per million tokens). First call: 69% smaller. Every call after: ~90% smaller (prompt cache). Session average: ~90%.
       <a href="how-it-works.html#tool-schema" style="color:var(--muted)">How does this work? →</a>
     </div>
   </div>
@@ -716,7 +716,7 @@ promptolian mcp install
     [['docker','self.host','self-host','own server','on premise','local server'],
      'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
     [['context','memory','history','conversation','session'],
-     'The Context Engine (Builder plan) compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim.'],
+     'The context engine compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim. Available on all plans.'],
     [['language','spanish','italian','french','german','multilingual'],
      'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
     [['how','work','compress','token','shrink','shorter','save'],
