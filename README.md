@@ -1,58 +1,107 @@
 # Promptolian
 
-Compress prompts, conversation history, and tool schemas before sending to any LLM. Fully deterministic — no LLM calls, no data leaves your machine.
+Transparent proxy and compression SDK for AI agents. Caches tool schemas automatically so you stop paying for the same tokens on every call.
 
-**[promptolian.com](https://promptolian.com)** · [API docs](https://promptolian.com/docs) · [Benchmarks](https://promptolian.com/benchmarks)
+**[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Dashboard](https://promptolian.com/dashboard.html) · [Docs](https://promptolian.com/docs.html)
 
 ---
 
-## Why it's different
+## What it does
 
-Most compression tools shorten a single prompt. Promptolian stacks three independent layers:
-
-| Layer | Saves | How |
+| Layer | Savings | How |
 |---|---|---|
-| **Prompt** | 15–33% | Symbol rules, grammar cleanup, domain packs |
-| **Conversation history** | up to 52.9% | KV-cache-aware sandwich layout across turns |
-| **Tool schemas** | 69% turn 1 · **97% turn 2+** | JSON → DSL compiler with session caching |
+| **Tool schemas** | ~90% session avg | Proxy injects `cache_control`; Anthropic charges 10% on cached hits |
+| **Conversation history** | 52.9% | KV-cache sandwich layout — old turns summarised, first/last kept verbatim |
+| **Prompt text** | ~20% | Symbol rules, filler removal, grammar cleanup |
 
-The tool schema layer is the headline: on the second call, the entire schema block collapses to `TOOLS:[name1,name2]` — three tokens. No other tool does this.
-
-**100% fact preservation** across 41 runs — numbers, file paths, named entities survive unchanged.
+**100% fact preservation** — numbers, file paths, named entities survive unchanged.
 
 ---
 
-## Get started
+## Quickstart
+
+### Option A — Transparent proxy (any language)
 
 ```bash
-# CLI
-pip install promptolian
-promptolian compress "You are an expert Python developer..." --tier developer
-
-# API
-curl -X POST https://api.promptolian.com/compress-prompt \
-  -H "Content-Type: application/json" \
-  -d '{"text": "...", "tier": "pro"}'
-
-# Claude Code MCP
-promptolian-server   # exposes compress_prompt, compress_tools, compression_stats
+pip install "promptolian[proxy]"
+promptolian proxy              # starts at localhost:3002
 ```
 
-Browser extension for Claude, ChatGPT, Gemini, Copilot — install at [promptolian.com](https://promptolian.com).
+Point your client at the proxy instead of Anthropic:
+
+```python
+import anthropic
+client = anthropic.Anthropic(base_url="http://localhost:3002")
+# All calls compressed automatically — no other changes needed
+```
+
+### Option B — Python SDK wrapper
+
+```bash
+pip install promptolian
+```
+
+```python
+from promptolian import patch_anthropic
+patch_anthropic()              # one call at startup
+
+import anthropic
+client = anthropic.Anthropic() # works normally, compression is transparent
+```
+
+### Option C — Claude Code MCP
+
+```bash
+pip install "promptolian[mcp]"
+promptolian mcp install        # restart Claude Code after this
+```
 
 ---
 
-## Self-hosting
+## Cloud proxy
+
+Skip self-hosting. Point your agent at `proxy.promptolian.com`:
+
+```python
+client = anthropic.Anthropic(
+    base_url="https://proxy.promptolian.com",
+    default_headers={"X-Promptolian-Key": "pk_..."},
+)
+```
+
+| Plan | Price | Keys | Sessions |
+|---|---|---|---|
+| Free | $0 | — | SQLite, self-hosted |
+| Solo | $9/mo | 1 | PostgreSQL, always-on |
+| Team | $29/mo | Up to 10 | PostgreSQL + per-project breakdown |
+
+Sign up at [promptolian.com/pricing.html](https://promptolian.com/pricing.html).
+
+---
+
+## Self-hosting the API
 
 ```bash
-docker compose up
-# or: pip install -r requirements-selfhost.txt && python api/api.py
+pip install -r requirements-selfhost.txt
+python api/api.py
 ```
 
 | Env var | Description |
 |---|---|
 | `DATABASE_URL` | PostgreSQL URL (defaults to SQLite) |
+| `PROMPTOLIAN_MASTER_KEY` | Activates API key auth (cloud mode) |
 | `STRIPE_SECRET_KEY` | Billing (optional) |
-| `GROQ_API_KEY` | Neural summarisation in context engine (optional) |
 
 API runs on port `3001`.
+
+---
+
+## Response headers (proxy)
+
+Every proxied response includes:
+
+```
+X-Promptolian-Cache-Hit: true|false
+X-Promptolian-Tokens-Saved: 840
+X-Promptolian-Session: sess_abc123
+```
