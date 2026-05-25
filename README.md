@@ -203,7 +203,7 @@ curl https://proxy.promptolian.com/proxy/pii-events \
 | Your Anthropic / OpenAI API key | **No** — forwarded in-flight only, never written to disk | Nobody | 0 |
 | Tool schemas | **Yes** — stored for session caching | You (account holder) | Session TTL (~5 min) |
 | Detection event: category name(s) | **Yes** — when a pattern fires | You only via `/proxy/pii-events` | Until account deletion |
-| Detection event: preview (≤200 chars around match) | **Yes** — when a pattern fires | You + server admin (Maurizio) | Until account deletion |
+| Detection event: preview (≤200 chars around match) | **Yes** — when a pattern fires | You + Promptolian | Until account deletion |
 | Tokens saved counter | **Yes** | You | Subscription lifetime |
 | Email address | **Yes** — via Stripe at signup | Promptolian (billing only) | Subscription duration |
 
