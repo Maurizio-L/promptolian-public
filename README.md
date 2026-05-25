@@ -185,8 +185,7 @@ curl https://proxy.promptolian.com/proxy/pii-events \
       "session_id": "a3f9c1d2",
       "risk_level": "HIGH",
       "categories": ["CONNECTION_STRING"],
-      "timestamp": 1748131200.0,
-      "preview": "postgres://admin:secret@db.internal:5432/prod"
+      "timestamp": 1748131200.0
     }
   ]
 }
@@ -203,11 +202,10 @@ curl https://proxy.promptolian.com/proxy/pii-events \
 | Your Anthropic / OpenAI API key | **No** — forwarded in-flight only, never written to disk | Nobody | 0 |
 | Tool schemas | **Yes** — stored for session caching | You (account holder) | Session TTL (~5 min) |
 | Detection event: category name(s) | **Yes** — when a pattern fires | You only via `/proxy/pii-events` | Until account deletion |
-| Detection event: preview (≤200 chars around match) | **Yes** — when a pattern fires | You + Promptolian | Until account deletion |
 | Tokens saved counter | **Yes** | You | Subscription lifetime |
 | Email address | **Yes** — via Stripe at signup | Promptolian (billing only) | Subscription duration |
 
-> The `preview` field stores up to 200 characters of the text that triggered the pattern — it may include a fragment of the matched credential or data. This is what powers the `/proxy/pii-events` log. If you prefer zero server-side storage of any matched text, use the self-hosted proxy instead.
+> No message content ever touches server-side storage. Only the category name (e.g. `CONNECTION_STRING`) and risk level are stored — enough to know what to rotate, nothing that could reconstruct the original text.
 
 **Self-hosted proxy — `promptolian proxy` (local / SQLite)**
 

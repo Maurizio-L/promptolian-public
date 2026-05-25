@@ -622,7 +622,7 @@ resp = httpx.get(
 )
 events = resp.json()[<span class="str">"events"</span>]
 <span class="kw">for</span> e <span class="kw">in</span> events:
-    <span class="fn">print</span>(e[<span class="str">"risk_level"</span>], e[<span class="str">"categories"</span>], e[<span class="str">"preview"</span>][:<span class="num">80</span>])</code></pre>
+    <span class="fn">print</span>(e[<span class="str">"risk_level"</span>], e[<span class="str">"categories"</span>], e[<span class="str">"session_id"</span>])</code></pre>
       </div>
     </div>
 
@@ -635,22 +635,20 @@ events = resp.json()[<span class="str">"events"</span>]
       <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
       <span class="str">"timestamp"</span>:    <span class="num">1748131200.0</span>,
       <span class="str">"risk_level"</span>:   <span class="str">"HIGH"</span>,
-      <span class="str">"categories"</span>:  [<span class="str">"CONNECTION_STRING"</span>],
-      <span class="str">"preview"</span>:     <span class="str">"postgres://admin:secret@db.internal:5432/prod"</span>
+      <span class="str">"categories"</span>:  [<span class="str">"CONNECTION_STRING"</span>]
     <span class="kw">}</span>,
     <span class="kw">{</span>
       <span class="str">"session_id"</span>:   <span class="str">"b7e2a051"</span>,
       <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
       <span class="str">"timestamp"</span>:    <span class="num">1748130900.0</span>,
       <span class="str">"risk_level"</span>:   <span class="str">"MEDIUM"</span>,
-      <span class="str">"categories"</span>:  [<span class="str">"SQL_DUMP"</span>, <span class="str">"CSV_DATA"</span>],
-      <span class="str">"preview"</span>:     <span class="str">"INSERT INTO users (id, name, email) VALUES (1, 'alice'..."</span>
+      <span class="str">"categories"</span>:  [<span class="str">"SQL_DUMP"</span>, <span class="str">"CSV_DATA"</span>]
     <span class="kw">}</span>
   ]
 <span class="kw">}</span></div>
 
     <div class="alert alert-info">
-      Detection adds &lt;1 ms overhead per request. It never blocks a request — HIGH and MEDIUM events are flagged and logged, but the request is always forwarded to the LLM. Detection runs locally on the proxy; no data is sent to any third party.
+      Detection adds &lt;1 ms overhead per request and never blocks a request. Only the category name and risk level are stored — no message content, no text fragments, no reconstructable data. Your prompts are never written to disk.
     </div>
 
     <h2 id="self-hosted">Self-hosted</h2>
