@@ -822,7 +822,7 @@ Key facts:
 
 STRICT RULES:
 1. Only answer questions about Promptolian — features, pricing, privacy, API, CLI, self-hosting, browser extension.
-2. For anything outside this scope reply EXACTLY: "I can only help with Promptolian questions. See the docs at promptolian.com/docs.html or email hello@promptolian.com"
+2. For anything outside this scope reply EXACTLY: "I can only help with Promptolian questions. See the docs at promptolian.com/docs.html or email support@promptolian.com"
 3. Keep answers to 2–3 sentences. Plain text only, no markdown."""
 
 _CHAT_FAQ = [
@@ -851,7 +851,7 @@ def _faq_fallback(message: str) -> str:
     for keywords, answer in _CHAT_FAQ:
         if any(k.replace('.', ' ') in msg for k in keywords):
             return answer
-    return "Good question! Check the full docs at promptolian.com/docs.html or email hello@promptolian.com and we'll help."
+    return "Good question! Check the full docs at promptolian.com/docs.html or email support@promptolian.com and we'll help."
 
 def _groq_response(message: str) -> str:
     if not _GROQ_KEY:
