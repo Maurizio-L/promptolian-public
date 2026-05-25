@@ -1,6 +1,7 @@
 #!/bin/bash
-echo "MASTER_KEY set: ${PROMPTOLIAN_MASTER_KEY:+yes}"
-echo "DATABASE_URL set: ${DATABASE_URL:+yes}"
+echo "=== ENV CHECK ==="
+env | grep -E "MASTER|DATABASE|STRIPE|BASE_URL|PORT" || echo "none found"
+echo "================="
 
 echo "Starting proxy on port 3002..."
 python -m promptolian.proxy --host 0.0.0.0 --port 3002 &
