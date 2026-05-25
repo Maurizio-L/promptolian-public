@@ -1,1 +1,1 @@
-web: python api/api.py
+web: bash start.sh
