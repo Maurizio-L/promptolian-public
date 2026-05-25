@@ -1,20 +1,80 @@
 # Promptolian
 
-Transparent proxy and compression SDK for AI agents. Caches tool schemas automatically so you stop paying for the same tokens on every call.
+> Transparent proxy for AI agents — caches tool schemas automatically so you stop paying for the same tokens on every call.
 
 **[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Dashboard](https://promptolian.com/dashboard.html) · [Docs](https://promptolian.com/docs.html)
 
 ---
 
-## What it does
+## The problem
 
-| Layer | Savings | How |
+Every time your agent calls the API, it re-sends the full tool schema — even if nothing changed. For 5 tools that's ~600 tokens on every single call.
+
+```
+Call 1:  [system] + [tools: 600 tok] + [message]   → full price
+Call 2:  [system] + [tools: 600 tok] + [message]   → full price again
+Call 3:  [system] + [tools: 600 tok] + [message]   → full price again
+```
+
+Promptolian fixes this with one line of code.
+
+---
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant A as Your agent
+    participant P as Promptolian proxy
+    participant C as Anthropic API
+
+    A->>P: POST /v1/messages (tools + message)
+    P->>P: Store tool schemas, add cache_control
+    P->>C: Forward with cache_control on tools
+    C-->>P: Response (tools cached for 5 min)
+    P-->>A: Response + X-Promptolian-Cache-Hit: false
+
+    A->>P: POST /v1/messages (message only)
+    P->>P: Re-inject cached tools + cache_control
+    P->>C: Forward — Anthropic bills at 10%
+    C-->>P: Response
+    P-->>A: Response + X-Promptolian-Cache-Hit: true ✓
+```
+
+On call 2 onwards, Anthropic charges 10% of the normal tool token price. You save ~90% on tool tokens across the session.
+
+---
+
+## Savings
+
+```mermaid
+xychart-beta
+    title "Token reduction by layer (measured)"
+    x-axis ["Tool schemas", "Conversation history", "Prompt text"]
+    y-axis "Tokens saved %" 0 --> 100
+    bar [90, 52.9, 20]
+```
+
+| Layer | Savings | Mechanism |
 |---|---|---|
-| **Tool schemas** | ~90% session avg | Proxy injects `cache_control`; Anthropic charges 10% on cached hits |
-| **Conversation history** | 52.9% | KV-cache sandwich layout — old turns summarised, first/last kept verbatim |
-| **Prompt text** | ~20% | Symbol rules, filler removal, grammar cleanup |
+| **Tool schemas** | **~90%** session avg | Proxy caches via Anthropic prompt cache — 10% billed on hit |
+| **Conversation history** | **52.9%** | KV-cache sandwich — old turns summarised, first 2 + last 4 kept verbatim |
+| **Prompt text** | **~20%** | Symbol rules, filler removal, grammar cleanup |
 
-**100% fact preservation** — numbers, file paths, named entities survive unchanged.
+100% fact preservation across all layers — numbers, file paths, named entities unchanged.
+
+---
+
+## Cost impact
+
+For an agent making **500 calls/day** with **5 tools**:
+
+```
+Tool tokens per call  : 5 × 120 = 600 tok
+Monthly without proxy : 500 × 30 × 600 = 9,000,000 tok → $27.00
+Monthly with proxy    : 9,000,000 × 10% = 900,000 tok  → $2.70
+Monthly saving        : $24.30  (at Claude Sonnet 4 pricing, $3/1M tokens)
+```
 
 ---
 
@@ -22,18 +82,22 @@ Transparent proxy and compression SDK for AI agents. Caches tool schemas automat
 
 ### Option A — Transparent proxy (any language)
 
+One line to start, one line to switch:
+
 ```bash
 pip install "promptolian[proxy]"
-promptolian proxy              # starts at localhost:3002
+promptolian proxy              # localhost:3002
 ```
-
-Point your client at the proxy instead of Anthropic:
 
 ```python
 import anthropic
-client = anthropic.Anthropic(base_url="http://localhost:3002")
-# All calls compressed automatically — no other changes needed
+
+client = anthropic.Anthropic(
+    base_url="http://localhost:3002",   # only change needed
+)
 ```
+
+The proxy handles caching automatically. Pass tools on call 1; omit them on call 2+, or pass them every time — the proxy does the right thing either way.
 
 ### Option B — Python SDK wrapper
 
@@ -43,24 +107,24 @@ pip install promptolian
 
 ```python
 from promptolian import patch_anthropic
-patch_anthropic()              # one call at startup
+patch_anthropic()   # call once at startup — all clients patched globally
 
 import anthropic
-client = anthropic.Anthropic() # works normally, compression is transparent
+client = anthropic.Anthropic()  # unchanged — compression is transparent
 ```
 
 ### Option C — Claude Code MCP
 
 ```bash
 pip install "promptolian[mcp]"
-promptolian mcp install        # restart Claude Code after this
+promptolian mcp install   # adds to ~/.claude/settings.json, then restart Claude Code
 ```
 
 ---
 
 ## Cloud proxy
 
-Skip self-hosting. Point your agent at `proxy.promptolian.com`:
+Skip self-hosting entirely. Use `proxy.promptolian.com`:
 
 ```python
 client = anthropic.Anthropic(
@@ -69,39 +133,81 @@ client = anthropic.Anthropic(
 )
 ```
 
-| Plan | Price | Keys | Sessions |
-|---|---|---|---|
-| Free | $0 | — | SQLite, self-hosted |
-| Solo | $9/mo | 1 | PostgreSQL, always-on |
-| Team | $29/mo | Up to 10 | PostgreSQL + per-project breakdown |
+```mermaid
+flowchart LR
+    A[Your agent] -->|X-Promptolian-Key| B[proxy.promptolian.com]
+    B <-->|Sessions| D[(PostgreSQL)]
+    B -->|Forwarded + cached| C[Anthropic API]
+    C --> B --> A
+```
 
-Sign up at [promptolian.com/pricing.html](https://promptolian.com/pricing.html).
+| Plan | Price | API keys | Sessions |
+|---|---|---|---|
+| **Free** | $0 | — | SQLite · self-hosted |
+| **Solo** | $9/mo | 1 | PostgreSQL · always-on |
+| **Team** | $29/mo | Up to 10 | PostgreSQL · per-project breakdown |
+
+→ [Sign up at promptolian.com/pricing.html](https://promptolian.com/pricing.html)
 
 ---
 
-## Self-hosting the API
+## Response headers
+
+Every proxied response includes diagnostic headers:
+
+```http
+X-Promptolian-Cache-Hit: true
+X-Promptolian-Tokens-Saved: 540
+X-Promptolian-Session: a3f9c1d2
+X-Promptolian-Note: Tools re-injected from session cache. ~540 tokens billed at 10%.
+```
+
+---
+
+## Self-hosting
 
 ```bash
 pip install -r requirements-selfhost.txt
-python api/api.py
+python api/api.py          # REST API on :3001
+# or
+promptolian proxy          # transparent proxy on :3002
 ```
 
-| Env var | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL URL (defaults to SQLite) |
-| `PROMPTOLIAN_MASTER_KEY` | Activates API key auth (cloud mode) |
-| `STRIPE_SECRET_KEY` | Billing (optional) |
-
-API runs on port `3001`.
+| Env var | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | No | PostgreSQL URL — defaults to SQLite |
+| `PROMPTOLIAN_MASTER_KEY` | Cloud only | Activates API key auth |
+| `STRIPE_SECRET_KEY` | Cloud only | Billing |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Cloud only | API key delivery emails |
 
 ---
 
-## Response headers (proxy)
+## Benchmarks
 
-Every proxied response includes:
+Measured on 200 prompts across 5 domains (finance, legal, medical, code, devops):
+
+| Metric | Value |
+|---|---|
+| Tool schema savings (session avg) | ~90% |
+| Context history savings | 52.9% |
+| Prompt text savings (median) | ~20% |
+| Fact preservation rate | 100% (41 runs) |
+| Proxy overhead | < 10ms |
+
+Full methodology: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
+
+---
+
+## Repo structure
 
 ```
-X-Promptolian-Cache-Hit: true|false
-X-Promptolian-Tokens-Saved: 840
-X-Promptolian-Session: sess_abc123
+promptolian/        pip package — proxy, SDK wrappers, CLI, MCP server
+public/             this submodule — website, API server, browser extension
+tests/              pytest suite (48 tests)
+services/           production Flask server + dashboard
+tools/
+  hooks/            Claude Code compression hooks
+  scripts/          benchmark, post_article, build scripts
+  dev/              local dev utilities
+  reports/          roadmap, schemas, onboarding docs
 ```
