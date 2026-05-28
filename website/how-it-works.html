@@ -339,8 +339,8 @@ footer a:hover{color:#aaa}
 <!-- PAGE HERO -->
 <section class="hero" style="padding-bottom:32px">
   <div class="hero-badge">How it works</div>
-  <h1>Under the hood:<br><em>three compression layers</em></h1>
-  <p>Promptolian stacks three complementary engines — standard phrase compression, tool-schema DSL compilation, and context-history pruning — each adding savings on top of the last.</p>
+  <h1>Under the hood:<br><em>two problems, one proxy</em></h1>
+  <p>Promptolian fixes two silent costs: your agent re-sends the same tool schema on every call, and built-in context compression loses facts your agent will need later. Both are solved transparently — one line to switch.</p>
 </section>
 
 <!-- TOOL SCHEMA DEMO -->
@@ -382,8 +382,8 @@ footer a:hover{color:#aaa}
 <!-- CONTEXT ENGINE SHOWCASE -->
 <section class="section" id="context-engine" style="padding-top:72px">
   <div class="section-label">Context Engine · Solo / Team plan</div>
-  <div class="section-title">Stop paying for everything your AI remembers</div>
-  <p class="section-sub">In a long conversation, every old message gets resent to the AI on every reply — even the parts it barely needs. The Context Engine compresses old turns automatically, so you only pay for what still matters.</p>
+  <div class="section-title">Context quality: 4.26/5 at 22% compression</div>
+  <p class="section-sub">Built-in provider compression (Anthropic, OpenAI) scores 3.44/5 and 3.35/5 on context quality — they lose facts to save tokens. Promptolian's KV-sandwich keeps facts intact: HEAD and TAIL turns preserved verbatim, only the redundant middle compressed. <a href="ucurve.html" style="color:inherit;text-decoration:underline">See cost/quality model →</a></p>
 
   <div class="ctx-demo">
 
@@ -409,7 +409,7 @@ footer a:hover{color:#aaa}
     <div class="ctx-panel" id="ctx-panel-after" style="--meter-w:27%">
       <div class="ctx-panel-label good">✓ With Promptolian — same turn 5</div>
       <div class="ctx-turns">
-        <div class="ctx-turn" style="--bar-w:20%"><span class="ctx-turn-label">Summary</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-summary"></div></div><span class="ctx-tok">95 tok</span></div>
+        <div class="ctx-turn" style="--bar-w:20%"><span class="ctx-turn-label">§ encoded</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-summary"></div></div><span class="ctx-tok">95 tok</span></div>
         <div class="ctx-turn" style="--bar-w:52%"><span class="ctx-turn-label">Turn 4</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-comp"></div></div><span class="ctx-tok">248 tok</span></div>
         <div class="ctx-turn is-active" style="--bar-w:67%"><span class="ctx-turn-label">Now ◀</span><div class="ctx-bar-wrap"><div class="ctx-bar-fill fill-active"></div></div><span class="ctx-tok">320 tok</span></div>
       </div>
@@ -480,16 +480,16 @@ footer a:hover{color:#aaa}
 
   <div class="ctx-stats-row">
     <div class="ctx-stat">
-      <span class="ctx-stat-val">52.9%</span>
-      <div class="ctx-stat-lbl">history compression on<br>20-turn sessions (KV geometry)</div>
+      <span class="ctx-stat-val">22%</span>
+      <div class="ctx-stat-lbl">context tokens removed<br>KV-sandwich (middle only)</div>
     </div>
     <div class="ctx-stat">
-      <span class="ctx-stat-val">101K</span>
-      <div class="ctx-stat-lbl">tokens saved per developer<br>per month (estimated)</div>
+      <span class="ctx-stat-val">4.26/5</span>
+      <div class="ctx-stat-lbl">context quality score<br>vs Anthropic 3.44 · OpenAI 3.35</div>
     </div>
     <div class="ctx-stat">
-      <span class="ctx-stat-val" title="verified across 41 benchmark runs — every number, entity, and named term preserved">100% <span style="font-size:14px;border-bottom:1px dashed var(--muted);cursor:help">FPR</span></span>
-      <div class="ctx-stat-lbl">fact preservation across<br>all tiers · 41 benchmark runs</div>
+      <span class="ctx-stat-val">3.5 min</span>
+      <div class="ctx-stat-lbl">break-even: if a context failure<br>costs this, Promptolian pays off</div>
     </div>
   </div>
 
@@ -638,7 +638,7 @@ footer a:hover{color:#aaa}
   // Local FAQ — used when API is unreachable
   var FAQ = [
     [['price','cost','plan','free','solo','team','paid','cheap','subscription','how much'],
-     'Free plan is self-hosted (pip install "promptolian[proxy]"). Solo is $9/mo: hosted proxy at proxy.promptolian.com, 1 API key, savings dashboard. Team is $29/mo: up to 10 project keys plus per-project breakdown.'],
+     'Free plan is self-hosted (pip install "promptolian[proxy]"). Solo is $9/mo: hosted proxy at proxy.promptolian.com, 1 API key, savings dashboard. Team is $49/mo: up to 10 project keys plus per-project breakdown.'],
     [['private','privacy','data','store','track','gdpr','safe','secure','leave'],
      'The self-hosted proxy runs 100% locally — your prompts never leave your machine. The hosted proxy (Solo/Team) forwards requests to Anthropic/OpenAI but does not log or store prompt content.'],
     [['install','start','begin','pip','proxy','setup'],
@@ -650,7 +650,7 @@ footer a:hover{color:#aaa}
     [['docker','self.host','self-host','own server','on premise','local server'],
      'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
     [['context','memory','history','conversation','session'],
-     'The Context Engine (Builder plan) compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim.'],
+     'The Context Engine compresses old conversation turns using a KV-sandwich layout — first 2 and last 4 turns kept verbatim (facts and task state), only the redundant middle is entity-encoded and pruned. Result: 22% token reduction, 4.26/5 context quality score vs Anthropic built-in 3.44/5. Rule-based, no LLM, deterministic.'],
     [['language','spanish','italian','french','german','multilingual'],
      'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
     [['how','work','compress','token','shrink','shorter','save'],
