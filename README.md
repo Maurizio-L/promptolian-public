@@ -274,16 +274,34 @@ Full methodology: [promptolian.com/benchmarks.html](https://promptolian.com/benc
 
 ---
 
+## Further reading
+
+- **Article**: [Everyone compresses their agent's context. Nobody measures what it forgets.](https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3) — Dev.to
+- **Interactive cost chart**: [promptolian.com/ucurve.html](https://promptolian.com/ucurve.html) — quality vs compression rate + break-even analysis
+- **Full benchmarks**: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
+
+---
+
 ## Repo structure
 
 ```
-promptolian/        pip package — proxy, SDK wrappers, CLI, MCP server
-public/             this submodule — website, API server, browser extension
-tests/              pytest suite (48 tests)
-services/           production Flask server + dashboard
-tools/
-  hooks/            Claude Code compression hooks
-  scripts/          benchmark, post_article, build scripts
-  dev/              local dev utilities
-  reports/          roadmap, schemas, onboarding docs
+website/
+  index.html          landing page
+  pricing.html        plans + ROI calculator
+  benchmarks.html     context quality benchmark results
+  ucurve.html         interactive cost/quality chart
+  docs.html           integration docs
+  images/             article images (charts, diagrams)
+
+api/
+  api.py              Flask REST API (port 3001)
+  context_engine.py   KV-sandwich context compression pipeline
+
+promptolian/
+  proxy.py            transparent proxy (port 3002)
+  __main__.py         CLI entry point
+
+extension/            browser extension (Chrome + Firefox)
+docs/                 OpenAPI spec
+media/                brand assets
 ```
