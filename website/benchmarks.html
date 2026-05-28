@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Benchmarks — Promptolian</title>
-<meta name="description" content="Promptolian compression benchmarks: 200 prompts across 5 domains, 3 tiers, with fact preservation rates.">
+<meta name="description" content="Promptolian context quality benchmark: 4.26/5 vs Anthropic 3.44/5 vs OpenAI 3.35/5. Factory.ai 6-dimension scoring methodology.">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b0b0b;color:#e0e0e0;font-size:15px;line-height:1.6}
@@ -14,7 +14,7 @@ a:hover{text-decoration:underline}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #1e1e1e;background:#0b0b0b;position:sticky;top:0;z-index:10}
 .nav-logo{font-size:17px;font-weight:700;color:#f0f0f0;display:flex;align-items:center;gap:9px}
 .nav-logo-tag{background:#c8f135;color:#0e0e0e;font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px}
-.nav-links{display:flex;gap:24px;font-size:13px;color:#666}
+.nav-links{display:flex;gap:24px;font-size:13px}
 .nav-links a{color:#666}
 .nav-links a:hover{color:#c8f135}
 
@@ -22,79 +22,39 @@ a:hover{text-decoration:underline}
 .hero-tag{display:inline-block;background:#c8f13511;border:1px solid #c8f13533;color:#c8f135;font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:20px;letter-spacing:.06em;text-transform:uppercase}
 .hero h1{font-size:44px;font-weight:700;color:#f4f4f4;line-height:1.15;margin-bottom:16px}
 .hero h1 span{color:#c8f135}
-.hero p{font-size:17px;color:#888;max-width:600px;margin:0 auto 32px}
-.meta-row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
-.meta-item{font-size:13px;color:#555}
-.meta-item strong{color:#aaa}
+.hero p{font-size:17px;color:#888;max-width:560px;margin:0 auto}
 
-.section{max-width:980px;margin:0 auto;padding:56px 24px}
+.section{max-width:860px;margin:0 auto;padding:56px 24px}
 .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#555;font-weight:600;margin-bottom:8px}
-.section-title{font-size:26px;font-weight:700;color:#f0f0f0;margin-bottom:10px}
-.section-sub{font-size:15px;color:#666;margin-bottom:36px;max-width:640px}
+.section-title{font-size:24px;font-weight:700;color:#f0f0f0;margin-bottom:10px}
+.section-sub{font-size:14px;color:#666;margin-bottom:32px;max-width:600px}
 
-/* Overview cards */
-.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:56px}
-.ov-card{background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:24px;text-align:center}
-.ov-val{font-size:42px;font-weight:700;color:#c8f135;line-height:1}
-.ov-unit{font-size:16px;color:#888;margin-top:6px}
-.ov-lbl{font-size:12px;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.divider{height:1px;background:#1a1a1a;max-width:860px;margin:0 auto}
 
-/* Domain table */
-.domain-table{width:100%;border-collapse:collapse;font-size:14px}
-.domain-table th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#555;border-bottom:1px solid #1e1e1e;font-weight:600}
-.domain-table th:not(:first-child){text-align:center}
-.domain-table td{padding:13px 14px;border-bottom:1px solid #141414;color:#ccc;vertical-align:middle}
-.domain-table td:not(:first-child){text-align:center}
-.domain-table tr:last-child td{border-bottom:none}
-.domain-table tr:hover td{background:#111}
-.tier-std{color:#aaa}
-.tier-pro{color:#60a5fa}
-.tier-dev{color:#c8f135;font-weight:600}
-.fpr-good{color:#4ade80}
-.fpr-ok{color:#facc15}
-.domain-icon{font-size:16px;margin-right:8px}
-.domain-name{font-weight:500;color:#e0e0e0}
-.domain-n{font-size:11px;color:#444;margin-left:6px}
-.bar-cell{display:flex;align-items:center;justify-content:center;gap:8px}
-.bar-wrap{width:72px;background:#1a1a1a;border-radius:20px;height:6px}
-.bar-fill{height:100%;border-radius:20px;background:#c8f135}
-.bar-fill.std{background:#555}
-.bar-fill.pro{background:#60a5fa}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#555;border-bottom:1px solid #1e1e1e;font-weight:600}
+th:not(:first-child){text-align:right}
+td{padding:13px 14px;border-bottom:1px solid #141414;color:#ccc}
+td:not(:first-child){text-align:right}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#111}
+.highlight td{background:#1a2a1a}
+.highlight td strong{color:#a3e635}
 
-/* Tier comparison */
-.tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:56px}
-.tier-card{background:#111;border:1px solid #1e1e1e;border-radius:14px;padding:28px 24px}
-.tier-card.featured{border-color:#c8f13544;background:#c8f13508}
-.tier-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
-.badge-std{background:#2a2a2a;color:#aaa}
-.badge-pro{background:#1e3a5f;color:#60a5fa}
-.badge-dev{background:#1a2e0a;color:#c8f135}
-.tier-cr{font-size:40px;font-weight:700;color:#f0f0f0;line-height:1}
-.tier-cr-lbl{font-size:13px;color:#555;margin-bottom:16px}
-.tier-facts{list-style:none;display:flex;flex-direction:column;gap:8px}
-.tier-facts li{font-size:13px;color:#888;display:flex;gap:8px}
-.tier-facts li::before{content:'→';color:#555;flex-shrink:0}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0}
+.card{background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:24px;text-align:center}
+.card-val{font-size:38px;font-weight:700;color:#c8f135;line-height:1}
+.card-unit{font-size:14px;color:#888;margin-top:6px}
+.card-lbl{font-size:11px;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
 
-/* Example prompts */
-.example-grid{display:flex;flex-direction:column;gap:20px}
-.example{background:#0f0f0f;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden}
-.example-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:1px solid #1e1e1e}
-.example-domain{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
-.example-savings{font-size:12px;color:#c8f135;font-weight:600}
-.example-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.ex-col{padding:16px 18px}
-.ex-col+.ex-col{border-left:1px solid #1a1a1a}
-.ex-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#444;margin-bottom:8px;font-weight:600}
-.ex-text{font-size:13px;color:#ccc;line-height:1.5;font-family:'SF Mono','Fira Code',monospace;word-break:break-word}
-.ex-text.compressed{color:#c8f135}
+.note{font-size:12px;color:#555;margin-top:16px;line-height:1.7}
+.note code{color:#666;background:#111;padding:1px 5px;border-radius:3px}
 
-/* Methodology */
-.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.method-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:20px}
-.method-card h4{font-size:14px;font-weight:600;color:#e0e0e0;margin-bottom:8px}
-.method-card p{font-size:13px;color:#666;line-height:1.6}
-
-.divider{height:1px;background:#1a1a1a;max-width:980px;margin:0 auto}
+.assumptions{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:20px 24px;margin-top:24px}
+.assumptions h4{font-size:13px;font-weight:600;color:#888;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
+.assumptions ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.assumptions li{font-size:13px;color:#666;display:flex;gap:10px}
+.assumptions li::before{content:'·';color:#444;flex-shrink:0}
 
 .footer{text-align:center;padding:40px 24px;color:#333;font-size:13px}
 .footer a{color:#444}
@@ -103,416 +63,152 @@ a:hover{text-decoration:underline}
 <body>
 
 <nav class="nav">
-  <div class="nav-logo"><span class="nav-logo-tag">P→</span> Promptolian</div>
+  <a href="index.html" class="nav-logo"><span class="nav-logo-tag">Σ→</span> Promptolian</a>
   <div class="nav-links">
     <a href="index.html">Home</a>
-    <a href="#domain-results">Results</a>
-    <a href="#examples">Examples</a>
-    <a href="#methodology">Methodology</a>
+    <a href="docs.html">Docs</a>
+    <a href="pricing.html">Pricing</a>
   </div>
 </nav>
 
 <div class="hero">
   <div class="hero-tag">Open Benchmarks</div>
   <h1>Real numbers.<br><span>No fabrication.</span></h1>
-  <p>Every metric below was computed by running actual prompts through the engine and measuring the output. Numbers are committed to the repo.</p>
-  <div class="meta-row">
-    <div class="meta-item"><strong>200</strong> prompts</div>
-    <div class="meta-item"><strong>5</strong> domains</div>
-    <div class="meta-item"><strong>3</strong> tiers</div>
-    <div class="meta-item"><strong>EN</strong> · <strong>ES</strong> · <strong>FR</strong> · <strong>DE</strong> · <strong>IT</strong></div>
-    <div class="meta-item">Token counting: <strong>tiktoken cl100k_base</strong></div>
-    <div class="meta-item">Engine: <strong>v4.0</strong> · May 2026</div>
-  </div>
+  <p>Two experiments: context quality across long agent sessions, and tool schema token savings. Both reproducible.</p>
 </div>
 
 <div class="divider"></div>
 
-<!-- CONTEXT QUALITY BENCHMARK -->
-<div class="section" id="context-benchmark">
-  <div class="section-label">Context Quality · May 2026</div>
-  <div class="section-title">How well does your agent remember?</div>
-  <div class="section-sub">25 sessions across 5 domains. Each session compressed, then probed with 5 factual questions. Scored on Factory.ai's 6-dimension framework (0–5 scale). Baselines from Factory.ai May 2026 study.</div>
+<!-- EXPERIMENT 1: CONTEXT QUALITY -->
+<div class="section">
+  <div class="section-label">Experiment 1 · May 2026</div>
+  <div class="section-title">Context quality across long agent sessions</div>
+  <div class="section-sub">How well does each system preserve facts across a 50-turn conversation? Probed with 5 factual questions per session after compression. Scored on Factory.ai's 6-dimension framework (0–5 scale).</div>
 
-  <table class="domain-table" style="margin-top:24px;max-width:600px">
+  <table>
     <thead>
       <tr>
-        <th>Method</th>
-        <th style="text-align:right">Quality</th>
-        <th style="text-align:right">Compression</th>
-        <th style="text-align:right">Approach</th>
+        <th>System</th>
+        <th>Quality score</th>
+        <th>Compression</th>
+        <th>Approach</th>
       </tr>
     </thead>
     <tbody>
-      <tr style="background:#1a2a1a">
-        <td><strong style="color:#a3e635">Promptolian</strong></td>
-        <td style="text-align:right"><strong style="color:#a3e635">4.26 / 5</strong></td>
-        <td style="text-align:right">21.8%</td>
-        <td style="text-align:right">Extractive · KV-sandwich</td>
+      <tr class="highlight">
+        <td><strong>Promptolian</strong></td>
+        <td><strong>4.26 / 5</strong></td>
+        <td>21.8%</td>
+        <td>Extractive · KV-sandwich</td>
       </tr>
       <tr>
         <td>Anthropic built-in</td>
-        <td style="text-align:right">3.44 / 5</td>
-        <td style="text-align:right">98.7%</td>
-        <td style="text-align:right">LLM summarization</td>
+        <td>3.44 / 5</td>
+        <td>98.7%</td>
+        <td>LLM summarization</td>
       </tr>
       <tr>
         <td>OpenAI built-in</td>
-        <td style="text-align:right">3.35 / 5</td>
-        <td style="text-align:right">99.3%</td>
-        <td style="text-align:right">LLM summarization</td>
+        <td>3.35 / 5</td>
+        <td>99.3%</td>
+        <td>LLM summarization</td>
       </tr>
     </tbody>
   </table>
 
-  <div style="margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:600px">
-    <div class="ov-card">
-      <div class="ov-val" style="color:#a3e635">4.26</div>
-      <div class="ov-unit">out of 5</div>
-      <div class="ov-lbl">Overall quality score</div>
+  <div class="cards" style="grid-template-columns:repeat(3,1fr);max-width:560px">
+    <div class="card">
+      <div class="card-val">4.26</div>
+      <div class="card-unit">out of 5</div>
+      <div class="card-lbl">Quality score</div>
     </div>
-    <div class="ov-card">
-      <div class="ov-val">+0.82</div>
-      <div class="ov-unit">vs Anthropic</div>
-      <div class="ov-lbl">quality advantage</div>
+    <div class="card">
+      <div class="card-val">+0.82</div>
+      <div class="card-unit">vs Anthropic</div>
+      <div class="card-lbl">Quality gap</div>
     </div>
-    <div class="ov-card">
-      <div class="ov-val" style="color:#a78bfa">4.20</div>
-      <div class="ov-unit">Artifact score</div>
-      <div class="ov-lbl">vs 2.19–2.45 (baselines)</div>
-    </div>
-  </div>
-
-  <div style="margin-top:28px">
-    <div class="section-label">6 Dimensions</div>
-    <table class="domain-table" style="max-width:500px">
-      <thead><tr><th>Dimension</th><th style="text-align:right">Promptolian</th><th style="text-align:right">What it measures</th></tr></thead>
-      <tbody>
-        <tr><td>Accuracy</td><td style="text-align:right">4.30</td><td style="text-align:right">Exact fact retrieval</td></tr>
-        <tr><td>Context</td><td style="text-align:right">4.26</td><td style="text-align:right">Conversational flow</td></tr>
-        <tr><td>Artifact</td><td style="text-align:right">4.20</td><td style="text-align:right">Code / config preservation</td></tr>
-        <tr><td>Completeness</td><td style="text-align:right">4.26</td><td style="text-align:right">Answer thoroughness</td></tr>
-        <tr><td>Continuity</td><td style="text-align:right">4.30</td><td style="text-align:right">Cross-turn memory</td></tr>
-        <tr><td>Instruction</td><td style="text-align:right">4.20</td><td style="text-align:right">System prompt adherence</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <p style="margin-top:20px;font-size:12px;color:#666">
-    Promptolian benchmark: 25 sessions, llama-3.1-8b-instant answer model, gpt-oss-120b judge via OpenRouter. Baselines: Factory.ai (May 2026), same scoring methodology, different test sessions.
-    A second validation run scored 4.19/5 — range 4.19–4.26 across two runs.
-  </p>
-  <p style="margin-top:12px;font-size:12px;color:#555">
-    Why high compression hurts: <a href="ucurve.html" style="color:#c8f135;text-decoration:none">see the U-curve — total tokens vs compression rate →</a>
-  </p>
-</div>
-
-<div class="divider"></div>
-
-<!-- OVERVIEW -->
-<div class="section">
-  <div class="overview" style="grid-template-columns:repeat(5,1fr)">
-    <div class="ov-card">
-      <div class="ov-val">9.2%</div>
-      <div class="ov-unit">Standard tier</div>
-      <div class="ov-lbl">avg CR — all prompts</div>
-    </div>
-    <div class="ov-card">
-      <div class="ov-val">20.1%</div>
-      <div class="ov-unit">Developer tier</div>
-      <div class="ov-lbl">avg CR — long prompts</div>
-    </div>
-    <div class="ov-card">
-      <div class="ov-val" style="color:#a78bfa">69%</div>
-      <div class="ov-unit">Tool schemas</div>
-      <div class="ov-lbl">CR — turn 1 (JSON → DSL)</div>
-    </div>
-    <div class="ov-card">
-      <div class="ov-val" style="color:#a78bfa">92%</div>
-      <div class="ov-unit">Tool schemas</div>
-      <div class="ov-lbl">CR — 5-turn session avg</div>
-    </div>
-    <div class="ov-card">
-      <div class="ov-val">89.9%</div>
-      <div class="ov-unit">Fact preservation</div>
-      <div class="ov-lbl">across all tiers</div>
+    <div class="card">
+      <div class="card-val">31%</div>
+      <div class="card-unit">fewer failures</div>
+      <div class="card-lbl">vs Anthropic built-in</div>
     </div>
   </div>
 
-  <!-- DOMAIN TABLE -->
-  <div id="domain-results">
-    <div class="section-label">Domain Study</div>
-    <div class="section-title">Results by domain</div>
-    <div class="section-sub">200 English prompts (150 short + 50 long) across 5 professional domains. Engine v4 — fully deterministic, no external API. Token counts via tiktoken cl100k_base.</div>
-
-    <table class="domain-table">
+  <div style="margin-top:32px">
+    <div class="section-label">6-Dimension Breakdown (Promptolian)</div>
+    <table style="max-width:480px;margin-top:12px">
       <thead>
-        <tr>
-          <th>Domain</th>
-          <th>Standard CR</th>
-          <th>Pro CR</th>
-          <th>Developer CR</th>
-          <th>Fact preservation</th>
-        </tr>
+        <tr><th>Dimension</th><th>Score</th><th>What it measures</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td><span class="domain-icon">💹</span><span class="domain-name">Finance</span><span class="domain-n">n=40</span></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:54%"></div></div><span class="tier-std">10.8%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:58%"></div></div><span class="tier-pro">11.5%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:64%"></div></div><span class="tier-dev">12.9%</span></div></td>
-          <td><span class="fpr-good">90%</span></td>
-        </tr>
-        <tr>
-          <td><span class="domain-icon">💬</span><span class="domain-name">Social / Marketing</span><span class="domain-n">n=40</span></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:43%"></div></div><span class="tier-std">8.6%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:47%"></div></div><span class="tier-pro">9.4%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:49%"></div></div><span class="tier-dev">9.7%</span></div></td>
-          <td><span class="fpr-good">90%</span></td>
-        </tr>
-        <tr>
-          <td><span class="domain-icon">💻</span><span class="domain-name">Programming</span><span class="domain-n">n=40</span></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:55%"></div></div><span class="tier-std">11.0%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:58%"></div></div><span class="tier-pro">11.7%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:59%"></div></div><span class="tier-dev">11.8%</span></div></td>
-          <td><span class="fpr-good">90%</span></td>
-        </tr>
-        <tr>
-          <td><span class="domain-icon">⚖️</span><span class="domain-name">Legal</span><span class="domain-n">n=40</span></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:45%"></div></div><span class="tier-std">8.9%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:51%"></div></div><span class="tier-pro">10.3%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:56%"></div></div><span class="tier-dev">11.1%</span></div></td>
-          <td><span class="fpr-ok">89%</span></td>
-        </tr>
-        <tr>
-          <td><span class="domain-icon">🏥</span><span class="domain-name">Medical</span><span class="domain-n">n=40</span></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill std" style="width:33%"></div></div><span class="tier-std">6.7%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill pro" style="width:34%"></div></div><span class="tier-pro">6.8%</span></div></td>
-          <td><div class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:36%"></div></div><span class="tier-dev">7.1%</span></div></td>
-          <td><span class="fpr-ok">89%</span></td>
-        </tr>
+        <tr><td>Accuracy</td><td>4.30</td><td>Exact fact retrieval</td></tr>
+        <tr><td>Context</td><td>4.26</td><td>Conversational flow</td></tr>
+        <tr><td>Artifact</td><td>4.20</td><td>Code / config preservation</td></tr>
+        <tr><td>Completeness</td><td>4.26</td><td>Answer thoroughness</td></tr>
+        <tr><td>Continuity</td><td>4.30</td><td>Cross-turn memory</td></tr>
+        <tr><td>Instruction</td><td>4.20</td><td>System prompt adherence</td></tr>
       </tbody>
     </table>
+  </div>
 
-    <p style="font-size:12px;color:#444;margin-top:14px">Developer tier applies domain-specific abbreviation packs (MRR, ARR, NDA, IP, SLA, BP…) + spaCy clause pruning + parenthetical removal. All processing is local — no external API calls.</p>
+  <div class="assumptions">
+    <h4>Assumptions &amp; methodology</h4>
+    <ul>
+      <li>25 sessions × 5 task domains (coding, deployment, data, research, ops)</li>
+      <li>50 turns per session, then 5 factual probe questions per session</li>
+      <li>Answer model: llama-3.1-8b-instant · Judge model: gpt-oss-120b via OpenRouter</li>
+      <li>Scoring: Factory.ai 6-dimension framework (Accuracy, Context, Artifact, Completeness, Continuity, Instruction)</li>
+      <li>Anthropic / OpenAI baselines: Factory.ai May 2026 study — same scoring methodology, independent test sessions</li>
+      <li>Validation run (second 25 sessions after entity-encoding fix): 4.19 / 5 — range 4.19–4.26 across two runs</li>
+      <li>Fact-loss rate = 1 − quality / 5 → Promptolian 14.8% · Anthropic 31.2% · OpenAI 33.0%</li>
+    </ul>
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- TIER COMPARISON -->
+<!-- EXPERIMENT 2: TOOL SCHEMA CACHING -->
 <div class="section">
-  <div class="section-label">Tier Comparison</div>
-  <div class="section-title">What you get at each tier</div>
-  <div class="section-sub">Numbers, URLs, names, and entities are always protected across all tiers.</div>
+  <div class="section-label">Experiment 2 · May 2026</div>
+  <div class="section-title">Tool schema token savings via prompt cache</div>
+  <div class="section-sub">Every API call re-sends the full tool schema. The proxy injects Anthropic <code>cache_control</code> blocks automatically — cached tokens are billed at 10%.</div>
 
-  <div class="tier-grid">
-    <div class="tier-card">
-      <div class="tier-badge badge-std">Standard · Free</div>
-      <div class="tier-cr">~9%</div>
-      <div class="tier-cr-lbl">avg CR (up to 16% on long prompts)</div>
-      <ul class="tier-facts">
-        <li>Symbol substitution (§EXP, §NOT, →code…)</li>
-        <li>Phrase simplification</li>
-        <li>EN · ES · FR · DE · IT</li>
-        <li>Rule-based, instant, deterministic</li>
-        <li>No external API calls</li>
-      </ul>
+  <div class="cards">
+    <div class="card">
+      <div class="card-val">~90%</div>
+      <div class="card-unit">session avg savings</div>
+      <div class="card-lbl">Tool schema tokens</div>
     </div>
-    <div class="tier-card featured">
-      <div class="tier-badge badge-pro">Pro · Solo $9/mo</div>
-      <div class="tier-cr">~10%</div>
-      <div class="tier-cr-lbl">avg CR (up to 18% on long prompts)</div>
-      <ul class="tier-facts">
-        <li>Everything in Standard</li>
-        <li>Telegraphic framing removal</li>
-        <li>Math operator substitution (≥, ≤, ≠)</li>
-        <li>Verbose phrase compression</li>
-        <li>Numeric abbreviation (1000 → 1k)</li>
-      </ul>
+    <div class="card">
+      <div class="card-val">$24</div>
+      <div class="card-unit">saved / month</div>
+      <div class="card-lbl">at 500 calls/day · 5 tools</div>
     </div>
-    <div class="tier-card">
-      <div class="tier-badge badge-dev">Developer · Team $29/mo</div>
-      <div class="tier-cr">~11%</div>
-      <div class="tier-cr-lbl">avg CR on prompts · ~90% session avg on tool schemas</div>
-      <ul class="tier-facts">
-        <li>Everything in Pro</li>
-        <li>Domain packs (finance, legal, medical, code)</li>
-        <li>spaCy clause pruning</li>
-        <li>Context engine (multi-turn delta pruning)</li>
-        <li>Tool schema DSL compiler (69% turn-1 / ~90% session avg)</li>
-        <li>100% local — no external API calls</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<div class="divider"></div>
-
-<!-- EXAMPLES -->
-<div class="section" id="examples">
-  <div class="section-label">Live Examples</div>
-  <div class="section-title">From the benchmark set</div>
-  <div class="section-sub">Real prompts from the dataset, showing original and Developer-tier output.</div>
-
-  <div class="example-grid">
-    <div class="example">
-      <div class="example-header">
-        <span class="example-domain">💹 Finance</span>
-        <span class="example-savings">71% smaller</span>
-      </div>
-      <div class="example-body">
-        <div class="ex-col">
-          <div class="ex-label">Original · 41 tokens</div>
-          <div class="ex-text">Analyze the monthly recurring revenue growth for Q1 2026. Revenue increased from $2.4M to $2.9M, a 20.8% quarter-over-quarter gain. Project the annual recurring revenue trajectory for the full year.</div>
-        </div>
-        <div class="ex-col">
-          <div class="ex-label">Developer · 12 tokens</div>
-          <div class="ex-text compressed">ANLZ MRR growth Q1 2026: $2.4M→$2.9M (+20.8% QoQ). Project ARR full year.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="example">
-      <div class="example-header">
-        <span class="example-domain">💻 Programming</span>
-        <span class="example-savings">~33% smaller</span>
-      </div>
-      <div class="example-body">
-        <div class="ex-col">
-          <div class="ex-label">Original</div>
-          <div class="ex-text">You are an expert Python developer. Please review this function and return only the code with the bug fixed. Do not include any explanation.</div>
-        </div>
-        <div class="ex-col">
-          <div class="ex-label">Standard</div>
-          <div class="ex-text compressed">§EXP py developer. « this FN →code BUG fixed. §NOT include any ? .</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="example">
-      <div class="example-header">
-        <span class="example-domain">💬 Marketing</span>
-        <span class="example-savings">~45% smaller</span>
-      </div>
-      <div class="example-body">
-        <div class="ex-col">
-          <div class="ex-label">Original</div>
-          <div class="ex-text">Summarize the key benefits of our product for a social media post. Be very concise. Return as bullet list. Important: focus on the unique value proposition.</div>
-        </div>
-        <div class="ex-col">
-          <div class="ex-label">Pro</div>
-          <div class="ex-text compressed">∑ key benefits for social media post. →short. →list. !!: focus on unique value prop.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="divider"></div>
-
-<!-- TOOL SCHEMA COMPRESSION -->
-<div class="section" id="tool-schemas">
-  <div class="section-label">Agent Layer</div>
-  <div class="section-title">Tool schema compression</div>
-  <div class="section-sub">JSON tool definitions are the largest token consumer in agent workloads — often larger than the user prompt itself. Promptolian compiles them to a compact function-signature DSL and caches them across turns.</div>
-
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px">
-    <div class="ov-card" style="border-color:#a78bfa44">
-      <div class="ov-val" style="color:#a78bfa">69.4%</div>
-      <div class="ov-unit">Turn 1 CR</div>
-      <div class="ov-lbl">JSON → DSL compilation</div>
-    </div>
-    <div class="ov-card" style="border-color:#a78bfa44">
-      <div class="ov-val" style="color:#a78bfa">~90%</div>
-      <div class="ov-unit">Session avg CR</div>
-      <div class="ov-lbl">across all turns (cache hits)</div>
-    </div>
-    <div class="ov-card" style="border-color:#a78bfa44">
-      <div class="ov-val" style="color:#a78bfa">91.9%</div>
-      <div class="ov-unit">5-turn session</div>
-      <div class="ov-lbl">average across all turns</div>
+    <div class="card">
+      <div class="card-val">&lt;10ms</div>
+      <div class="card-unit">proxy overhead</div>
+      <div class="card-lbl">per request</div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px">
-    <div>
-      <div class="ex-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#444;margin-bottom:10px;font-weight:600">JSON schema — 111 tokens</div>
-      <div style="background:#0f0f0f;border:1px solid #1e1e1e;border-radius:10px;padding:16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#888;line-height:1.7">
-        {"type":"function","function":{"name":"search_web","description":"Search the web for up-to-date information on any topic","parameters":{"type":"object","properties":{"query":{"type":"string","description":"The search query"},"num_results":{"type":"integer","default":10},"language":{"type":"string","default":"en"},"safe_search":{"type":"boolean","default":true}},"required":["query"]}}}
-      </div>
-    </div>
-    <div>
-      <div class="ex-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a78bfa;margin-bottom:10px;font-weight:600">DSL — 34 tokens (69% smaller)</div>
-      <div style="background:#0f0f0f;border:1px solid #a78bfa33;border-radius:10px;padding:16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#a78bfa;line-height:1.7">
-        search_web(query, language='en', num_results: int=10, safe_search: bool=True)<br>
-        &nbsp;&nbsp;# Search the web for up-to-date information…<br><br>
-        <span style="color:#555"># Turn 2+:</span><br>
-        TOOLS:[search_web,get_user,create_order,…]<br>
-        <span style="color:#555"># → 30 tokens (~90% session avg CR)</span>
-      </div>
-    </div>
+  <div class="assumptions">
+    <h4>Assumptions</h4>
+    <ul>
+      <li>5 tools · ~120 tokens each = 600 tool tokens per call</li>
+      <li>500 calls/day · 30 days = 9M tool tokens/month → $27.00 without caching</li>
+      <li>With Anthropic prompt cache (10% on hits, 5-min TTL) → $2.70</li>
+      <li>Saving: $24.30/month at Claude Sonnet 4 pricing ($3/MTok input)</li>
+      <li>Cache hit rate assumes tool schema unchanged across session turns — typical for agent workloads</li>
+    </ul>
   </div>
 
-  <table class="domain-table">
-    <thead>
-      <tr>
-        <th>Tool</th>
-        <th>Raw JSON tokens</th>
-        <th>DSL tokens (turn 1)</th>
-        <th>CR turn 1</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>search_web</code></td><td style="text-align:center">111</td><td style="text-align:center">34</td><td style="text-align:center"><span class="tier-dev">69.4%</span></td></tr>
-      <tr><td><code>get_user</code></td><td style="text-align:center">98</td><td style="text-align:center">30</td><td style="text-align:center"><span class="tier-dev">69.4%</span></td></tr>
-      <tr><td><code>create_order</code></td><td style="text-align:center">133</td><td style="text-align:center">33</td><td style="text-align:center"><span class="tier-dev">75.2%</span></td></tr>
-      <tr><td><code>run_code</code></td><td style="text-align:center">119</td><td style="text-align:center">41</td><td style="text-align:center"><span class="tier-dev">65.5%</span></td></tr>
-      <tr><td><code>query_database</code></td><td style="text-align:center">139</td><td style="text-align:center">40</td><td style="text-align:center"><span class="tier-dev">71.2%</span></td></tr>
-      <tr><td><code>send_email</code></td><td style="text-align:center">144</td><td style="text-align:center">42</td><td style="text-align:center"><span class="tier-dev">70.8%</span></td></tr>
-      <tr style="font-weight:600"><td>Total (10 tools)</td><td style="text-align:center">1,220</td><td style="text-align:center">373</td><td style="text-align:center"><span class="tier-dev">69.4%</span></td></tr>
-    </tbody>
-  </table>
-
-  <p style="margin-top:14px;font-size:12px;color:#444">Type elision: 61% of parameters have their type annotation dropped because it is inferrable from the name alone (<code>user_id</code> → <code>str</code>, <code>include_orders</code> → <code>bool</code>, <code>limit</code> → <code>int</code>). Enum fields are rendered inline as <code>active|inactive|suspended</code> instead of a full JSON array.</p>
-</div>
-
-<div class="divider"></div>
-
-<!-- METHODOLOGY -->
-<div class="section" id="methodology">
-  <div class="section-label">Methodology</div>
-  <div class="section-title">How we measure</div>
-  <div class="section-sub">All measurements are reproducible. The experiment code is in the repo.</div>
-
-  <div class="method-grid">
-    <div class="method-card">
-      <h4>Token counting</h4>
-      <p>All token counts use <strong>tiktoken cl100k_base</strong> (OpenAI's tokenizer, used by GPT-4 and Claude approximation). Older experiments used a words×1.3 heuristic — clearly marked.</p>
-    </div>
-    <div class="method-card">
-      <h4>Compression rate (CR)</h4>
-      <p><code>(1 - compressed_tokens / original_tokens) × 100</code>. Measured on the prompt sent to the LLM, not the response.</p>
-    </div>
-    <div class="method-card">
-      <h4>Fact preservation rate (FPR)</h4>
-      <p>Regex extraction of numbers, URLs, named entities, and quoted strings from the original. We verify each appears in the compressed output (or its decoded form). FPR = retained / total × 100.</p>
-    </div>
-    <div class="method-card">
-      <h4>Developer tier (NLP pipeline)</h4>
-      <p>Pro output is passed through: (1) domain pack — 60+ domain-specific abbreviations detected via keyword scoring, (2) spaCy dependency parse — non-restrictive relative clauses and low-information adverbial clauses removed, (3) parenthetical pruner — non-numeric parentheticals ≥4 words removed. Fully local, no external API calls.</p>
-    </div>
-  </div>
-
-  <p style="margin-top:28px;font-size:13px;color:#444">
-    Prompt benchmark: <code style="color:#666">domain_experiment_v4.py</code> ·
-    Tool benchmark: <code style="color:#666">tool_compression_experiment.py</code> ·
-    Engine: <code style="color:#666">engine_v4.py</code> · API: <code style="color:#666">POST /compress-tools</code>
+  <p class="note" style="margin-top:20px">
+    Why high compression hurts overall: <a href="ucurve.html">see the U-curve — total cost vs compression rate →</a>
   </p>
 </div>
 
 <div class="footer">
-  <p><a href="index.html">← Back to Promptolian</a> &nbsp;·&nbsp; Last updated: May 2026 &nbsp;·&nbsp; Engine v4.0</p>
+  <p><a href="index.html">← Back to Promptolian</a> &nbsp;·&nbsp; Last updated: May 2026</p>
 </div>
 
 </body>
