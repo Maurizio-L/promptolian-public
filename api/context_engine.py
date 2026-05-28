@@ -209,6 +209,24 @@ def _jaccard(a: str, b: str) -> float:
     return len(sa & sb) / len(sa | sb)
 
 
+# Patterns that signal a turn contains probe-worthy facts
+_ENTITY_DENSITY_RE = re.compile(
+    r'\b\d[\d,]*\.?\d*\s*(?:seconds?|minutes?|hours?|days?|ms|GB|MB|KB|rows?|%|k|M)\b'  # numbers+units
+    r'|https?://\S+'                                           # URLs
+    r'|\b[a-z][a-z0-9]*(?:[_\-/][a-z0-9]+){1,5}\b'          # resource names (bucket, queue, path)
+    r'|\b[a-z_]+\s*[:=]\s*[\w.\-/\'"]{2,}'                   # key=value pairs
+    r'|\b\d{2,}\b',                                            # bare numbers (port, count, ID)
+    re.I,
+)
+
+def _entity_density(text: str) -> float:
+    """Score a message by how many probe-worthy facts it contains, normalized by length."""
+    words = max(len(text.split()), 1)
+    hits  = len(_ENTITY_DENSITY_RE.findall(text))
+    # Cap at 1.0 — a turn with 10 facts is as "dense" as one with 5, we just want priority
+    return min(1.0, hits / max(words * 0.1, 1))
+
+
 def _extract_entities(text: str) -> frozenset[str]:
     """Return frozenset of entity strings found in text."""
     return frozenset(m.strip() for m in _ENTITY_RE.findall(text) if len(m.strip()) > 1)
@@ -218,12 +236,27 @@ def _ngrams(tokens: list[str], n: int) -> list[tuple]:
     return [tuple(tokens[i:i+n]) for i in range(len(tokens) - n + 1)]
 
 
+_ENTITY_TOKEN_RE = re.compile(r'(§E\d+)')
+
 def _apply_entity_map(text: str, entity_map: dict[str, str]) -> str:
-    """Replace entity strings with their symbols (longest first)."""
-    out = text
+    """Replace entity strings with symbols (longest first).
+
+    Re-splits on §E tokens after each replacement so that newly-introduced
+    symbols (e.g. §E15) are protected from subsequent shorter replacements
+    (e.g. '15' → §E8 would otherwise corrupt §E15 → §E§E8).
+    """
+    parts: list[str] = [text]
     for ent in sorted(entity_map, key=len, reverse=True):
-        out = out.replace(ent, entity_map[ent])
-    return out
+        sym = entity_map[ent]
+        new_parts: list[str] = []
+        for p in parts:
+            if _ENTITY_TOKEN_RE.fullmatch(p):
+                new_parts.append(p)
+            else:
+                replaced = p.replace(ent, sym)
+                new_parts.extend(_ENTITY_TOKEN_RE.split(replaced))
+        parts = new_parts
+    return ''.join(parts)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -603,10 +636,19 @@ class ContextEngine:
         remaining   = max(0, budget - tail_tokens)
 
         if query and head:
-            # Sort head by relevance to current query, highest first
-            scored = sorted(head, key=lambda m: _jaccard(m.get('content', ''), query), reverse=True)
+            # Blend query relevance (Jaccard) with entity density so fact-rich
+            # turns survive pruning regardless of position in the conversation.
+            scored = sorted(
+                head,
+                key=lambda m: (
+                    0.5 * _jaccard(m.get('content', ''), query)
+                    + 0.5 * _entity_density(m.get('content', ''))
+                ),
+                reverse=True,
+            )
         else:
-            scored = list(reversed(head))  # newest-first (original behaviour)
+            # No query — rank by entity density alone so fact-rich turns win
+            scored = sorted(head, key=lambda m: _entity_density(m.get('content', '')), reverse=True)
 
         kept_head: list[dict] = []
         for msg in scored:
@@ -804,22 +846,30 @@ class ContextEngine:
         existing_summary: str,
     ) -> str:
         """Score-based extractive summary — no external deps."""
-        # Collect sentences from user messages (intent source)
-        user_sents: list[tuple[float, str]] = []
+        # User sentences: scored by goal/constraint patterns (intent)
+        # Assistant sentences: scored by entity density (facts/values)
+        # Both pools compete for the same summary budget.
+        all_sents: list[tuple[float, str]] = []
         for msg in messages:
-            if msg.get('role') != 'user':
+            role = msg.get('role', '')
+            if role == 'system':
                 continue
             for sent in _split_sentences(msg.get('content', '')):
-                score = _score_sentence(sent)
+                if role == 'user':
+                    score = _score_sentence(sent)
+                else:
+                    # Assistant: weight by entity density — preserves config values,
+                    # bucket names, thresholds that BM25 would otherwise drop
+                    score = _entity_density(sent) * 4.0
                 if score > 0:
-                    user_sents.append((score, sent))
+                    all_sents.append((score, sent))
 
         # Sort by score desc, deduplicate near-identical sentences
-        user_sents.sort(key=lambda x: x[0], reverse=True)
+        all_sents.sort(key=lambda x: x[0], reverse=True)
         seen: set[str] = set()
         selected: list[str] = []
         budget = self.summary_budget
-        for _, sent in user_sents:
+        for _, sent in all_sents:
             key = re.sub(r'\W+', '', sent.lower())[:40]
             if key in seen:
                 continue

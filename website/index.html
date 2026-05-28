@@ -342,18 +342,18 @@ footer a:hover{color:#aaa}
     <div class="hero-badge">⚡ Free to start — no credit card required</div>
     <div class="hero-badge" style="background:transparent;border:1.5px solid var(--lime)">🔒 Runs on your device — zero data sent to us</div>
   </div>
-  <h1>Your agent sends the same<br>tool list every call.<br><em>We collapse it to 3 tokens.</em></h1>
-  <p>From call 2 onward, Promptolian replaces your entire tool schema block with <code style="background:#1e2030;color:var(--lime);padding:1px 7px;border-radius:5px;font-size:15px">TOOLS:[name1,name2]</code> — <strong>~90% smaller</strong> on session average. No other tool does this. Works on any LLM API.</p>
+  <h1>Your AI agent is forgetting things.<br><em>And you're paying for it.</em></h1>
+  <p>Built-in context management loses specific facts — config values, resource names, exact numbers. Promptolian keeps what matters and drops the filler. <strong>4.26/5 context quality</strong> vs Anthropic's 3.44/5 and OpenAI's 3.35/5, measured on 25 real sessions.</p>
   <div class="hero-btns">
-    <a href="how-it-works.html#tool-schema" class="btn btn-primary">See the tool schema demo →</a>
+    <a href="benchmarks.html" class="btn btn-primary">See the benchmark →</a>
     <a href="#agent-calc" class="btn btn-secondary">Calculate your savings</a>
     <a href="docs.html" class="btn btn-outline">API docs</a>
   </div>
   <div class="hero-audiences">
     <div class="hero-aud">
       <div class="hero-aud-label">Build AI agents</div>
-      <div class="hero-aud-title">~90% tool schema · 52.9% context.</div>
-      <div class="hero-aud-text">pip install, point your agent at the proxy, and every tool schema is cached automatically. Works with any language or HTTP client.</div>
+      <div class="hero-aud-title">Context reliability + ~90% tool schema savings.</div>
+      <div class="hero-aud-text">One line to add. The proxy compresses context history intelligently and caches tool schemas automatically. Your agent stops forgetting — and stops wasting tokens.</div>
       <a href="docs.html" class="hero-aud-cta">Read the API docs →</a>
     </div>
   </div>
@@ -361,11 +361,11 @@ footer a:hover{color:#aaa}
 
 <!-- PROOF BAR -->
 <div class="proof">
+  <div class="proof-item"><strong>4.26/5</strong> context quality — vs Anthropic 3.44, OpenAI 3.35</div>
+  <div class="dot"></div>
   <div class="proof-item"><strong>~90%</strong> tool schema savings — session avg</div>
   <div class="dot"></div>
-  <div class="proof-item"><strong>52.9%</strong> history compression — 20-turn session</div>
-  <div class="dot"></div>
-  <div class="proof-item"><strong>100%</strong> fact preservation · 41 benchmark runs</div>
+  <div class="proof-item"><strong>25 sessions</strong> · Factory.ai 6-dimension benchmark</div>
   <div class="dot"></div>
   <div class="proof-item"><strong>9 patterns</strong> sensitive data detection — credentials &amp; dumps</div>
 </div>
@@ -712,13 +712,13 @@ promptolian mcp install
     [['install','start','begin','pip','proxy','setup'],
      'Run: pip install "promptolian[proxy]" then: promptolian proxy — then point your agent at http://localhost:3002. Works with any language or HTTP client.'],
     [['api','rest','endpoint','curl','developer','key','token'],
-     'The REST API is at api.promptolian.com. Standard compression is free with no key. See full docs at promptolian.com/docs.html'],
+     'The REST API is at api.promptolian.com. See full docs at promptolian.com/docs.html'],
     [['cli','command','terminal','pip','install promptolian'],
      'Run: pip install promptolian — then: promptolian compress "your prompt". Works fully offline on your machine.'],
     [['docker','self.host','self-host','own server','on premise','local server'],
      'Clone github.com/Maurizio-L/promptolian-public and run: docker compose up — the full API runs locally, nothing leaves your network.'],
     [['context','memory','history','conversation','session'],
-     'The context engine compresses old conversation turns automatically using a KV-cache sandwich layout — up to 52.9% savings across a 20-turn session. Old turns get summarised; the first 2 and last 4 turns stay verbatim. Available on all plans.'],
+     'The context engine compresses old conversation turns using a KV-sandwich layout — fact-rich turns kept verbatim, filler pruned. Scores 4.26/5 on context quality vs Anthropic 3.44/5 and OpenAI 3.35/5 (Factory.ai benchmark, 25 sessions). Available on all plans with --compress flag.'],
     [['language','spanish','italian','french','german','multilingual'],
      'Five languages supported: English, Spanish, Italian, French, German. Language is auto-detected — no setup needed.'],
     [['how','work','compress','token','shrink','shorter','save'],

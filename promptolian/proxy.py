@@ -56,7 +56,16 @@ except ImportError:
 ANTHROPIC_API = 'https://api.anthropic.com'
 OPENAI_API    = 'https://api.openai.com'
 
-_CACHE_TTL       = 5 * 60          # Anthropic prompt cache TTL (seconds)
+_CACHE_TTL        = 5 * 60         # Anthropic prompt cache TTL (seconds)
+_COMPRESS_HISTORY = False           # set to True via --compress CLI flag
+
+try:
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).parent.parent / 'api'))
+    from context_engine import ContextEngine as _ContextEngine
+    _CONTEXT_ENGINE_AVAILABLE = True
+except ImportError:
+    _CONTEXT_ENGINE_AVAILABLE = False
 _DATABASE_URL    = os.getenv('DATABASE_URL')          # set by Railway
 _MASTER_KEY      = os.getenv('PROMPTOLIAN_MASTER_KEY')  # required in cloud mode
 _STRIPE_KEY          = os.getenv('STRIPE_SECRET_KEY', '')
@@ -528,6 +537,31 @@ def _resolve_session(session_id: str, tools_in_request: Optional[list]) -> tuple
 # ── Anthropic /v1/messages ────────────────────────────────────────────────────
 
 @app.route('/v1/messages', methods=['POST'])
+def _compress_messages(messages: list[dict]) -> tuple[list[dict], int]:
+    """Run context engine on messages. Returns (compressed, tokens_saved)."""
+    if not _COMPRESS_HISTORY or not _CONTEXT_ENGINE_AVAILABLE or not messages:
+        return messages, 0
+    try:
+        query  = next((m['content'] for m in reversed(messages) if m.get('role') == 'user'), '')
+        orig   = sum(max(1, len(m.get('content', '').split()) * 4 // 3) for m in messages)
+        engine = _ContextEngine(keep_last=4, budget_tokens=max(300, orig // 2),
+                                summarize_threshold=6, summary_budget=120)
+        result = engine.optimize(messages, query, mode='lossless', use_kv_geometry=True)
+        compressed = result.get('optimized_prompt')
+        if not compressed:
+            return messages, 0
+        # optimized_prompt is a string — wrap back into messages format
+        comp_tokens = max(1, len(compressed.split()) * 4 // 3)
+        saved = max(0, orig - comp_tokens)
+        # Return as a single user-role context message prepended to the tail
+        tail  = [m for m in messages if m.get('role') != 'system'][-4:]
+        sys   = [m for m in messages if m.get('role') == 'system']
+        ctx_msg = {'role': 'user', 'content': compressed}
+        return sys + [ctx_msg] + tail, saved
+    except Exception:
+        return messages, 0
+
+
 def proxy_messages():
     promptolian_key, err = _check_auth()
     if err:
@@ -554,6 +588,8 @@ def proxy_messages():
     if cache_hit and promptolian_key:
         _record_savings(promptolian_key, tokens_saved)
 
+    body['messages'], ctx_saved = _compress_messages(body.get('messages', []))
+
     pii_hits = _detect_sensitive_data(_extract_message_text(body))
     if pii_hits:
         _record_pii_event(session_id, promptolian_key, pii_hits)
@@ -568,7 +604,7 @@ def proxy_messages():
         forward_headers['anthropic-beta'] = request.headers['anthropic-beta']
 
     resp = _forward(ANTHROPIC_API, '/v1/messages', forward_headers, body)
-    return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk)
+    return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk, ctx_saved)
 
 
 # ── OpenAI /v1/responses ──────────────────────────────────────────────────────
@@ -600,6 +636,8 @@ def proxy_responses():
     if cache_hit and promptolian_key:
         _record_savings(promptolian_key, tokens_saved)
 
+    body['messages'], ctx_saved = _compress_messages(body.get('messages', []))
+
     pii_hits = _detect_sensitive_data(_extract_message_text(body))
     if pii_hits:
         _record_pii_event(session_id, promptolian_key, pii_hits)
@@ -613,7 +651,7 @@ def proxy_responses():
         forward_headers['OpenAI-Organization'] = request.headers['OpenAI-Organization']
 
     resp = _forward(OPENAI_API, '/v1/responses', forward_headers, body)
-    return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk)
+    return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk, ctx_saved)
 
 
 # ── Generic forwarder ─────────────────────────────────────────────────────────
@@ -633,7 +671,8 @@ def _forward(base_url: str, path: str, headers: dict, body: dict) -> Response:
                         content_type=r.headers.get('content-type', 'application/json'))
 
 
-def _attach_headers(resp: Response, session_id: str, cache_hit: bool, tokens_saved: int, pii_risk: str = '') -> Response:
+def _attach_headers(resp: Response, session_id: str, cache_hit: bool, tokens_saved: int,
+                    pii_risk: str = '', ctx_saved: int = 0) -> Response:
     resp.headers['X-Promptolian-Session']      = session_id
     resp.headers['X-Promptolian-Cache-Hit']    = 'true' if cache_hit else 'false'
     resp.headers['X-Promptolian-Tokens-Saved'] = str(tokens_saved)
@@ -642,6 +681,8 @@ def _attach_headers(resp: Response, session_id: str, cache_hit: bool, tokens_sav
             f'Tools re-injected from session cache. '
             f'~{tokens_saved} tokens billed at 10% (prompt cache).'
         )
+    if ctx_saved > 0:
+        resp.headers['X-Promptolian-Context-Saved'] = str(ctx_saved)
     if pii_risk:
         resp.headers['X-Promptolian-Sensitive'] = pii_risk
     return resp
@@ -1169,7 +1210,11 @@ def get_pii_events():
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False) -> None:
+def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False,
+         compress: bool = False) -> None:
+    global _COMPRESS_HISTORY
+    _COMPRESS_HISTORY = compress
+
     _ensure_schema()
     mode    = 'cloud' if _MASTER_KEY else 'local'
     storage = 'postgresql' if _is_pg() else f'sqlite ({_DB_PATH})'
@@ -1182,6 +1227,9 @@ def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False) -> None
     print(f'  Listening : http://{host}:{port}')
     print(f'  Anthropic : {ANTHROPIC_API}')
     print(f'  OpenAI    : {OPENAI_API}')
+    if compress:
+        status = 'enabled' if _CONTEXT_ENGINE_AVAILABLE else 'UNAVAILABLE (context_engine not found)'
+        print(f'  Context   : {status}')
     if mode == 'local':
         print()
         print('  In your code, change one line:')
@@ -1205,5 +1253,7 @@ if __name__ == '__main__':
     p.add_argument('--port', type=int, default=3002)
     p.add_argument('--host', default='127.0.0.1')
     p.add_argument('--debug', action='store_true')
+    p.add_argument('--compress', action='store_true',
+                   help='Enable context history compression (KV-sandwich)')
     args = p.parse_args()
-    main(args.port, args.host, args.debug)
+    main(args.port, args.host, args.debug, args.compress)

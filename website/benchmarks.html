@@ -128,6 +128,87 @@ a:hover{text-decoration:underline}
 
 <div class="divider"></div>
 
+<!-- CONTEXT QUALITY BENCHMARK -->
+<div class="section" id="context-benchmark">
+  <div class="section-label">Context Quality · May 2026</div>
+  <div class="section-title">How well does your agent remember?</div>
+  <div class="section-sub">25 sessions across 5 domains. Each session compressed, then probed with 5 factual questions. Scored on Factory.ai's 6-dimension framework (0–5 scale). Baselines from Factory.ai May 2026 study.</div>
+
+  <table class="domain-table" style="margin-top:24px;max-width:600px">
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th style="text-align:right">Quality</th>
+        <th style="text-align:right">Compression</th>
+        <th style="text-align:right">Approach</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#1a2a1a">
+        <td><strong style="color:#a3e635">Promptolian</strong></td>
+        <td style="text-align:right"><strong style="color:#a3e635">4.26 / 5</strong></td>
+        <td style="text-align:right">21.8%</td>
+        <td style="text-align:right">Extractive · KV-sandwich</td>
+      </tr>
+      <tr>
+        <td>Anthropic built-in</td>
+        <td style="text-align:right">3.44 / 5</td>
+        <td style="text-align:right">98.7%</td>
+        <td style="text-align:right">LLM summarization</td>
+      </tr>
+      <tr>
+        <td>OpenAI built-in</td>
+        <td style="text-align:right">3.35 / 5</td>
+        <td style="text-align:right">99.3%</td>
+        <td style="text-align:right">LLM summarization</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:600px">
+    <div class="ov-card">
+      <div class="ov-val" style="color:#a3e635">4.26</div>
+      <div class="ov-unit">out of 5</div>
+      <div class="ov-lbl">Overall quality score</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-val">+0.82</div>
+      <div class="ov-unit">vs Anthropic</div>
+      <div class="ov-lbl">quality advantage</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-val" style="color:#a78bfa">4.20</div>
+      <div class="ov-unit">Artifact score</div>
+      <div class="ov-lbl">vs 2.19–2.45 (baselines)</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px">
+    <div class="section-label">6 Dimensions</div>
+    <table class="domain-table" style="max-width:500px">
+      <thead><tr><th>Dimension</th><th style="text-align:right">Promptolian</th><th style="text-align:right">What it measures</th></tr></thead>
+      <tbody>
+        <tr><td>Accuracy</td><td style="text-align:right">4.30</td><td style="text-align:right">Exact fact retrieval</td></tr>
+        <tr><td>Context</td><td style="text-align:right">4.26</td><td style="text-align:right">Conversational flow</td></tr>
+        <tr><td>Artifact</td><td style="text-align:right">4.20</td><td style="text-align:right">Code / config preservation</td></tr>
+        <tr><td>Completeness</td><td style="text-align:right">4.26</td><td style="text-align:right">Answer thoroughness</td></tr>
+        <tr><td>Continuity</td><td style="text-align:right">4.30</td><td style="text-align:right">Cross-turn memory</td></tr>
+        <tr><td>Instruction</td><td style="text-align:right">4.20</td><td style="text-align:right">System prompt adherence</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top:20px;font-size:12px;color:#666">
+    Promptolian benchmark: 25 sessions, llama-3.1-8b-instant answer model, gpt-oss-120b judge via OpenRouter. Baselines: Factory.ai (May 2026), same scoring methodology, different test sessions.
+    A second validation run scored 4.19/5 — range 4.19–4.26 across two runs.
+  </p>
+  <p style="margin-top:12px;font-size:12px;color:#555">
+    Why high compression hurts: <a href="ucurve.html" style="color:#c8f135;text-decoration:none">see the U-curve — total tokens vs compression rate →</a>
+  </p>
+</div>
+
+<div class="divider"></div>
+
 <!-- OVERVIEW -->
 <div class="section">
   <div class="overview" style="grid-template-columns:repeat(5,1fr)">

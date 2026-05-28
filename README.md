@@ -1,14 +1,18 @@
 # Promptolian
 
-> Transparent proxy for AI agents — caches tool schemas automatically so you stop paying for the same tokens on every call.
+> Proxy layer for AI agents — keeps context intact across long conversations and eliminates redundant token costs. One line to add, zero changes to your agent logic.
 
 **[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Dashboard](https://promptolian.com/dashboard.html) · [Docs](https://promptolian.com/docs.html)
 
 ---
 
-## The problem
+## Two problems, one proxy
 
-Every time your agent calls the API, it re-sends the full tool schema — even if nothing changed. For 5 tools that's ~600 tokens on every single call.
+**Problem 1 — Your agent forgets things.**
+Built-in context management (Anthropic, OpenAI) compresses old turns aggressively. Specific facts — config values, resource names, exact numbers — get lost. The agent hallucinates or asks you to repeat yourself. That's rework.
+
+**Problem 2 — Your agent re-sends the same tool list on every call.**
+Every time your agent calls the API, it re-sends the full tool schema — even if nothing changed. For 5 tools that's ~600 tokens wasted on every single call.
 
 ```
 Call 1:  [system] + [tools: 600 tok] + [message]   → full price
@@ -16,7 +20,7 @@ Call 2:  [system] + [tools: 600 tok] + [message]   → full price again
 Call 3:  [system] + [tools: 600 tok] + [message]   → full price again
 ```
 
-Promptolian fixes this with one line of code.
+Promptolian fixes both with one line of code.
 
 ---
 
@@ -58,10 +62,17 @@ xychart-beta
 | Layer | Savings | Mechanism |
 |---|---|---|
 | **Tool schemas** | **~90%** session avg | Proxy caches via Anthropic prompt cache — 10% billed on hit |
-| **Conversation history** | **52.9%** | KV-cache sandwich — old turns summarised, first 2 + last 4 kept verbatim |
+| **Conversation history** | **~22%** tokens · **4.26/5** quality | KV-sandwich — fact-rich turns kept verbatim, filler pruned |
 | **Prompt text** | **~20%** | Symbol rules, filler removal, grammar cleanup |
 
-100% fact preservation across all layers — numbers, file paths, named entities unchanged.
+Context quality benchmark (25 sessions, Factory.ai 6-dimension scoring):
+
+| | Promptolian | Anthropic built-in | OpenAI built-in |
+|---|---|---|---|
+| Quality | **4.26 / 5** | 3.44 / 5 | 3.35 / 5 |
+| Compression | 21.8% | 98.7% | 99.3% |
+
+Baselines from Factory.ai (May 2026). Promptolian benchmark: internal, same scoring methodology.
 
 ---
 
@@ -86,7 +97,8 @@ One line to start, one line to switch:
 
 ```bash
 pip install "promptolian[proxy]"
-promptolian proxy              # localhost:3002
+promptolian proxy              # localhost:3002 — tool caching only
+promptolian proxy --compress   # + context history compression
 ```
 
 ```python
@@ -145,7 +157,7 @@ flowchart LR
 |---|---|---|---|
 | **Free** | $0 | — | SQLite · self-hosted |
 | **Solo** | $9/mo | 1 | PostgreSQL · always-on |
-| **Team** | $29/mo | Up to 10 | PostgreSQL · per-project breakdown |
+| **Team** | $49/mo | Up to 10 | PostgreSQL · per-project breakdown |
 
 → [Sign up at promptolian.com/pricing.html](https://promptolian.com/pricing.html)
 
@@ -249,15 +261,14 @@ promptolian proxy          # transparent proxy on :3002
 
 ## Benchmarks
 
-Measured on 200 prompts across 5 domains (finance, legal, medical, code, devops):
-
 | Metric | Value |
 |---|---|
 | Tool schema savings (session avg) | ~90% |
-| Context history savings | 52.9% |
-| Prompt text savings (median) | ~20% |
-| Fact preservation rate | 100% (41 runs) |
+| Context quality score | **4.26 / 5** (vs Anthropic 3.44, OpenAI 3.35) |
+| Context compression | ~22% tokens removed |
 | Proxy overhead | < 10ms |
+
+Context quality measured across 25 sessions, 5 task domains, using Factory.ai's 6-dimension probe scoring (Accuracy, Context, Artifact, Completeness, Continuity, Instruction). Baselines from Factory.ai May 2026 study.
 
 Full methodology: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
 

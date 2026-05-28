@@ -262,7 +262,7 @@ footer a:hover{color:#aaa}
   <!-- CALCULATOR -->
   <div class="calc-box">
     <div class="calc-title">Estimate your monthly savings</div>
-    <div class="calc-inputs">
+    <div class="calc-inputs" style="grid-template-columns:1fr 1fr 1fr 1fr">
       <label class="calc-label">Agent API calls / day
         <input class="calc-input" id="calc-calls" type="number" min="1" max="1000000" value="500">
       </label>
@@ -271,6 +271,9 @@ footer a:hover{color:#aaa}
       </label>
       <label class="calc-label">Input price per 1M tokens ($)
         <input class="calc-input" id="calc-price" type="number" min="0.01" max="100" step="0.01" value="3.00">
+      </label>
+      <label class="calc-label">Rework cost / incident ($)
+        <input class="calc-input" id="calc-rework" type="number" min="0" max="10000" step="1" value="50">
       </label>
     </div>
     <div class="calc-compare">
@@ -285,8 +288,8 @@ footer a:hover{color:#aaa}
           <span class="calc-stat-lbl">tool tokens / month</span>
         </div>
         <div class="calc-net-row">
-          <div class="calc-net-lbl">No caching — full schema every call</div>
-          <div class="calc-net-val">Pay for every call</div>
+          <div class="calc-net-lbl">~5% of calls trigger rework (context loss)</div>
+          <div class="calc-net-val">Full price every call</div>
         </div>
       </div>
       <div class="calc-col after">
@@ -297,15 +300,19 @@ footer a:hover{color:#aaa}
         </div>
         <div class="calc-stat">
           <span class="calc-stat-val" id="c-saved">—</span>
-          <span class="calc-stat-lbl">saved per month</span>
+          <span class="calc-stat-lbl">token cost saved / month</span>
+        </div>
+        <div class="calc-stat">
+          <span class="calc-stat-val" id="c-rework">—</span>
+          <span class="calc-stat-lbl">rework prevented / month</span>
         </div>
         <div class="calc-net-row">
-          <div class="calc-net-lbl">Solo plan ($9/mo) net savings</div>
+          <div class="calc-net-lbl">Solo plan ($9/mo) total net savings</div>
           <div class="calc-net-val" id="c-net">—</div>
         </div>
       </div>
     </div>
-    <div class="calc-footer-note">Tool tokens estimated at ~120 per tool · 90% cache hit rate (session avg from benchmarks) · Claude Sonnet 4 default pricing</div>
+    <div class="calc-footer-note">Tool tokens: ~120 per tool · 90% cache hit rate · Claude Sonnet 4 pricing · Rework rate: 5% without proxy → 0.8% with proxy (based on 4.26/5 vs 3.44/5 context quality)</div>
   </div>
 
   <!-- PLAN CARDS -->
@@ -358,7 +365,7 @@ footer a:hover{color:#aaa}
     <!-- TEAM -->
     <div class="price-card">
       <div class="price-tier">Team</div>
-      <div class="price-amount">$29</div>
+      <div class="price-amount">$49</div>
       <div class="price-period">per month · cancel anytime</div>
       <div class="price-blurb">
         <strong>For 2–10 developers.</strong> One account, separate keys per project, per-project cost analytics.
@@ -390,7 +397,7 @@ footer a:hover{color:#aaa}
         <th>Feature</th>
         <th>Free</th>
         <th style="background:#c8f135;color:#0e0e0e">Solo $9</th>
-        <th>Team $29</th>
+        <th>Team $49</th>
       </tr>
     </thead>
     <tbody>
@@ -495,8 +502,10 @@ footer a:hover{color:#aaa}
 <script>
 // ── Calculator ────────────────────────────────────────────────────────────────
 (function(){
-  var TOK_PER_TOOL = 120;
-  var CACHE_HIT    = 0.90;
+  var TOK_PER_TOOL    = 120;
+  var CACHE_HIT       = 0.90;
+  var REWORK_RATE_NO  = 0.05;   // ~5% of calls trigger rework without proxy (fact loss)
+  var REWORK_RATE_YES = 0.008;  // ~0.8% with proxy (4.26/5 vs 3.44/5 quality improvement)
 
   function fmt(n){
     if(n>=1000000) return '$'+(n/1000000).toFixed(1)+'M';
@@ -514,24 +523,29 @@ footer a:hover{color:#aaa}
     var calls  = Math.max(1, parseInt(document.getElementById('calc-calls').value)||500);
     var tools  = Math.max(1, parseInt(document.getElementById('calc-tools').value)||5);
     var price  = Math.max(0.001, parseFloat(document.getElementById('calc-price').value)||3);
+    var rework = Math.max(0, parseFloat(document.getElementById('calc-rework').value)||50);
 
-    var tokPerCall = tools * TOK_PER_TOOL;
-    var monthCalls = calls * 30;
-    var tokBefore  = monthCalls * tokPerCall;
-    var tokAfter   = monthCalls * tokPerCall * (1 - CACHE_HIT);
-    var costBefore = tokBefore / 1e6 * price;
-    var costAfter  = tokAfter  / 1e6 * price;
-    var saved      = costBefore - costAfter;
-    var net        = saved - 9;
+    var tokPerCall    = tools * TOK_PER_TOOL;
+    var monthCalls    = calls * 30;
+    var tokBefore     = monthCalls * tokPerCall;
+    var tokAfter      = monthCalls * tokPerCall * (1 - CACHE_HIT);
+    var costBefore    = tokBefore / 1e6 * price;
+    var costAfter     = tokAfter  / 1e6 * price;
+    var saved         = costBefore - costAfter;
+    var reworkBefore  = monthCalls * REWORK_RATE_NO  * rework;
+    var reworkAfter   = monthCalls * REWORK_RATE_YES * rework;
+    var reworkSaved   = reworkBefore - reworkAfter;
+    var net           = saved + reworkSaved - 9;
 
-    document.getElementById('c-cost-before').textContent  = fmt(costBefore);
+    document.getElementById('c-cost-before').textContent   = fmt(costBefore);
     document.getElementById('c-tokens-before').textContent = fmtTok(tokBefore) + ' tok';
-    document.getElementById('c-cost-after').textContent   = fmt(costAfter);
-    document.getElementById('c-saved').textContent        = fmt(saved) + ' saved';
-    document.getElementById('c-net').textContent          = (net >= 0 ? '+' : '') + fmt(net) + ' net';
+    document.getElementById('c-cost-after').textContent    = fmt(costAfter);
+    document.getElementById('c-saved').textContent         = fmt(saved);
+    document.getElementById('c-rework').textContent        = fmt(reworkSaved);
+    document.getElementById('c-net').textContent           = (net >= 0 ? '+' : '') + fmt(net) + ' net';
   }
 
-  ['calc-calls','calc-tools','calc-price'].forEach(function(id){
+  ['calc-calls','calc-tools','calc-price','calc-rework'].forEach(function(id){
     document.getElementById(id).addEventListener('input', update);
   });
   update();
@@ -616,7 +630,7 @@ async function submitSignup(){
 (function(){
   var FAQ = [
     [['price','cost','plan','free','solo','team','paid','subscription','how much','cheap'],
-     'Free plan is forever free — self-hosted proxy with SQLite sessions. Solo is $9/mo: hosted proxy at proxy.promptolian.com with PostgreSQL sessions, 1 API key, and a savings dashboard. Team is $29/mo and adds up to 10 project keys with per-project breakdown.'],
+     'Free plan is forever free — self-hosted proxy with SQLite sessions. Solo is $9/mo: hosted proxy at proxy.promptolian.com with PostgreSQL sessions, 1 API key, and a savings dashboard. Team is $49/mo and adds up to 10 project keys with per-project breakdown.'],
     [['private','privacy','data','store','track','gdpr','safe','secure'],
      'The proxy only sees your API requests in transit — it never stores prompt content. Sessions store only tool schemas (not your messages). Your data is not used for training.'],
     [['install','start','begin','how do i','setup','configure'],
@@ -630,7 +644,7 @@ async function submitSignup(){
     [['dashboard','usage','analytics','savings'],
      'Paid plans include a dashboard at promptolian.com/dashboard.html. Log in with your API key to see tokens saved, dollar saved, cache hit rate, and active sessions.'],
     [['team','project','multiple','keys'],
-     'Team plan ($29/mo) lets you create up to 10 project API keys — one per agent, environment, or developer. Each key tracks its own usage so you can do per-project cost attribution.'],
+     'Team plan ($49/mo) lets you create up to 10 project API keys — one per agent, environment, or developer. Each key tracks its own usage so you can do per-project cost attribution.'],
     [['rotate','rotation','new key','regenerate'],
      'You can rotate any API key from the dashboard. Your old key is invalidated immediately; a new one is issued. The plan and project stay the same.'],
     [['cli','command','terminal','pip'],
