@@ -136,19 +136,45 @@ tr:hover td{background:#111}
 
   <div style="margin-top:32px">
     <div class="section-label">6-Dimension Breakdown (Promptolian)</div>
-    <table style="max-width:480px;margin-top:12px">
+    <p style="font-size:13px;color:#666;margin:8px 0 16px">Each session was probed with 5 factual questions after compression. A judge model scored every answer across six dimensions — each on a 0–5 scale. Here's what each one means:</p>
+    <table style="margin-top:4px">
       <thead>
-        <tr><th>Dimension</th><th>Score</th><th>What it measures</th></tr>
+        <tr><th>Dimension</th><th style="text-align:left">What it measures</th><th>Score</th></tr>
       </thead>
       <tbody>
-        <tr><td>Accuracy</td><td>4.30</td><td>Exact fact retrieval</td></tr>
-        <tr><td>Context</td><td>4.26</td><td>Conversational flow</td></tr>
-        <tr><td>Artifact</td><td>4.20</td><td>Code / config preservation</td></tr>
-        <tr><td>Completeness</td><td>4.26</td><td>Answer thoroughness</td></tr>
-        <tr><td>Continuity</td><td>4.30</td><td>Cross-turn memory</td></tr>
-        <tr><td>Instruction</td><td>4.20</td><td>System prompt adherence</td></tr>
+        <tr>
+          <td><strong>Accuracy</strong></td>
+          <td style="text-align:left;color:#888">Did the agent recall exact facts — numbers, names, URLs — from earlier in the conversation?</td>
+          <td>4.30</td>
+        </tr>
+        <tr>
+          <td><strong>Context</strong></td>
+          <td style="text-align:left;color:#888">Did the answer make sense given the conversation history, or did it feel disconnected?</td>
+          <td>4.26</td>
+        </tr>
+        <tr>
+          <td><strong>Artifact</strong></td>
+          <td style="text-align:left;color:#888">Were code snippets, config values, and structured data preserved intact — not paraphrased or lost?</td>
+          <td>4.20</td>
+        </tr>
+        <tr>
+          <td><strong>Completeness</strong></td>
+          <td style="text-align:left;color:#888">Did the answer cover everything asked, or were parts missing because the context was compressed away?</td>
+          <td>4.26</td>
+        </tr>
+        <tr>
+          <td><strong>Continuity</strong></td>
+          <td style="text-align:left;color:#888">Did the agent remember decisions and facts from early turns, not just the most recent messages?</td>
+          <td>4.30</td>
+        </tr>
+        <tr>
+          <td><strong>Instruction</strong></td>
+          <td style="text-align:left;color:#888">Did the agent still follow the original system prompt constraints after 50 turns of compression?</td>
+          <td>4.20</td>
+        </tr>
       </tbody>
     </table>
+    <p style="font-size:12px;color:#444;margin-top:12px">Artifact is the hardest dimension for LLM summarizers — they scored 2.19–2.45/5 on this. Promptolian's rule-based encoding preserves exact values verbatim.</p>
   </div>
 
   <div class="assumptions">
