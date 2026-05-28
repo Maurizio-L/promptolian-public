@@ -76,9 +76,9 @@
   <div class="fig-title">Monthly cost: API tokens + engineer rework time</div>
   <div class="chart-wrap"><div id="fig2" style="height:400px"></div></div>
   <p class="fig-caption">
-    Total monthly cost (API tokens + engineer time spent fixing context failures) for 1,000 sessions.
-    Assumptions: 50 calls/session × 8K context tokens × $3/MTok input = $1.20 context spend per session;
-    engineer time valued at $100/hr loaded rate.
+    Total monthly cost (API tokens + engineer time spent fixing context failures) for a single developer
+    running ~100 sessions/month. Assumptions: 50 calls/session × 8K context tokens × $3/MTok input = $1.20
+    context spend per session; engineer time valued at $100/hr loaded rate.
     <strong>Fact-loss rate per system is derived directly from quality scores</strong>
     (Promptolian 14.8%, Anthropic 31.2%, OpenAI 33.0%) — no assumed endpoints.
     At zero debugging time, Anthropic built-in appears cheapest (99% token savings).
@@ -208,7 +208,7 @@
   //   rework cost = SESSIONS × fact_loss(c) × (t_min/60) × ENG_RATE
   //   fact_loss(c) = 1 − quality(c)/5  (derived from benchmark quality scores)
 
-  var SESSIONS      = 1000;    // sessions/month
+  var SESSIONS      = 100;     // sessions/month (~1 developer)
   var CTX_SPEND     = 1.20;    // $/session: 50 calls × 8K tok × $3/MTok
   var ENG_RATE      = 100;     // $/hr loaded engineer rate
 
@@ -272,7 +272,7 @@
     {
       xref: 'paper', yref: 'paper',
       x: 0.98, y: 0.02,
-      text: '1,000 sessions/mo · 8K ctx tok/call · $3/MTok input · $100/hr eng',
+      text: '100 sessions/mo (~1 dev) · 8K ctx tok/call · $3/MTok input · $100/hr eng',
       showarrow: false,
       font: { size: 9.5, color: '#bbb' },
       xanchor: 'right', yanchor: 'bottom',
@@ -300,10 +300,10 @@
       range: [0, 10], dtick: 1,
     },
     yaxis: {
-      title: { text: 'Monthly cost — 1,000 sessions (USD)', font: { size: 12, color: '#444' } },
+      title: { text: 'Monthly cost — 100 sessions / ~1 developer (USD)', font: { size: 12, color: '#444' } },
       tickfont: { size: 11, color: '#555' },
       gridcolor: '#ebebeb', zerolinecolor: '#ccc',
-      range: [0, 6000], dtick: 1000,
+      range: [0, 600], dtick: 100,
       tickprefix: '$', tickformat: ',.0f',
     },
     legend: {
