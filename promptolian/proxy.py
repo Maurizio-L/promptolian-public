@@ -536,7 +536,6 @@ def _resolve_session(session_id: str, tools_in_request: Optional[list]) -> tuple
 
 # ── Anthropic /v1/messages ────────────────────────────────────────────────────
 
-@app.route('/v1/messages', methods=['POST'])
 def _compress_messages(messages: list[dict]) -> tuple[list[dict], int]:
     """Run context engine on messages. Returns (compressed, tokens_saved)."""
     if not _COMPRESS_HISTORY or not _CONTEXT_ENGINE_AVAILABLE or not messages:
@@ -562,6 +561,7 @@ def _compress_messages(messages: list[dict]) -> tuple[list[dict], int]:
         return messages, 0
 
 
+@app.route('/v1/messages', methods=['POST'])
 def proxy_messages():
     promptolian_key, err = _check_auth()
     if err:
