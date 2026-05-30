@@ -79,6 +79,18 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
 .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
 .msg.error{background:#fef2f2;color:var(--red);border:1px solid #fca5a5}
 
+/* ── PII alerts ── */
+.pii-list{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:28px}
+.pii-row{display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px}
+.pii-row:last-child{border-bottom:none}
+.badge-high{background:#fef2f2;color:var(--red);border:1px solid #fca5a5;display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-medium{background:#fef9ee;color:#b45309;border:1px solid #fde68a;display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.pii-category{font-family:'DM Mono',monospace;font-size:12px;font-weight:500}
+.pii-session{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.pii-time{font-size:12px;color:var(--muted);white-space:nowrap}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-note{font-size:12px;color:var(--muted)}
+
 @media(max-width:600px){
   nav{padding:14px 20px}
   #dash-screen{padding:28px 16px}
@@ -177,6 +189,15 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
     <div class="empty-state">Loading sessions…</div>
   </div>
 
+  <!-- Sensitive data alerts -->
+  <div class="section-header">
+    <div class="section-title" style="margin-bottom:0">Sensitive data alerts</div>
+    <div class="section-note">Categories only — no values stored. Rotate any flagged credentials immediately.</div>
+  </div>
+  <div class="pii-list" id="pii-list">
+    <div class="empty-state">Loading…</div>
+  </div>
+
 </div>
 
 <script>
@@ -240,6 +261,7 @@ function showDash(data) {
   }
 
   loadSessions();
+  loadPiiEvents();
 }
 
 function renderProjects(projects) {
@@ -275,6 +297,39 @@ async function loadSessions() {
   } catch(e) {
     list.innerHTML = '<div class="empty-state">Could not load sessions.</div>';
   }
+}
+
+// ── PII events ────────────────────────────────────────────────────────────────
+async function loadPiiEvents() {
+  const list = document.getElementById('pii-list');
+  try {
+    const data = await apiFetch('/proxy/pii-events?limit=20', _currentKey);
+    if (!data.events || data.events.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="color:#16a34a">No alerts — no sensitive data detected in recent traffic.</div>';
+      return;
+    }
+    list.innerHTML = data.events.map(e => {
+      const cats = Array.isArray(e.categories) ? e.categories : [e.categories];
+      const ago = timeAgo(e.timestamp);
+      const badgeClass = e.risk_level === 'HIGH' ? 'badge-high' : 'badge-medium';
+      return `<div class="pii-row">
+        <span class="${badgeClass}">${esc(e.risk_level)}</span>
+        <span class="pii-category">${cats.map(esc).join(', ')}</span>
+        <span class="pii-session">${esc(e.session_id)}</span>
+        <span class="pii-time">${ago}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Could not load alerts.</div>';
+  }
+}
+
+function timeAgo(ts) {
+  const diff = Math.floor(Date.now() / 1000 - ts);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
 }
 
 // ── Key management ────────────────────────────────────────────────────────────
