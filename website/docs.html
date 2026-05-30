@@ -3,741 +3,711 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Promptolian API — Developer Documentation</title>
+<title>Docs — Promptolian</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
-:root{--lime:#c8f135;--ink:#0e0e0e;--soft:#f5f4ef;--muted:#6b6b6b;--white:#fff;--dark:#0f0f0f;--dark2:#141414;--dark3:#1a1a1a;--border:#2a2a2a;--radius:12px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--dark);color:#e0e0e0;font-size:14px;line-height:1.6}
-a{color:var(--lime);text-decoration:none}
-a:hover{text-decoration:underline}
-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:var(--dark);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:20px;color:#f0f0f0;text-decoration:none}
-.logo-icon{background:var(--lime);color:var(--ink);font-weight:700;font-size:12px;padding:4px 8px;border-radius:7px;font-family:'DM Sans',sans-serif}
-.nav-links{display:flex;align-items:center;gap:24px;list-style:none}
-.nav-links a{font-size:13px;color:#888}
-.nav-links a:hover{color:#e0e0e0;text-decoration:none}
-.nav-cta{background:var(--lime);color:var(--ink)!important;padding:7px 18px;border-radius:100px;font-size:12px;font-weight:600}
-.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px)}
-.sidebar{background:var(--dark2);border-right:1px solid var(--border);padding:28px 0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
-.sidebar-group{margin-bottom:28px}
-.sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#555;padding:0 20px;margin-bottom:8px}
-.sidebar a{display:block;padding:7px 20px;font-size:13px;color:#888;transition:all .15s}
-.sidebar a:hover{color:#e0e0e0;background:#1e1e1e;text-decoration:none}
-.sidebar a.active{color:var(--lime);background:#c8f13511;border-right:2px solid var(--lime)}
-.main{padding:48px 56px;max-width:900px}
-.main h1{font-family:'DM Serif Display',serif;font-size:40px;color:#f0f0f0;margin-bottom:12px}
-.main h2{font-family:'DM Serif Display',serif;font-size:26px;color:#f0f0f0;margin:48px 0 16px;padding-top:16px;border-top:1px solid var(--border)}
-.main h3{font-size:16px;font-weight:600;color:#e0e0e0;margin:28px 0 10px}
-.main p{color:#aaa;margin-bottom:14px;line-height:1.75}
-.main ul{color:#aaa;padding-left:20px;margin-bottom:14px}
-.main ul li{margin-bottom:6px}
-.lead{font-size:17px;color:#888;margin-bottom:36px;line-height:1.7}
-.badge{display:inline-flex;align-items:center;gap:6px;background:#c8f13511;border:1px solid #c8f13533;color:var(--lime);font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;margin-bottom:28px}
-.endpoint{display:flex;align-items:center;gap:12px;background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin:16px 0 24px;font-family:'Fira Code','SF Mono',monospace;font-size:13px}
-.method{background:#c8f13522;color:var(--lime);padding:3px 10px;border-radius:6px;font-weight:700;font-size:12px;letter-spacing:.04em}
-.method.get{background:#3b82f622;color:#60a5fa}
-.path{color:#e0e0e0}
-.code-tabs{margin:16px 0}
-.code-tab-bar{display:flex;gap:2px;background:var(--dark3);border-radius:var(--radius) var(--radius) 0 0;padding:8px 8px 0;border:1px solid var(--border);border-bottom:none}
-.code-tab-btn{padding:6px 16px;border-radius:8px 8px 0 0;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#666;font-family:'DM Sans',sans-serif;transition:all .15s}
-.code-tab-btn.active{background:var(--dark2);color:#e0e0e0}
-.code-pane{display:none;background:var(--dark2);border:1px solid var(--border);border-radius:0 var(--radius) var(--radius) var(--radius);overflow:hidden}
-.code-pane.active{display:block}
-pre{padding:20px 22px;overflow-x:auto;margin:0}
-code{font-family:'Fira Code','SF Mono',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4}
-.kw{color:#c8f135}.str{color:#ce9178}.cmt{color:#6a9955}.fn{color:#dcdcaa}.num{color:#b5cea8}.type{color:#4ec9b0}.var{color:#9cdcfe}
-code.inline{background:var(--dark3);border:1px solid var(--border);padding:2px 7px;border-radius:5px;font-size:12px;color:#e0e0e0}
-.param-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:13px}
-.param-table th{text-align:left;font-weight:600;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;border-bottom:1px solid var(--border)}
-.param-table td{padding:10px 12px;border-bottom:1px solid #1e1e1e;color:#ccc;vertical-align:top}
-.param-table td:first-child{font-family:'Fira Code',monospace;font-size:12px;color:var(--lime)}
-.param-table td:nth-child(2){color:#888;font-size:12px}
-.required{color:#f87171;font-size:10px;font-weight:700;vertical-align:super;margin-left:3px}
-.optional{color:#555;font-size:10px;vertical-align:super;margin-left:3px}
-.resp-block{background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin:16px 0 24px;font-family:'Fira Code',monospace;font-size:12.5px;line-height:1.7;color:#d4d4d4;overflow-x:auto}
-.alert{padding:14px 16px;border-radius:var(--radius);margin:20px 0;font-size:13px;line-height:1.6}
-.alert-info{background:#1e3a5f22;border:1px solid #3b82f633;color:#93c5fd}
-.alert-warn{background:#f59e0b11;border:1px solid #f59e0b33;color:#fbbf24}
-.status-table{width:100%;border-collapse:collapse;margin:12px 0 24px;font-size:13px}
-.status-table td{padding:9px 12px;border-bottom:1px solid #1e1e1e}
-.status-table td:first-child{font-family:'Fira Code',monospace;font-size:12px;width:80px}
-.status-ok{color:#4ade80}.status-err{color:#f87171}.status-warn{color:#fbbf24}
-h2,h3{scroll-margin-top:80px}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:       #09090b;
+  --surface:  #111113;
+  --surface2: #18181b;
+  --border:   #27272a;
+  --border2:  #3f3f46;
+  --text:     #e4e4e7;
+  --muted:    #71717a;
+  --subtle:   #3f3f46;
+  --lime:     #c8f135;
+  --lime-dim: rgba(200,241,53,.10);
+  --lime-border: rgba(200,241,53,.25);
+  --blue:     #60a5fa;
+  --blue-dim: rgba(96,165,250,.10);
+  --red:      #f87171;
+  --red-dim:  rgba(248,113,113,.10);
+  --amber:    #fbbf24;
+  --amber-dim:rgba(251,191,36,.10);
+  --radius:   8px;
+  --sidebar-w:240px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--lime); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Top nav ── */
+.topnav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 56px;
+  background: rgba(9,9,11,.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 600; color: var(--text);
+  text-decoration: none; letter-spacing: -.01em;
+}
+.logo-mark {
+  background: var(--lime); color: #0a0a0b;
+  font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  padding: 3px 7px; border-radius: 5px;
+}
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links a {
+  font-size: 13px; color: var(--muted); padding: 6px 12px;
+  border-radius: 6px; transition: color .15s, background .15s;
+}
+.nav-links a:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
+.nav-cta {
+  background: var(--lime); color: #0a0a0b !important;
+  font-weight: 600; font-size: 12px !important;
+  padding: 7px 14px !important; border-radius: 6px !important;
+}
+.nav-cta:hover { opacity: .9; background: var(--lime) !important; }
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: calc(100vh - 56px);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  position: sticky; top: 56px; height: calc(100vh - 56px);
+  overflow-y: auto; padding: 24px 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.sidebar-group { margin-bottom: 24px; }
+.sidebar-label {
+  display: block; padding: 0 16px 8px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted);
+}
+.sidebar a {
+  display: block; padding: 5px 16px;
+  font-size: 13px; color: var(--muted);
+  border-radius: 0; transition: color .12s, background .12s;
+  border-left: 2px solid transparent;
+  margin: 1px 0;
+}
+.sidebar a:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
+.sidebar a.active { color: var(--lime); background: var(--lime-dim); border-left-color: var(--lime); }
+
+/* ── Main content ── */
+.main {
+  padding: 56px 64px;
+  max-width: 800px;
+  min-width: 0;
+}
+
+.page-eyebrow {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); margin-bottom: 12px;
+}
+.page-title {
+  font-size: 36px; font-weight: 600; color: var(--text);
+  letter-spacing: -.03em; line-height: 1.15; margin-bottom: 16px;
+}
+.page-lead {
+  font-size: 16px; color: var(--muted); line-height: 1.7;
+  margin-bottom: 40px; max-width: 560px;
+}
+
+h2 {
+  font-size: 20px; font-weight: 600; color: var(--text);
+  letter-spacing: -.02em; margin: 48px 0 16px;
+  padding-top: 48px; border-top: 1px solid var(--border);
+  scroll-margin-top: 80px;
+}
+h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+h3 {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  margin: 28px 0 10px; scroll-margin-top: 80px;
+}
+p { color: var(--muted); margin-bottom: 14px; line-height: 1.75; }
+strong { color: var(--text); }
+
+/* ── Code ── */
+.code-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 16px 0 24px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.code-block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--muted); font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+.code-block pre { padding: 18px 20px; overflow-x: auto; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #d4d4d4; }
+.kw{color:var(--lime)}.str{color:#ce9178}.cmt{color:#6a9955}.fn{color:#dcdcaa}.num{color:#b5cea8}.type{color:#4ec9b0}.var{color:#9cdcfe}
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text);
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 4px;
+}
+
+/* ── Tabbed code ── */
+.tabs { margin: 16px 0 24px; }
+.tab-bar {
+  display: flex; gap: 1px; flex-wrap: wrap;
+  margin-bottom: -1px; position: relative; z-index: 1;
+}
+.tab-btn {
+  padding: 7px 14px; font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-bottom: none; border-radius: 6px 6px 0 0;
+  font-family: 'Inter', sans-serif; transition: color .12s;
+}
+.tab-btn.active { color: var(--text); background: var(--surface); }
+.tab-pane { display: none; }
+.tab-pane.active {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 var(--radius) var(--radius) var(--radius);
+  overflow: hidden;
+}
+.tab-pane pre { padding: 18px 20px; overflow-x: auto; }
+
+/* ── Endpoint pill ── */
+.endpoint {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 16px;
+  margin: 12px 0 20px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+.method {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  padding: 2px 8px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.post { background: var(--lime-dim); color: var(--lime); border: 1px solid var(--lime-border); }
+.get  { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
+.del  { background: var(--red-dim);  color: var(--red);  border: 1px solid rgba(248,113,113,.25); }
+.path { color: var(--text); }
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; }
+thead th {
+  text-align: left; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  color: var(--muted); vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--lime); }
+
+/* ── Response block ── */
+.resp {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  margin: 12px 0 24px; overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+  line-height: 1.7; color: #d4d4d4;
+}
+
+/* ── Callouts ── */
+.callout {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 16px; border-radius: var(--radius);
+  margin: 20px 0; font-size: 13px; line-height: 1.6;
+}
+.callout-icon { flex-shrink: 0; font-size: 15px; line-height: 1.6; }
+.callout-info  { background: var(--blue-dim);  border: 1px solid rgba(96,165,250,.2);  color: #93c5fd; }
+.callout-warn  { background: var(--amber-dim); border: 1px solid rgba(251,191,36,.2);  color: var(--amber); }
+.callout-lime  { background: var(--lime-dim);  border: 1px solid var(--lime-border);   color: var(--lime); }
+
+/* ── Status codes ── */
+.status { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; }
+.s-ok   { color: #4ade80; }
+.s-warn { color: var(--amber); }
+.s-err  { color: var(--red); }
+
+/* ── Risk badges ── */
+.risk-high   { display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.25); }
+.risk-medium { display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.25); }
+
+/* ── Benchmark mini-table ── */
+.bench-row-best td { color: var(--lime) !important; font-weight: 500; }
+
+@media(max-width:768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 32px 20px; }
+  .page-title { font-size: 28px; }
+}
 </style>
 </head>
 <body>
 
-<nav>
-  <a class="logo" href="/">
-    <span class="logo-icon">∑→</span> Promptolian
+<header class="topnav">
+  <a href="index.html" class="nav-logo">
+    <span class="logo-mark">∑→</span>
+    Promptolian
   </a>
-  <ul class="nav-links">
-    <li><a href="/">Home</a></li>
-    <li><a href="/#pricing">Pricing</a></li>
-    <li><a href="/docs.html" style="color:#e0e0e0">Docs</a></li>
-    <li><a href="/#pricing" class="nav-cta">Get API access →</a></li>
-  </ul>
-</nav>
+  <nav class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="benchmarks.html">Benchmarks</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="pricing.html" class="nav-cta">Get started →</a>
+  </nav>
+</header>
 
 <div class="layout">
 
-  <!-- Sidebar -->
-  <nav class="sidebar">
+  <aside class="sidebar">
     <div class="sidebar-group">
-      <div class="sidebar-label">Getting started</div>
+      <span class="sidebar-label">Getting started</span>
       <a href="#overview" class="active">Overview</a>
-      <a href="#auth">Authentication</a>
-      <a href="#quickstart">Quickstart</a>
+      <a href="#local">Local proxy</a>
+      <a href="#cloud">Cloud proxy</a>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-label">Endpoints</div>
-      <a href="#compress">POST /compress</a>
-      <a href="#optimize-context">POST /optimize-context</a>
-      <a href="#compress-tools">POST /compress-tools</a>
-      <a href="#stats">GET /stats</a>
-      <a href="#health">GET /health</a>
-      <a href="#pii-events">GET /proxy/pii-events</a>
+      <span class="sidebar-label">Features</span>
+      <a href="#tool-caching">Tool schema caching</a>
+      <a href="#context-compression">Context compression</a>
+      <a href="#pii-detection">Sensitive data detection</a>
+      <a href="#sessions">Sessions</a>
     </div>
     <div class="sidebar-group">
-      <div class="sidebar-label">Reference</div>
-      <a href="#tiers">Compression tiers</a>
+      <span class="sidebar-label">API reference</span>
+      <a href="#ep-messages">POST /v1/messages</a>
+      <a href="#ep-responses">POST /v1/responses</a>
+      <a href="#ep-health">GET /proxy/health</a>
+      <a href="#ep-sessions">GET /proxy/sessions</a>
+      <a href="#ep-dashboard">GET /proxy/dashboard</a>
+      <a href="#ep-pii">GET /proxy/pii-events</a>
+      <a href="#ep-keys">Key management</a>
+    </div>
+    <div class="sidebar-group">
+      <span class="sidebar-label">Reference</span>
+      <a href="#response-headers">Response headers</a>
       <a href="#errors">Errors</a>
-      <a href="#limits">Rate limits</a>
     </div>
-    <div class="sidebar-group">
-      <div class="sidebar-label">Integrations</div>
-      <a href="#cli">CLI</a>
-      <a href="#mcp">Claude Code MCP</a>
-      <a href="#curl-examples">curl examples</a>
-      <a href="#self-hosted">Self-hosted</a>
-    </div>
-  </nav>
+  </aside>
 
-  <!-- Main -->
   <main class="main">
 
-    <div class="badge">Promptolian API · v2.3</div>
-    <h1>Promptolian API</h1>
-    <p class="lead">
-      Compress AI prompts programmatically. Send text, get back shorter text and token metrics.
-      No AI involved — all compression runs locally on the server using NLP rules.
-      Privacy-first by design.
-    </p>
+    <p class="page-eyebrow">Proxy docs · v2.2</p>
+    <h1 class="page-title">Promptolian Proxy</h1>
+    <p class="page-lead">A transparent proxy between your agent and Anthropic or OpenAI. One line change — no agent logic to touch. Tool caching and context compression run automatically.</p>
 
     <!-- ── Overview ── -->
-    <h2 id="overview">Overview</h2>
-    <p>The Promptolian REST API exposes the same compression engine used in the CLI and transparent proxy. You send plain text; you get back compressed text plus token savings metrics.</p>
-    <p><strong>REST API base URL:</strong> <code class="inline">https://api.promptolian.com</code> · <strong>Hosted proxy:</strong> <code class="inline">https://proxy.promptolian.com</code></p>
-    <p>All requests and responses use JSON. The free tier (self-hosted) requires no authentication. Solo ($9/mo) and Team ($29/mo) plans include a hosted proxy and project API keys.</p>
+    <h2 id="overview">How it works</h2>
+    <p>The proxy sits between your code and the API. It intercepts every call, injects <code class="inline">cache_control</code> blocks on tool schemas automatically, and optionally compresses conversation history through the KV-sandwich engine before forwarding.</p>
+    <p>Your agent sees the exact same response it would get from Anthropic or OpenAI directly. No response fields are modified.</p>
 
-    <div class="alert alert-info">
-      Solo plan ($9/mo) — hosted proxy, PostgreSQL sessions, 1 project API key, savings dashboard. Team plan ($29/mo) — up to 10 project keys plus per-project breakdown. Need more? <a href="mailto:support@promptolian.com">Contact us</a>.
+    <div class="callout callout-lime">
+      <span class="callout-icon">→</span>
+      <span>One line change: swap <code class="inline">base_url</code>. Your API key goes in the standard header — the proxy forwards it directly and never stores it.</span>
     </div>
 
-    <!-- ── Auth ── -->
-    <h2 id="auth">Authentication</h2>
-    <p>Pass your API key either in the JSON body or as a header. Free tier works without a key (standard tier only, IP rate-limited).</p>
+    <!-- ── Local ── -->
+    <h2 id="local">Local proxy</h2>
+    <p>Run on your own machine. No account needed. Sessions stored in SQLite at <code class="inline">~/.promptolian/sessions.db</code>.</p>
 
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchTab(this,'auth','body')">JSON body</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'auth','header')">Header</button>
+    <div class="code-block">
+      <div class="code-block-header"><span>bash</span></div>
+      <pre><code><span class="cmt"># Install</span>
+pip install <span class="str">"promptolian[proxy]"</span>
+
+<span class="cmt"># Tool caching only</span>
+promptolian proxy
+
+<span class="cmt"># Tool caching + context compression</span>
+promptolian proxy --compress
+
+<span class="cmt"># Custom port</span>
+promptolian proxy --port 8080</code></pre>
+    </div>
+
+    <h3>Point your client at it</h3>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="tab(this,'l','py')">Anthropic</button>
+        <button class="tab-btn" onclick="tab(this,'l','oa')">OpenAI</button>
       </div>
-      <div class="code-pane active" id="auth-body">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
+      <div class="tab-pane active" id="l-py">
+        <pre><code><span class="kw">import</span> anthropic
+
+client = anthropic.Anthropic(
+    base_url=<span class="str">"http://localhost:3002"</span>,  <span class="cmt"># ← only change</span>
+)
+
+<span class="cmt"># Everything else unchanged</span>
+resp = client.messages.create(
+    model=<span class="str">"claude-sonnet-4-6"</span>,
+    max_tokens=<span class="num">1024</span>,
+    tools=[...],
+    messages=[...],
+)</code></pre>
+      </div>
+      <div class="tab-pane" id="l-oa">
+        <pre><code><span class="kw">import</span> openai
+
+client = openai.OpenAI(
+    base_url=<span class="str">"http://localhost:3002/v1"</span>,  <span class="cmt"># ← only change</span>
+    api_key=<span class="str">"your-openai-key"</span>,
+)
+
+resp = client.chat.completions.create(
+    model=<span class="str">"gpt-4o"</span>,
+    tools=[...],
+    messages=[...],
+)</code></pre>
+      </div>
+    </div>
+
+    <!-- ── Cloud ── -->
+    <h2 id="cloud">Cloud proxy</h2>
+    <p>Skip self-hosting. <code class="inline">proxy.promptolian.com</code> runs 24/7 on PostgreSQL with context compression enabled. Requires a Solo or Team plan key.</p>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="tab(this,'c','py')">Anthropic</button>
+        <button class="tab-btn" onclick="tab(this,'c','oa')">OpenAI</button>
+        <button class="tab-btn" onclick="tab(this,'c','cu')">curl</button>
+      </div>
+      <div class="tab-pane active" id="c-py">
+        <pre><code>client = anthropic.Anthropic(
+    base_url=<span class="str">"https://proxy.promptolian.com"</span>,
+    default_headers={<span class="str">"X-Promptolian-Key"</span>: <span class="str">"pk_..."</span>},
+)</code></pre>
+      </div>
+      <div class="tab-pane" id="c-oa">
+        <pre><code>client = openai.OpenAI(
+    base_url=<span class="str">"https://proxy.promptolian.com/v1"</span>,
+    api_key=<span class="str">"your-openai-key"</span>,
+    default_headers={<span class="str">"X-Promptolian-Key"</span>: <span class="str">"pk_..."</span>},
+)</code></pre>
+      </div>
+      <div class="tab-pane" id="c-cu">
+        <pre><code>curl -X POST https://proxy.promptolian.com/v1/messages \
+  -H <span class="str">"x-api-key: YOUR_ANTHROPIC_KEY"</span> \
+  -H <span class="str">"X-Promptolian-Key: pk_..."</span> \
+  -H <span class="str">"anthropic-version: 2023-06-01"</span> \
   -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"text": "...", "tier": "pro", "api_key": "YOUR_API_KEY"}'</span></code></pre>
-      </div>
-      <div class="code-pane" id="auth-header">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -H <span class="str">"X-API-Key: YOUR_API_KEY"</span> \
-  -d <span class="str">'{"text": "...", "tier": "pro"}'</span></code></pre>
+  -d <span class="str">'{"model":"claude-sonnet-4-6","max_tokens":1024,"messages":[...]}'</span></code></pre>
       </div>
     </div>
 
-    <!-- ── Quickstart ── -->
-    <h2 id="quickstart">Quickstart</h2>
-    <p>Compress a prompt in one call — no API key needed for standard tier:</p>
+    <!-- ── Tool caching ── -->
+    <h2 id="tool-caching">Tool schema caching</h2>
+    <p>Every API call normally re-sends the full tool schema even when nothing changed. The proxy stores schemas per session and injects Anthropic <code class="inline">cache_control</code> blocks automatically. Cached tokens are billed at 10%.</p>
 
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchTab(this,'qs','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'qs','python')">Python</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'qs','js')">JavaScript</button>
-      </div>
-      <div class="code-pane active" id="qs-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{
-    "text": "You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation.",
-    "tier": "standard"
-  }'</span></code></pre>
-      </div>
-      <div class="code-pane" id="qs-python">
-<pre><code><span class="kw">import</span> httpx
+    <h3>How to use sessions</h3>
+    <p>Pass <code class="inline">X-Session</code> to group calls. On the first call, include your tools as usual. On subsequent calls you can omit tools entirely — the proxy re-injects them.</p>
 
-resp = httpx.post(<span class="str">"https://api.promptolian.com/compress"</span>, json={
-    <span class="str">"text"</span>: <span class="str">"You are an expert Python developer. Please write a function to sort a list and return only the code without any explanation."</span>,
-    <span class="str">"tier"</span>: <span class="str">"standard"</span>,
-    <span class="str">"api_key"</span>: <span class="str">"YOUR_API_KEY"</span>,  <span class="cmt"># omit for free tier</span>
-})
-data = resp.json()
-<span class="fn">print</span>(data[<span class="str">"compressed"</span>])        <span class="cmt"># §EXP py developer. FN sort list →code ⊖explain.</span>
-<span class="fn">print</span>(data[<span class="str">"tokens_saved_pct"</span>])  <span class="cmt"># 21</span></code></pre>
-      </div>
-      <div class="code-pane" id="qs-js">
-<pre><code><span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.promptolian.com/compress'</span>, {
-  method: <span class="str">'POST'</span>,
-  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
-  body: JSON.<span class="fn">stringify</span>({
-    text: <span class="str">'You are an expert Python developer. Please write a function to sort a list and return only the code.'</span>,
-    tier: <span class="str">'standard'</span>,
-    api_key: <span class="str">'YOUR_API_KEY'</span>,
-  }),
-});
-<span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
-console.<span class="fn">log</span>(data.compressed);
-console.<span class="fn">log</span>(<span class="str">`Saved ${data.tokens_saved_pct}%`</span>);</code></pre>
-      </div>
+    <div class="code-block">
+      <div class="code-block-header"><span>python</span></div>
+      <pre><code><span class="cmt"># Call 1 — tools sent and stored by the proxy</span>
+client.messages.create(
+    ...,
+    tools=[search_tool, read_tool, sql_tool],
+    extra_headers={<span class="str">"X-Session"</span>: <span class="str">"session-abc"</span>},
+)
+
+<span class="cmt"># Call 2+ — omit tools, proxy re-injects from cache (~90% cheaper)</span>
+client.messages.create(
+    ...,
+    extra_headers={<span class="str">"X-Session"</span>: <span class="str">"session-abc"</span>},
+)</code></pre>
     </div>
 
-    <h3>Response</h3>
-    <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"compressed"</span>:        <span class="str">"§EXP py developer. FN sort list →code ⊖explain."</span>,
-  <span class="str">"original_tokens"</span>:   <span class="num">24</span>,
-  <span class="str">"compressed_tokens"</span>: <span class="num">19</span>,
-  <span class="str">"tokens_saved"</span>:      <span class="num">5</span>,
-  <span class="str">"tokens_saved_pct"</span>:  <span class="num">21</span>,
-  <span class="str">"tier"</span>:              <span class="str">"standard"</span>
-<span class="kw">}</span></div>
-
-    <!-- ── POST /compress ── -->
-    <h2 id="compress">POST /compress</h2>
-    <p>Compress a single prompt. Returns the compressed text plus token metrics.</p>
-
-    <div class="endpoint">
-      <span class="method">POST</span>
-      <span class="path">https://api.promptolian.com/compress</span>
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ</span>
+      <span>Anthropic's prompt cache TTL is 5 minutes. If a session is idle longer, the proxy re-warms it automatically on the next call — one cold call, then back to 10% billing.</span>
     </div>
 
-    <h3>Request body</h3>
-    <table class="param-table">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <!-- ── Context compression ── -->
+    <h2 id="context-compression">Context compression</h2>
+    <p>Enabled with <code class="inline">--compress</code> locally, or always-on in the cloud proxy. The engine runs before every call, invisibly. No model changes required.</p>
+
+    <h3>KV-sandwich architecture</h3>
+
+    <div class="code-block">
+      <div class="code-block-header"><span>structure</span></div>
+      <pre><code>HEAD   → first 2 turns  → VERBATIM    task framing, constraints
+MIDDLE → turns 3 to N-4 → COMPRESSED  weighted by information density
+TAIL   → last 4 turns   → VERBATIM    current working state</code></pre>
+    </div>
+
+    <p>Middle turns are scored by how much new information they add — new entities, vocabulary, delta from prior turns. Pure acknowledgements ("ok", "noted") and reformulations of earlier content are pruned first. High-density turns survive.</p>
+
+    <h3>Pipeline stages</h3>
+    <table>
+      <thead><tr><th>Stage</th><th>What it does</th></tr></thead>
       <tbody>
-        <tr><td>text<span class="required">*</span></td><td>string</td><td>The prompt text to compress. Max 50,000 characters.</td></tr>
-        <tr><td>tier<span class="optional">opt</span></td><td>string</td><td><code class="inline">standard</code> (default), <code class="inline">pro</code>, or <code class="inline">developer</code>. Higher tiers apply more aggressive NLP-based compression. Pro/developer require Solo or Team plan.</td></tr>
-        <tr><td>lang<span class="optional">opt</span></td><td>string</td><td>Language hint: <code class="inline">auto</code> (default), <code class="inline">en</code>, <code class="inline">es</code>, <code class="inline">fr</code>, <code class="inline">de</code>, <code class="inline">it</code>.</td></tr>
-        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Your API key. Alternatively pass as <code class="inline">X-API-Key</code> header. Required for pro/developer tiers.</td></tr>
+        <tr><td>delta_prune</td><td>Drop turns whose facts are already in later history</td></tr>
+        <tr><td>entity_register</td><td>Repeated values (URLs, keys, names) → <code class="inline">§E1</code>, <code class="inline">§E2</code>… — expanded back verbatim before forwarding</td></tr>
+        <tr><td>relevance_prune</td><td>BM25 + entity density scoring against current query</td></tr>
+        <tr><td>summarize</td><td>TF-IDF extractive summary — no LLM, no hallucination risk</td></tr>
+        <tr><td>session_huffman</td><td>Repeated bigrams/trigrams → <code class="inline">§H1</code>, <code class="inline">§H2</code>… symbols</td></tr>
       </tbody>
     </table>
 
-    <h3>Response fields</h3>
-    <table class="param-table">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <h3>Benchmark results</h3>
+    <table>
+      <thead><tr><th>System</th><th>Quality score</th><th>Compression</th><th>Approach</th></tr></thead>
       <tbody>
-        <tr><td>compressed</td><td>string</td><td>The compressed prompt text.</td></tr>
-        <tr><td>original_tokens</td><td>integer</td><td>Token count of the input (BPE estimate).</td></tr>
-        <tr><td>compressed_tokens</td><td>integer</td><td>Token count of the compressed output.</td></tr>
-        <tr><td>tokens_saved</td><td>integer</td><td>Tokens saved = original − compressed.</td></tr>
-        <tr><td>tokens_saved_pct</td><td>integer</td><td>Percentage of tokens saved (0–100).</td></tr>
-        <tr><td>tier</td><td>string</td><td>The tier actually used.</td></tr>
+        <tr class="bench-row-best">
+          <td>Promptolian</td><td>4.26 / 5</td><td>21.8%</td><td>Extractive · KV-sandwich</td>
+        </tr>
+        <tr><td>Anthropic built-in</td><td>3.44 / 5</td><td>98.7%</td><td>LLM summarization</td></tr>
+        <tr><td>OpenAI built-in</td><td>3.35 / 5</td><td>99.3%</td><td>LLM summarization</td></tr>
       </tbody>
     </table>
+    <p style="font-size:12px;color:var(--subtle)">Factory.ai 6-dimension methodology · 25 sessions · 5 task domains · May 2026. <a href="benchmarks.html">Full methodology →</a></p>
 
-    <!-- ── POST /optimize-context ── -->
-    <h2 id="optimize-context">POST /optimize-context</h2>
-    <p>Prune and compress a multi-turn conversation history before sending it to an LLM. Removes off-topic messages, compresses retained ones, and optionally produces a rolling summary. Requires Solo or Team plan.</p>
+    <!-- ── PII detection ── -->
+    <h2 id="pii-detection">Sensitive data detection</h2>
+    <p>Every request is scanned for credentials and data dumps before being forwarded. Detection adds &lt;1 ms overhead and never blocks a call. Only the category and risk level are stored — no message content, no reconstructable data.</p>
 
-    <div class="endpoint">
-      <span class="method">POST</span>
-      <span class="path">https://api.promptolian.com/optimize-context</span>
-    </div>
-
-    <h3>Request body</h3>
-    <table class="param-table">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td>messages<span class="required">*</span></td><td>array</td><td>Array of <code class="inline">{"role": "user|assistant", "content": "..."}</code> objects.</td></tr>
-        <tr><td>query<span class="required">*</span></td><td>string</td><td>The current user query. Used to score relevance of past messages.</td></tr>
-        <tr><td>summary<span class="optional">opt</span></td><td>string</td><td>Rolling summary from a previous call. Injected as context.</td></tr>
-        <tr><td>mode<span class="optional">opt</span></td><td>string</td><td><code class="inline">lossless</code> (default) — removes only clearly off-topic messages. <code class="inline">aggressive</code> — prunes more heavily.</td></tr>
-        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Solo or Team plan key required.</td></tr>
-      </tbody>
-    </table>
-
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchTab(this,'ctx','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'ctx','python')">Python</button>
-      </div>
-      <div class="code-pane active" id="ctx-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/optimize-context \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{
-    "messages": [
-      {"role": "user",      "content": "I am building a FastAPI app"},
-      {"role": "assistant", "content": "Great, I can help with FastAPI."},
-      {"role": "user",      "content": "What is the weather today?"},
-      {"role": "assistant", "content": "I am not sure about the weather."},
-      {"role": "user",      "content": "Back to FastAPI — how do I add auth?"}
-    ],
-    "query":   "How do I add JWT authentication to FastAPI?",
-    "mode":    "lossless",
-    "api_key": "YOUR_API_KEY"
-  }'</span></code></pre>
-      </div>
-      <div class="code-pane" id="ctx-python">
-<pre><code>resp = httpx.post(<span class="str">"https://api.promptolian.com/optimize-context"</span>, json={
-    <span class="str">"messages"</span>: [
-        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"I am building a FastAPI app"</span>},
-        {<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="str">"Great, I can help with FastAPI."</span>},
-        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"What is the weather today?"</span>},
-        {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"Back to FastAPI — how do I add auth?"</span>},
-    ],
-    <span class="str">"query"</span>:   <span class="str">"How do I add JWT authentication to FastAPI?"</span>,
-    <span class="str">"mode"</span>:    <span class="str">"lossless"</span>,
-    <span class="str">"api_key"</span>: <span class="str">"YOUR_API_KEY"</span>,
-})
-data = resp.json()
-<span class="fn">print</span>(data[<span class="str">"optimized_prompt"</span>])
-<span class="fn">print</span>(<span class="fn">f</span><span class="str">"{data['messages_pruned']} messages pruned, {data['tokens_saved_estimate']} tokens saved"</span>)</code></pre>
-      </div>
-    </div>
-
-    <h3>Response</h3>
-    <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"optimized_prompt"</span>:      <span class="str">"[compressed conversation ready to send to LLM]"</span>,
-  <span class="str">"original_tokens"</span>:        <span class="num">87</span>,
-  <span class="str">"optimized_tokens"</span>:       <span class="num">54</span>,
-  <span class="str">"tokens_saved_estimate"</span>:  <span class="num">33</span>,
-  <span class="str">"messages_pruned"</span>:        <span class="num">2</span>,
-  <span class="str">"new_summary"</span>:            <span class="str">"User building FastAPI app, asked about auth."</span>
-<span class="kw">}</span></div>
-
-    <!-- ── POST /compress-tools ── -->
-    <h2 id="compress-tools">POST /compress-tools</h2>
-    <p>Compress a JSON tool schema array (OpenAI / Anthropic format) into a compact DSL. Achieves ~69% compression on first call, ~90% session average via session caching. Requires Solo or Team plan.</p>
-
-    <div class="endpoint">
-      <span class="method">POST</span>
-      <span class="path">https://api.promptolian.com/compress-tools</span>
-    </div>
-
-    <table class="param-table">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td>tools<span class="required">*</span></td><td>array</td><td>Array of tool objects in OpenAI or Anthropic format.</td></tr>
-        <tr><td>session_id<span class="optional">opt</span></td><td>string</td><td>Unique ID for this conversation session. Enables cache-hit compression (~90% session avg CR) on repeated calls.</td></tr>
-        <tr><td>api_key<span class="optional">opt</span></td><td>string</td><td>Solo or Team plan key required.</td></tr>
-      </tbody>
-    </table>
-
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchTab(this,'tools','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'tools','python')">Python</button>
-      </div>
-      <div class="code-pane active" id="tools-curl">
-<pre><code><span class="fn">curl</span> -X POST https://api.promptolian.com/compress-tools \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{
-    "tools": [
-      {
-        "name": "get_weather",
-        "description": "Get the current weather for a location",
-        "input_schema": {
-          "type": "object",
-          "properties": {
-            "location": {"type": "string", "description": "City name"},
-            "unit":     {"type": "string", "enum": ["celsius","fahrenheit"]}
-          },
-          "required": ["location"]
-        }
-      }
-    ],
-    "session_id": "my-chat-session-123",
-    "api_key":    "YOUR_API_KEY"
-  }'</span></code></pre>
-      </div>
-      <div class="code-pane" id="tools-python">
-<pre><code>tools = [{
-    <span class="str">"name"</span>: <span class="str">"get_weather"</span>,
-    <span class="str">"description"</span>: <span class="str">"Get the current weather for a location"</span>,
-    <span class="str">"input_schema"</span>: {
-        <span class="str">"type"</span>: <span class="str">"object"</span>,
-        <span class="str">"properties"</span>: {
-            <span class="str">"location"</span>: {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"description"</span>: <span class="str">"City name"</span>},
-            <span class="str">"unit"</span>:     {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"enum"</span>: [<span class="str">"celsius"</span>, <span class="str">"fahrenheit"</span>]},
-        },
-        <span class="str">"required"</span>: [<span class="str">"location"</span>],
-    },
-}]
-
-resp = httpx.post(<span class="str">"https://api.promptolian.com/compress-tools"</span>, json={
-    <span class="str">"tools"</span>:      tools,
-    <span class="str">"session_id"</span>: <span class="str">"my-chat-session-123"</span>,
-    <span class="str">"api_key"</span>:    <span class="str">"YOUR_API_KEY"</span>,
-})
-data = resp.json()
-<span class="fn">print</span>(data[<span class="str">"dsl"</span>])             <span class="cmt"># compact DSL string</span>
-<span class="fn">print</span>(data[<span class="str">"tokens_saved"</span>])   <span class="cmt"># tokens saved vs raw JSON</span></code></pre>
-      </div>
-    </div>
-
-    <!-- ── GET /stats ── -->
-    <h2 id="stats">GET /stats</h2>
-    <p>Returns aggregate compression statistics across all API users.</p>
-
-    <div class="endpoint">
-      <span class="method get">GET</span>
-      <span class="path">https://api.promptolian.com/stats</span>
-    </div>
-
-    <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"total_compressions"</span>:  <span class="num">1482</span>,
-  <span class="str">"total_tokens_saved"</span>:  <span class="num">38291</span>,
-  <span class="str">"avg_compression_pct"</span>: <span class="num">9.4</span>,
-  <span class="str">"by_tier"</span>: <span class="kw">{</span>
-    <span class="str">"standard"</span>:  <span class="kw">{</span><span class="str">"count"</span>: <span class="num">1100</span>, <span class="str">"avg_pct"</span>: <span class="num">8.2</span><span class="kw">}</span>,
-    <span class="str">"pro"</span>:       <span class="kw">{</span><span class="str">"count"</span>: <span class="num">280</span>,  <span class="str">"avg_pct"</span>: <span class="num">10.1</span><span class="kw">}</span>,
-    <span class="str">"developer"</span>: <span class="kw">{</span><span class="str">"count"</span>: <span class="num">102</span>,  <span class="str">"avg_pct"</span>: <span class="num">11.4</span><span class="kw">}</span>
-  <span class="kw">}</span>
-<span class="kw">}</span></div>
-
-    <!-- ── GET /health ── -->
-    <h2 id="health">GET /health</h2>
-    <p>Returns server status. Use this to check if the API is reachable and which tiers are available.</p>
-
-    <div class="endpoint">
-      <span class="method get">GET</span>
-      <span class="path">https://api.promptolian.com/health</span>
-    </div>
-
-    <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"status"</span>:           <span class="str">"ok"</span>,
-  <span class="str">"service"</span>:          <span class="str">"Promptolian API"</span>,
-  <span class="str">"version"</span>:          <span class="str">"2.2.0"</span>,
-  <span class="str">"engine_v4"</span>:        <span class="kw">true</span>,
-  <span class="str">"tiers_available"</span>:  [<span class="str">"standard"</span>, <span class="str">"pro"</span>, <span class="str">"developer"</span>],
-  <span class="str">"endpoints"</span>:        [<span class="str">"/compress"</span>, <span class="str">"/compress-tools"</span>, <span class="str">"/optimize-context"</span>, <span class="str">"/stats"</span>, <span class="str">"/feedback"</span>],
-  <span class="str">"timestamp"</span>:        <span class="str">"2026-05-17T10:00:00Z"</span>
-<span class="kw">}</span></div>
-
-    <!-- ── Tiers ── -->
-    <h2 id="tiers">Compression tiers</h2>
-    <table class="param-table">
-      <thead><tr><th>Tier</th><th>What it does</th><th>Avg CR</th><th>Plan required</th></tr></thead>
-      <tbody>
-        <tr><td>standard</td><td>Symbol substitution + grammar rules. Removes filler phrases, replaces verbose patterns with symbols (§EXP, →code, ∑, etc).</td><td>~9%</td><td>Free / Solo / Team</td></tr>
-        <tr><td>pro</td><td>Standard + math operators, numeric abbreviations (5 million → 5M), verbose phrase removal.</td><td>~10%</td><td>Solo / Team</td></tr>
-        <tr><td>developer</td><td>Pro + spaCy NLP deep pruning, domain-specific packs (code, finance, legal, medical), dependency parse.</td><td>~11%, up to 33%</td><td>Solo / Team</td></tr>
-      </tbody>
-    </table>
-
-    <div class="alert alert-warn">
-      Token counts use BPE estimation via tiktoken (cl100k_base encoding — same as Claude and GPT-4). Both original and compressed counts are measured so you can verify savings independently.
-    </div>
-
-    <!-- ── Errors ── -->
-    <h2 id="errors">Errors</h2>
-    <p>All errors return a JSON body with an <code class="inline">error</code> field.</p>
-    <table class="status-table">
-      <tbody>
-        <tr><td class="status-ok">200</td><td>Success</td></tr>
-        <tr><td class="status-warn">400</td><td>Missing or malformed fields (e.g. no <code class="inline">text</code> field, invalid <code class="inline">mode</code>)</td></tr>
-        <tr><td class="status-warn">413</td><td>Input exceeds 50,000 characters</td></tr>
-        <tr><td class="status-err">429</td><td>Rate limit exceeded — free tier IP limit reached</td></tr>
-        <tr><td class="status-err">500</td><td>Internal server error</td></tr>
-      </tbody>
-    </table>
-
-    <div class="resp-block"><span class="cmt">// 400 example</span>
-<span class="kw">{</span>
-  <span class="str">"error"</span>: <span class="str">"text is required"</span>
-<span class="kw">}</span></div>
-
-    <!-- ── Limits ── -->
-    <h2 id="limits">Rate limits</h2>
-    <table class="param-table">
-      <thead><tr><th>Plan</th><th>Tiers</th><th>Tokens / day</th><th>Auth</th></tr></thead>
-      <tbody>
-        <tr><td>Free (self-hosted)</td><td>all</td><td>Unlimited (self-hosted — no limit)</td><td>None</td></tr>
-        <tr><td>Solo ($9/mo)</td><td>standard, pro, developer</td><td>Unlimited (hosted proxy)</td><td>Project API key</td></tr>
-        <tr><td>Team ($29/mo)</td><td>All</td><td>Unlimited (hosted proxy)</td><td>Project API key</td></tr>
-        <tr><td>Custom</td><td>All</td><td>Custom</td><td>API key</td></tr>
-      </tbody>
-    </table>
-
-    <!-- ── CLI ── -->
-    <h2 id="cli">CLI</h2>
-    <p>The <code class="inline">promptolian</code> CLI runs compression locally — no server needed for standard tier.</p>
-
-    <h3>Install</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="fn">pip</span> install promptolian
-
-<span class="cmt"># With NLP engine (pro/developer tiers):</span>
-<span class="fn">pip</span> install <span class="str">"promptolian[nlp]"</span>
-<span class="fn">python</span> -m spacy download en_core_web_sm</code></pre>
-    </div>
-
-    <h3>Usage</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="cmt"># Compress a prompt (standard tier, no server needed)</span>
-<span class="fn">promptolian</span> compress <span class="str">"You are an expert Python developer. Return only the code."</span>
-
-<span class="cmt"># Pro tier with JSON output</span>
-<span class="fn">promptolian</span> compress <span class="str">"You are an expert Python developer."</span> --tier pro --json
-
-<span class="cmt"># Compress from file</span>
-<span class="fn">promptolian</span> compress --file prompt.txt --tier developer --output compressed.txt
-
-<span class="cmt"># Optimize conversation history</span>
-<span class="fn">promptolian</span> context --file chat.json --query <span class="str">"How do I add auth?"</span>
-
-<span class="cmt"># Show compression statistics</span>
-<span class="fn">promptolian</span> stats</code></pre>
-    </div>
-
-    <!-- ── MCP ── -->
-    <h2 id="mcp">Claude Code MCP</h2>
-    <p>Install the Promptolian MCP server to compress prompts natively inside Claude Code — no copy-paste needed.</p>
-
-    <h3>Setup</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="cmt"># 1. Install dependencies</span>
-<span class="fn">pip</span> install mcp httpx
-
-<span class="cmt"># 2. Start the API server (or use api.promptolian.com)</span>
-<span class="fn">python</span> public/api/api.py &
-
-<span class="cmt"># 3. Add to ~/.claude/settings.json</span>
-<span class="kw">{</span>
-  <span class="str">"mcpServers"</span>: <span class="kw">{</span>
-    <span class="str">"promptolian"</span>: <span class="kw">{</span>
-      <span class="str">"command"</span>: <span class="str">"python3"</span>,
-      <span class="str">"args"</span>: [<span class="str">"/path/to/tools/promptolian_mcp_server.py"</span>],
-      <span class="str">"env"</span>: <span class="kw">{</span>
-        <span class="str">"PROMPTOLIAN_URL"</span>: <span class="str">"http://localhost:3001"</span>,
-        <span class="str">"PROMPTOLIAN_KEY"</span>: <span class="str">"YOUR_API_KEY"</span>
-      <span class="kw">}</span>
-    <span class="kw">}</span>
-  <span class="kw">}</span>
-<span class="kw">}</span>
-
-<span class="cmt"># 4. Restart Claude Code — then use compress_prompt tool directly</span></code></pre>
-    </div>
-
-    <!-- ── curl examples ── -->
-    <h2 id="curl-examples">curl examples</h2>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border)">
-<pre><code><span class="cmt"># Health check</span>
-<span class="fn">curl</span> https://api.promptolian.com/health
-
-<span class="cmt"># Standard compression (free, no key)</span>
-<span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"text": "Please explain how to optimize Python code step by step", "tier": "standard"}'</span>
-
-<span class="cmt"># Pro compression (Builder plan)</span>
-<span class="fn">curl</span> -X POST https://api.promptolian.com/compress \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -H <span class="str">"X-API-Key: YOUR_API_KEY"</span> \
-  -d <span class="str">'{"text": "The dataset grew from 100 to 5 million records. Please optimize the query.", "tier": "pro"}'</span>
-
-<span class="cmt"># Context optimization</span>
-<span class="fn">curl</span> -X POST https://api.promptolian.com/optimize-context \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{
-    "messages": [{"role":"user","content":"I am building a FastAPI app"},{"role":"assistant","content":"Great!"}],
-    "query": "How do I add authentication?",
-    "api_key": "YOUR_API_KEY"
-  }'</span>
-
-<span class="cmt"># Stats</span>
-<span class="fn">curl</span> https://api.promptolian.com/stats</code></pre>
-    </div>
-
-    <!-- ── GET /proxy/pii-events ── -->
-    <h2 id="pii-events">GET /proxy/pii-events</h2>
-    <p>Returns the sensitive-data detection event log for your account. The proxy scans every message for credentials and data-dump patterns before forwarding — events are stored per account and visible only to the account holder.</p>
-
-    <div class="endpoint">
-      <span class="method get">GET</span>
-      <span class="path">https://proxy.promptolian.com/proxy/pii-events</span>
-    </div>
-
-    <h3>Detection categories</h3>
-    <table class="param-table">
+    <table>
       <thead><tr><th>Category</th><th>Risk</th><th>What it matches</th></tr></thead>
       <tbody>
-        <tr><td>CONNECTION_STRING</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>postgres://, mysql://, mongodb://, redis:// URIs with credentials embedded</td></tr>
-        <tr><td>API_KEY</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>OpenAI sk-, AWS AKIA, GitHub ghp_/gho_, Slack xoxb-, Google AIza keys</td></tr>
-        <tr><td>PRIVATE_KEY</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>RSA / EC / OPENSSH PEM private key headers</td></tr>
-        <tr><td>JWT</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>Three-part eyXXX.eyXXX.XXX bearer tokens</td></tr>
-        <tr><td>ENV_FILE</td><td><span style="color:#f87171;font-weight:600">HIGH</span></td><td>3+ consecutive KEY=value lines (.env file pastes)</td></tr>
-        <tr><td>SQL_DUMP</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>3+ consecutive INSERT INTO statements (database dump pastes)</td></tr>
-        <tr><td>STACK_TRACE</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>Python Traceback (most recent call last)</td></tr>
-        <tr><td>CSV_DATA</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>3+ rows × 5+ columns of comma-separated data</td></tr>
-        <tr><td>LARGE_JSON</td><td><span style="color:#fbbf24;font-weight:600">MEDIUM</span></td><td>Array of 10+ JSON objects (possible database record dump)</td></tr>
+        <tr><td>CONNECTION_STRING</td><td><span class="risk-high">HIGH</span></td><td>postgres://, mysql://, mongodb://, redis:// with credentials</td></tr>
+        <tr><td>API_KEY</td><td><span class="risk-high">HIGH</span></td><td>sk-, AKIA, ghp_, gho_, xoxb-, AIza patterns</td></tr>
+        <tr><td>PRIVATE_KEY</td><td><span class="risk-high">HIGH</span></td><td>RSA / EC / OPENSSH PEM headers</td></tr>
+        <tr><td>JWT</td><td><span class="risk-high">HIGH</span></td><td>Three-part eyXXX.eyXXX.XXX bearer tokens</td></tr>
+        <tr><td>ENV_FILE</td><td><span class="risk-high">HIGH</span></td><td>3+ consecutive KEY=value lines</td></tr>
+        <tr><td>SQL_DUMP</td><td><span class="risk-medium">MEDIUM</span></td><td>3+ consecutive INSERT INTO statements</td></tr>
+        <tr><td>STACK_TRACE</td><td><span class="risk-medium">MEDIUM</span></td><td>Python Traceback header</td></tr>
+        <tr><td>CSV_DATA</td><td><span class="risk-medium">MEDIUM</span></td><td>3+ rows × 5+ columns CSV</td></tr>
+        <tr><td>LARGE_JSON</td><td><span class="risk-medium">MEDIUM</span></td><td>Array of 10+ JSON objects</td></tr>
       </tbody>
     </table>
 
-    <div class="alert alert-warn">
-      When a HIGH or MEDIUM pattern fires, the proxy attaches <code class="inline">X-Promptolian-Sensitive: HIGH|MEDIUM</code> to the response so you can observe it in real time — before checking the dashboard.
-    </div>
+    <p>Hits return <code class="inline">X-Promptolian-Sensitive: HIGH|MEDIUM</code> in the response header. Events are visible in the <a href="dashboard.html">dashboard</a> and via <a href="#ep-pii">GET /proxy/pii-events</a>.</p>
 
-    <h3>Query parameters</h3>
-    <table class="param-table">
-      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <!-- ── Sessions ── -->
+    <h2 id="sessions">Sessions</h2>
+    <p>Pass <code class="inline">X-Session</code> to group API calls. The proxy uses the session ID to look up cached tool schemas and maintain compression state. If omitted, a new session ID is generated and returned in <code class="inline">X-Promptolian-Session</code>.</p>
+
+    <!-- ── API Reference ── -->
+    <h2 id="ep-messages">POST /v1/messages</h2>
+    <p>Proxies to Anthropic's messages API. All Anthropic parameters forwarded unchanged. Tool caching and context compression applied transparently.</p>
+
+    <div class="endpoint"><span class="method post">POST</span><span class="path">/v1/messages</span></div>
+
+    <table>
+      <thead><tr><th>Header</th><th>Required</th><th>Description</th></tr></thead>
       <tbody>
-        <tr><td>limit<span class="optional">opt</span></td><td>integer</td><td>Max events to return. Default 100, max 500.</td></tr>
+        <tr><td>x-api-key</td><td>Yes</td><td>Your Anthropic API key — forwarded directly</td></tr>
+        <tr><td>anthropic-version</td><td>Yes</td><td>e.g. <code class="inline">2023-06-01</code></td></tr>
+        <tr><td>X-Promptolian-Key</td><td>Cloud only</td><td>Your plan key (<code class="inline">pk_...</code>)</td></tr>
+        <tr><td>X-Session</td><td>No</td><td>Session ID for tool caching. Auto-generated if omitted.</td></tr>
+        <tr><td>anthropic-beta</td><td>No</td><td>Forwarded to Anthropic as-is</td></tr>
       </tbody>
     </table>
 
-    <h3>Authentication</h3>
-    <p>Pass your Promptolian API key in the <code class="inline">X-Promptolian-Key</code> header. Events are scoped to all API keys on your account — you only see your own data.</p>
+    <h2 id="ep-responses">POST /v1/responses</h2>
+    <p>Proxies to OpenAI's responses API. Same tool caching logic applies. Session falls back to <code class="inline">previous_response_id</code> if no <code class="inline">X-Session</code> header.</p>
 
-    <div class="code-tabs">
-      <div class="code-tab-bar">
-        <button class="code-tab-btn active" onclick="switchTab(this,'pii','curl')">curl</button>
-        <button class="code-tab-btn" onclick="switchTab(this,'pii','python')">Python</button>
+    <div class="endpoint"><span class="method post">POST</span><span class="path">/v1/responses</span></div>
+
+    <table>
+      <thead><tr><th>Header</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Authorization</td><td>Yes</td><td><code class="inline">Bearer YOUR_OPENAI_KEY</code></td></tr>
+        <tr><td>X-Promptolian-Key</td><td>Cloud only</td><td>Your plan key</td></tr>
+        <tr><td>X-Session</td><td>No</td><td>Session ID</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="ep-health">GET /proxy/health</h2>
+    <p>Returns proxy status and storage mode. Use to verify the proxy is reachable.</p>
+
+    <div class="endpoint"><span class="method get">GET</span><span class="path">/proxy/health</span></div>
+
+    <div class="resp"><span class="kw">{</span>
+  <span class="str">"status"</span>:          <span class="str">"ok"</span>,
+  <span class="str">"mode"</span>:            <span class="str">"local"</span>,      <span class="cmt">// or "cloud"</span>
+  <span class="str">"storage"</span>:         <span class="str">"sqlite"</span>,     <span class="cmt">// or "postgresql"</span>
+  <span class="str">"sessions_cached"</span>: <span class="num">3</span>,
+  <span class="str">"db_path"</span>:         <span class="str">"~/.promptolian/sessions.db"</span>
+<span class="kw">}</span></div>
+
+    <h2 id="ep-sessions">GET /proxy/sessions</h2>
+    <p>Lists all active sessions with cached tool schemas, warm/cold cache state, and token counts.</p>
+
+    <div class="endpoint"><span class="method get">GET</span><span class="path">/proxy/sessions</span></div>
+
+    <div class="resp"><span class="kw">{</span>
+  <span class="str">"session-id-abc"</span>: <span class="kw">{</span>
+    <span class="str">"tool_count"</span>:      <span class="num">3</span>,
+    <span class="str">"tool_names"</span>:      [<span class="str">"search_web"</span>, <span class="str">"read_file"</span>, <span class="str">"run_sql"</span>],
+    <span class="str">"tokens_cached"</span>:   <span class="num">360</span>,
+    <span class="str">"cache_warm"</span>:      <span class="kw">true</span>,
+    <span class="str">"last_call_ago_s"</span>: <span class="num">42</span>
+  <span class="kw">}</span>
+<span class="kw">}</span></div>
+
+    <p>Delete a session:</p>
+    <div class="endpoint"><span class="method del">DELETE</span><span class="path">/proxy/sessions/{session_id}</span></div>
+
+    <h2 id="ep-dashboard">GET /proxy/dashboard</h2>
+    <p>Returns savings stats for the authenticated account. Team plan includes per-project breakdown in the <code class="inline">projects</code> array.</p>
+
+    <div class="endpoint"><span class="method get">GET</span><span class="path">/proxy/dashboard</span></div>
+
+    <div class="resp"><span class="kw">{</span>
+  <span class="str">"email"</span>:           <span class="str">"you@example.com"</span>,
+  <span class="str">"plan"</span>:            <span class="str">"team"</span>,
+  <span class="str">"status"</span>:          <span class="str">"active"</span>,
+  <span class="str">"sessions_active"</span>: <span class="num">4</span>,
+  <span class="str">"tokens_saved"</span>:    <span class="num">1840000</span>,
+  <span class="str">"dollar_saved"</span>:    <span class="num">5.52</span>,
+  <span class="str">"key_limit"</span>:       <span class="num">10</span>,
+  <span class="str">"keys_used"</span>:       <span class="num">3</span>,
+  <span class="str">"projects"</span>:        [<span class="cmt">/* Team only */</span>]
+<span class="kw">}</span></div>
+
+    <h2 id="ep-pii">GET /proxy/pii-events</h2>
+    <p>Sensitive data detection log for your account. Scoped to your keys only — you never see other accounts' data.</p>
+
+    <div class="endpoint"><span class="method get">GET</span><span class="path">/proxy/pii-events?limit=100</span></div>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="tab(this,'p','cu')">curl</button>
+        <button class="tab-btn" onclick="tab(this,'p','py')">Python</button>
       </div>
-      <div class="code-pane active" id="pii-curl">
-<pre><code><span class="fn">curl</span> https://proxy.promptolian.com/proxy/pii-events \
+      <div class="tab-pane active" id="p-cu">
+        <pre><code><span class="cmt"># Cloud</span>
+curl https://proxy.promptolian.com/proxy/pii-events \
   -H <span class="str">"X-Promptolian-Key: pk_..."</span>
 
-<span class="cmt"># Local proxy (no auth needed):</span>
-<span class="fn">curl</span> http://localhost:3002/proxy/pii-events</code></pre>
+<span class="cmt"># Local</span>
+curl http://localhost:3002/proxy/pii-events</code></pre>
       </div>
-      <div class="code-pane" id="pii-python">
-<pre><code><span class="kw">import</span> httpx
-
-resp = httpx.get(
+      <div class="tab-pane" id="p-py">
+        <pre><code>events = httpx.get(
     <span class="str">"https://proxy.promptolian.com/proxy/pii-events"</span>,
     headers={<span class="str">"X-Promptolian-Key"</span>: <span class="str">"pk_..."</span>},
     params={<span class="str">"limit"</span>: <span class="num">50</span>},
-)
-events = resp.json()[<span class="str">"events"</span>]
-<span class="kw">for</span> e <span class="kw">in</span> events:
-    <span class="fn">print</span>(e[<span class="str">"risk_level"</span>], e[<span class="str">"categories"</span>], e[<span class="str">"session_id"</span>])</code></pre>
+).json()[<span class="str">"events"</span>]</code></pre>
       </div>
     </div>
 
-    <h3>Response</h3>
-    <div class="resp-block"><span class="kw">{</span>
-  <span class="str">"count"</span>: <span class="num">2</span>,
-  <span class="str">"events"</span>: [
-    <span class="kw">{</span>
-      <span class="str">"session_id"</span>:   <span class="str">"a3f9c1d2"</span>,
-      <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
-      <span class="str">"timestamp"</span>:    <span class="num">1748131200.0</span>,
-      <span class="str">"risk_level"</span>:   <span class="str">"HIGH"</span>,
-      <span class="str">"categories"</span>:  [<span class="str">"CONNECTION_STRING"</span>]
-    <span class="kw">}</span>,
-    <span class="kw">{</span>
-      <span class="str">"session_id"</span>:   <span class="str">"b7e2a051"</span>,
-      <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
-      <span class="str">"timestamp"</span>:    <span class="num">1748130900.0</span>,
-      <span class="str">"risk_level"</span>:   <span class="str">"MEDIUM"</span>,
-      <span class="str">"categories"</span>:  [<span class="str">"SQL_DUMP"</span>, <span class="str">"CSV_DATA"</span>]
-    <span class="kw">}</span>
-  ]
+    <div class="resp"><span class="kw">{</span>
+  <span class="str">"count"</span>: <span class="num">1</span>,
+  <span class="str">"events"</span>: [<span class="kw">{</span>
+    <span class="str">"session_id"</span>:   <span class="str">"a3f9c1d2"</span>,
+    <span class="str">"api_key_hint"</span>: <span class="str">"pk_xYz1..."</span>,
+    <span class="str">"timestamp"</span>:    <span class="num">1748131200.0</span>,
+    <span class="str">"risk_level"</span>:   <span class="str">"HIGH"</span>,
+    <span class="str">"categories"</span>:  [<span class="str">"CONNECTION_STRING"</span>]
+  <span class="kw">}]</span>
 <span class="kw">}</span></div>
 
-    <div class="alert alert-info">
-      Detection adds &lt;1 ms overhead per request and never blocks a request. Only the category name and risk level are stored — no message content, no text fragments, no reconstructable data. Your prompts are never written to disk.
-    </div>
+    <h2 id="ep-keys">Key management</h2>
+    <p>All key endpoints require <code class="inline">X-Promptolian-Key</code>.</p>
 
-    <h2 id="self-hosted">Self-hosted</h2>
-    <p>Run the Promptolian API on your own machine or infrastructure. Prompts are processed locally — nothing is sent to <code>api.promptolian.com</code>.</p>
+    <h3>Rotate a key</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="path">/proxy/keys/rotate</span></div>
+    <p>Generates a new key immediately. The old key stops working at once — update your config before rotating.</p>
+    <div class="resp"><span class="kw">{</span> <span class="str">"api_key"</span>: <span class="str">"pk_newkey..."</span>, <span class="str">"project_name"</span>: <span class="str">"default"</span> <span class="kw">}</span></div>
 
-    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option A — Docker (recommended)</h3>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">One command. SQLite data persisted in a Docker volume. No account needed.</p>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
-<pre><code><span class="cmt"># Clone the public repo</span>
-git clone https://github.com/Maurizio-L/promptolian-public
-<span class="fn">cd</span> promptolian-public
+    <h3>List keys</h3>
+    <div class="endpoint"><span class="method get">GET</span><span class="path">/proxy/keys</span></div>
+    <p>Returns all keys on your account (first 8 chars only). Team plan shows per-project breakdown.</p>
 
-<span class="cmt"># Start (builds image on first run, ~2 min)</span>
-docker compose up
+    <h3>Create a project key <span style="font-size:12px;color:var(--muted);font-weight:400">Team only</span></h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="path">/proxy/keys/new</span></div>
 
-<span class="cmt"># Test it</span>
-<span class="fn">curl</span> http://localhost:3001/health
-<span class="fn">curl</span> -X POST http://localhost:3001/compress \
+    <div class="code-block">
+      <div class="code-block-header"><span>curl</span></div>
+      <pre><code>curl -X POST https://proxy.promptolian.com/proxy/keys/new \
+  -H <span class="str">"X-Promptolian-Key: pk_..."</span> \
   -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"text": "Please explain step by step", "tier": "pro"}'</span></code></pre>
+  -d <span class="str">'{"project_name": "staging-agent"}'</span></code></pre>
     </div>
 
-    <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Then in your code, change one line: <code>API_BASE = "http://localhost:3001"</code> instead of <code>https://api.promptolian.com</code>. All endpoints work identically.</p>
+    <div class="resp"><span class="kw">{</span> <span class="str">"api_key"</span>: <span class="str">"pk_newkey..."</span>, <span class="str">"project_name"</span>: <span class="str">"staging-agent"</span> <span class="kw">}</span></div>
 
-    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option B — Python (from repo)</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
-<pre><code>git clone https://github.com/Maurizio-L/promptolian-public
-<span class="fn">cd</span> promptolian-public
-pip install -r public/requirements-selfhost.txt
-python -m spacy download en_core_web_sm
-
-<span class="cmt"># Start on default port 3001</span>
-python -m promptolian.server
-
-<span class="cmt"># Or on a custom port</span>
-python -m promptolian.server --port 8080</code></pre>
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠</span>
+      <span>Save the returned key immediately — it is not retrievable after this response. Up to 10 project keys on Team plan.</span>
     </div>
 
-    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Option C — pip install</h3>
-    <div class="code-pane active" style="border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
-<pre><code>pip install <span class="str">"promptolian[self-hosted]"</span>
-python -m spacy download en_core_web_sm
-promptolian-server              <span class="cmt"># starts on localhost:3001</span>
-promptolian-server --port 8080  <span class="cmt"># custom port</span></code></pre>
-    </div>
+    <!-- ── Response headers ── -->
+    <h2 id="response-headers">Response headers</h2>
+    <p>Every proxied response includes these headers so you can observe caching behaviour programmatically.</p>
 
-    <h3 style="margin:24px 0 10px;font-size:15px;font-weight:600">Environment variables</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="background:var(--soft)">
-        <th style="padding:8px 12px;text-align:left;font-weight:600">Variable</th>
-        <th style="padding:8px 12px;text-align:left;font-weight:600">Default</th>
-        <th style="padding:8px 12px;text-align:left;font-weight:600">Description</th>
-      </tr></thead>
+    <table>
+      <thead><tr><th>Header</th><th>Value</th><th>Description</th></tr></thead>
       <tbody>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>PORT</code></td><td style="padding:8px 12px"><code>3001</code></td><td style="padding:8px 12px;color:var(--muted)">Port to listen on</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>HOST</code></td><td style="padding:8px 12px"><code>127.0.0.1</code></td><td style="padding:8px 12px;color:var(--muted)">Bind address. Use <code>0.0.0.0</code> to expose on network</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>DB_PATH</code></td><td style="padding:8px 12px"><code>/data/promptolian.db</code></td><td style="padding:8px 12px;color:var(--muted)">SQLite file path (Docker) or custom location</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>DATABASE_URL</code></td><td style="padding:8px 12px">—</td><td style="padding:8px 12px;color:var(--muted)">PostgreSQL connection string — overrides SQLite</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:8px 12px"><code>FLASK_DEBUG</code></td><td style="padding:8px 12px"><code>0</code></td><td style="padding:8px 12px;color:var(--muted)">Set to <code>1</code> for hot-reload during development</td></tr>
+        <tr><td>X-Promptolian-Session</td><td>string</td><td>Session ID used for this call</td></tr>
+        <tr><td>X-Promptolian-Cache-Hit</td><td>true / false</td><td>Whether tool schemas were served from cache</td></tr>
+        <tr><td>X-Promptolian-Tokens-Saved</td><td>integer</td><td>Tool tokens saved this call (0 on cache miss)</td></tr>
+        <tr><td>X-Promptolian-Note</td><td>string</td><td>Human-readable cache hit summary</td></tr>
+        <tr><td>X-Promptolian-Sensitive</td><td>HIGH / MEDIUM</td><td>Present only when sensitive data was detected</td></tr>
       </tbody>
     </table>
 
-    <div style="margin-top:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;font-size:13px;line-height:1.7">
-      <strong style="color:#15803d">Privacy guarantee</strong><br>
-      When self-hosted, every compression happens inside your own process. No data is sent to <code>api.promptolian.com</code> or any external service. The SQLite database (or your PostgreSQL instance) stays on your infrastructure.
-    </div>
+    <!-- ── Errors ── -->
+    <h2 id="errors">Errors</h2>
+    <p>Proxy errors are JSON with an <code class="inline">error</code> field. Non-proxy errors (400, 429, etc.) are passed through from Anthropic or OpenAI unchanged.</p>
+
+    <table>
+      <thead><tr><th>Status</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td><span class="status s-warn">401</span></td><td>Missing or invalid <code class="inline">X-Promptolian-Key</code> (cloud), or missing Anthropic/OpenAI key</td></tr>
+        <tr><td><span class="status s-warn">403</span></td><td>Subscription inactive or plan key limit reached</td></tr>
+        <tr><td><span class="status s-err">500</span></td><td>Proxy or upstream error — check <code class="inline">/proxy/health</code></td></tr>
+      </tbody>
+    </table>
 
   </main>
 </div>
 
 <script>
-function switchTab(btn, group, lang) {
+function tab(btn, group, id) {
   document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
-  btn.closest('.code-tab-bar').querySelectorAll('.code-tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`${group}-${lang}`).classList.add('active');
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`${group}-${id}`).classList.add('active');
   btn.classList.add('active');
 }
-const headings = document.querySelectorAll('h2[id]');
-const links    = document.querySelectorAll('.sidebar a');
-const observer = new IntersectionObserver(entries => {
+
+const obs = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
-      links.forEach(l => l.classList.remove('active'));
-      const match = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
-      if (match) match.classList.add('active');
+      document.querySelectorAll('.sidebar a').forEach(l => l.classList.remove('active'));
+      const m = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (m) m.classList.add('active');
     }
   });
-}, { rootMargin: '-30% 0px -60% 0px' });
-headings.forEach(h => observer.observe(h));
+}, { rootMargin: '-20% 0px -70% 0px' });
+document.querySelectorAll('h2[id]').forEach(h => obs.observe(h));
 </script>
+
 </body>
 </html>
