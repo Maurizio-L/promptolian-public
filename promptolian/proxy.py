@@ -946,13 +946,14 @@ Questions? Reply to this email.
 
 — Maurizio @ Promptolian
 """
+        from_addr = 'support@promptolian.com'
         msg = MIMEText(body)
         msg['Subject'] = 'Your Promptolian API key'
-        msg['From']    = smtp_user
+        msg['From']    = f'Promptolian <{from_addr}>'
         msg['To']      = email
         with smtplib.SMTP_SSL(smtp_host, 465) as s:
             s.login(smtp_user, smtp_pass)
-            s.sendmail(smtp_user, [email], msg.as_string())
+            s.sendmail(from_addr, [email], msg.as_string())
     except Exception as e:
         print(f'[promptolian] Email failed for {email}: {e}')
 
