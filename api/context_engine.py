@@ -191,7 +191,8 @@ def _split_sentences(text: str) -> list[str]:
 
 # Entity extraction — numbers, URLs, acronyms, proper names
 _ENTITY_RE = re.compile(
-    r'https?://\S+'                            # URLs
+    r'[a-z][a-z0-9+\-]*://\S+'                # any URI scheme (postgres://, redis://, https://, etc.)
+    r'|\b(?:sk|pk|ghp|gho|xoxb|AIza|AKIA)[_\-]\S+'  # API key patterns
     r'|\b\d+(?:[.,/]\d+)*\s*(?:%|USD|EUR|GBP|k|M|B|ms|px|rem|em)?\b'  # numbers + units
     r'|\b[A-Z]{2,}\b'                          # acronyms
     r'|[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+'        # proper names (2+ words)
@@ -229,7 +230,11 @@ def _entity_density(text: str) -> float:
 
 def _extract_entities(text: str) -> frozenset[str]:
     """Return frozenset of entity strings found in text."""
-    return frozenset(m.strip() for m in _ENTITY_RE.findall(text) if len(m.strip()) > 1)
+    return frozenset(
+        m.strip().rstrip('.,;:)"\']')
+        for m in _ENTITY_RE.findall(text)
+        if len(m.strip()) > 1
+    )
 
 
 def _ngrams(tokens: list[str], n: int) -> list[tuple]:

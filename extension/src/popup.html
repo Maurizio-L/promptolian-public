@@ -116,7 +116,7 @@ button:hover{background:#1e1e1e;border-color:#333}
 <body>
 
 <div class="header">
-  <div class="logo"><span class="logo-icon">P&#8594;</span> Promptly</div>
+  <div class="logo"><span class="logo-icon">P&#8594;</span> Promptolian</div>
   <div class="toggle-wrap">
     <span class="toggle-lbl" id="toggle-lbl">ON</span>
     <label class="toggle"><input type="checkbox" id="main-toggle" checked><span class="slider"></span></label>
@@ -254,7 +254,7 @@ button:hover{background:#1e1e1e;border-color:#333}
 </div>
 
 <div class="footer">
-  <a href="https://promptly.so" target="_blank">promptly.so</a>
+  <a href="https://promptolian.com" target="_blank">promptolian.com</a>
   <span class="version">v1.2.0</span>
 </div>
 
@@ -473,7 +473,7 @@ function enc(t,tele){
 function setPopupTier(t){
   if((t==='pro'||t==='developer')&&!isPro){openUpgrade();return;}
   popupTier=t;
-  chrome.storage.local.set({promptly_tier:t});
+  chrome.storage.local.set({promptolian_tier:t});
   ['std','pro','dev'].forEach(k=>document.getElementById('tbtn-'+k).classList.remove('active'));
   document.getElementById('tbtn-'+(t==='developer'?'dev':t==='pro'?'pro':'std')).classList.add('active');
   liveTranslate();
@@ -491,9 +491,9 @@ function doCompressInternal(e,save){
   const pill=document.getElementById('saving-pill');pill.style.display='block';
   pill.textContent=pc+'% smaller · '+sv+' tokens saved'+(popupTier==='developer'?' · Up to 20% CR on long prompts — no API calls':'');
   if(save){
-    chrome.storage.local.get(['promptly_tokens_saved','promptly_pct_sum','promptly_prompts'],r=>{
-      const ns=(r.promptly_tokens_saved||0)+sv,nps=(r.promptly_pct_sum||0)+pc,np=(r.promptly_prompts||0)+1;
-      chrome.storage.local.set({promptly_tokens_saved:ns,promptly_pct_sum:nps,promptly_prompts:np});
+    chrome.storage.local.get(['promptolian_tokens_saved','promptolian_pct_sum','promptolian_prompts'],r=>{
+      const ns=(r.promptolian_tokens_saved||0)+sv,nps=(r.promptolian_pct_sum||0)+pc,np=(r.promptolian_prompts||0)+1;
+      chrome.storage.local.set({promptolian_tokens_saved:ns,promptolian_pct_sum:nps,promptolian_prompts:np});
       _renderStats(ns,np,nps);
     });
   }
@@ -513,18 +513,18 @@ function _renderStats(tokens,prompts,pctSum){
 function switchTab(n,b){document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.getElementById("tab-"+n).classList.add("active");b.classList.add("active");if(n==="analytics")loadAnalytics();}
 const FL=10;
 function dk(){return new Date().toISOString().slice(0,10);}
-chrome.storage.local.get(["promptly_enabled","promptly_tokens_saved","promptly_pct_sum","promptly_prompts","promptly_tele","promptly_license","promptly_daily","promptly_packs","promptly_custom_rules","promptly_auto","promptly_tier"],r=>{
-  const on=r.promptly_enabled!==false;
+chrome.storage.local.get(["promptolian_enabled","promptolian_tokens_saved","promptolian_pct_sum","promptolian_prompts","promptolian_tele","promptolian_license","promptolian_daily","promptolian_packs","promptolian_custom_rules","promptolian_auto","promptolian_tier"],r=>{
+  const on=r.promptolian_enabled!==false;
   document.getElementById("main-toggle").checked=on;
   document.getElementById("toggle-lbl").textContent=on?"ON":"OFF";
-  _renderStats(r.promptly_tokens_saved||0,r.promptly_prompts||0,r.promptly_pct_sum||0);
-  teleMode=r.promptly_tele===true;updTele();
-  isPro=!!r.promptly_license;
-  updPlan(r.promptly_license,r.promptly_daily);
+  _renderStats(r.promptolian_tokens_saved||0,r.promptolian_prompts||0,r.promptolian_pct_sum||0);
+  teleMode=r.promptolian_tele===true;updTele();
+  isPro=!!r.promptolian_license;
+  updPlan(r.promptolian_license,r.promptolian_daily);
   updLocks(isPro);
-  if(isPro)loadPro(r.promptly_packs||[],r.promptly_custom_rules||[],r.promptly_auto===true);
+  if(isPro)loadPro(r.promptolian_packs||[],r.promptolian_custom_rules||[],r.promptolian_auto===true);
   // Load saved tier (only allow pro/dev if isPro)
-  const savedTier=r.promptly_tier||'standard';
+  const savedTier=r.promptolian_tier||'standard';
   popupTier=(savedTier!=='standard'&&!isPro)?'standard':savedTier;
   const tKey=popupTier==='developer'?'dev':popupTier==='pro'?'pro':'std';
   document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
@@ -547,19 +547,19 @@ function updPlan(lic,daily){
     if(used>=FL){document.getElementById("quota-bar").style.background="#f87171";document.getElementById("daily-remaining").style.color="#f87171";document.getElementById("daily-remaining").textContent="limit reached";}
   }
 }
-function openUpgrade(){chrome.tabs.create({url:"https://promptly.so/#pricing"});}
+function openUpgrade(){chrome.tabs.create({url:"https://promptolian.com/#pricing"});}
 function activateLicense(){
   const k=document.getElementById("license-input").value.trim();
   if(k.length<8){document.getElementById("license-input").style.borderColor="#f87171";return;}
-  chrome.storage.local.set({promptly_license:k},()=>{isPro=true;updPlan(k,null);updLocks(true);chrome.storage.local.get(["promptly_packs","promptly_custom_rules","promptly_auto"],r=>loadPro(r.promptly_packs||[],r.promptly_custom_rules||[],r.promptly_auto===true));});
+  chrome.storage.local.set({promptolian_license:k},()=>{isPro=true;updPlan(k,null);updLocks(true);chrome.storage.local.get(["promptolian_packs","promptolian_custom_rules","promptolian_auto"],r=>loadPro(r.promptolian_packs||[],r.promptolian_custom_rules||[],r.promptolian_auto===true));});
 }
-function deactivateLicense(){chrome.storage.local.remove("promptly_license",()=>{isPro=false;chrome.storage.local.get(["promptly_daily"],r=>updPlan(null,r.promptly_daily));updLocks(false);});}
-document.getElementById("main-toggle").addEventListener("change",e=>{chrome.storage.local.set({promptly_enabled:e.target.checked});document.getElementById("toggle-lbl").textContent=e.target.checked?"ON":"OFF";});
-function toggleTele(){teleMode=!teleMode;chrome.storage.local.set({promptly_tele:teleMode});updTele();}
+function deactivateLicense(){chrome.storage.local.remove("promptolian_license",()=>{isPro=false;chrome.storage.local.get(["promptolian_daily"],r=>updPlan(null,r.promptolian_daily));updLocks(false);});}
+document.getElementById("main-toggle").addEventListener("change",e=>{chrome.storage.local.set({promptolian_enabled:e.target.checked});document.getElementById("toggle-lbl").textContent=e.target.checked?"ON":"OFF";});
+function toggleTele(){teleMode=!teleMode;chrome.storage.local.set({promptolian_tele:teleMode});updTele();}
 function updTele(){const b=document.getElementById("tele-btn");if(!b)return;b.textContent=teleMode?"⚡ Tele: ON":"Tele: OFF";b.style.background=teleMode?"#c8f13522":"transparent";b.style.borderColor=teleMode?"#c8f13555":"#2a2a2a";b.style.color=teleMode?"#a8d420":"#ccc";}
 function copyOut(){const t=document.getElementById("ps-out").textContent;if(!t||t.includes("output"))return;navigator.clipboard.writeText(t);}
 function clearAll(){document.getElementById("eng-in").value="";document.getElementById("ps-out").textContent="Promptolian output…";document.getElementById("saving-pill").style.display="none";}
-function loadAnalytics(){if(!isPro)return;chrome.storage.local.get(["promptly_history"],r=>renderAnl(r.promptly_history||[]));}
+function loadAnalytics(){if(!isPro)return;chrome.storage.local.get(["promptolian_history"],r=>renderAnl(r.promptolian_history||[]));}
 function renderAnl(h){
   const tt=h.reduce((s,e)=>s+Math.max(0,(e.et||0)-(e.pt||0)),0),tc=h.length,ap=tc>0?Math.round(h.reduce((s,e)=>s+(e.pct||0),0)/tc):0;
   document.getElementById("anl-tokens").textContent=tt>999?(tt/1000).toFixed(1)+"k":tt;
@@ -576,7 +576,7 @@ function loadPro(packs,rules,auto){
   ["medical","academic","legal_pro"].forEach(p=>{const e=document.getElementById("pack-"+p);if(e)e.checked=packs.includes(p);});
   renderRules(rules);const ae=document.getElementById("auto-compress");if(ae)ae.checked=auto;
 }
-function savePacks(){const p=["medical","academic","legal_pro"].filter(p=>{const e=document.getElementById("pack-"+p);return e&&e.checked;});chrome.storage.local.set({promptly_packs:p});}
+function savePacks(){const p=["medical","academic","legal_pro"].filter(p=>{const e=document.getElementById("pack-"+p);return e&&e.checked;});chrome.storage.local.set({promptolian_packs:p});}
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function renderRules(rules){
   const l=document.getElementById("rules-list");if(!l)return;
@@ -584,10 +584,10 @@ function renderRules(rules){
 }
 function addCustomRule(){
   const p=document.getElementById("rule-phrase").value.trim(),a=document.getElementById("rule-abbrev").value.trim();if(!p||!a)return;
-  chrome.storage.local.get(["promptly_custom_rules"],r=>{const rules=r.promptly_custom_rules||[];rules.push({pattern:p,replacement:a});chrome.storage.local.set({promptly_custom_rules:rules},()=>{renderRules(rules);document.getElementById("rule-phrase").value="";document.getElementById("rule-abbrev").value="";});});
+  chrome.storage.local.get(["promptolian_custom_rules"],r=>{const rules=r.promptolian_custom_rules||[];rules.push({pattern:p,replacement:a});chrome.storage.local.set({promptolian_custom_rules:rules},()=>{renderRules(rules);document.getElementById("rule-phrase").value="";document.getElementById("rule-abbrev").value="";});});
 }
-function delRule(i){chrome.storage.local.get(["promptly_custom_rules"],r=>{const rules=(r.promptly_custom_rules||[]).filter((_,j)=>j!==i);chrome.storage.local.set({promptly_custom_rules:rules},()=>renderRules(rules));});}
-function saveAuto(){chrome.storage.local.set({promptly_auto:document.getElementById("auto-compress").checked});}
+function delRule(i){chrome.storage.local.get(["promptolian_custom_rules"],r=>{const rules=(r.promptolian_custom_rules||[]).filter((_,j)=>j!==i);chrome.storage.local.set({promptolian_custom_rules:rules},()=>renderRules(rules));});}
+function saveAuto(){chrome.storage.local.set({promptolian_auto:document.getElementById("auto-compress").checked});}
 </script>
 </body>
 </html>

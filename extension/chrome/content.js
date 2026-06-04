@@ -580,29 +580,29 @@
 
   function loadProSettings() {
     chrome.storage.local.get(
-      ['promptly_license', 'promptly_packs', 'promptly_custom_rules', 'promptly_auto', 'promptly_daily'],
+      ['promptolian_license', 'promptolian_packs', 'promptolian_custom_rules', 'promptolian_auto', 'promptolian_daily'],
       res => {
-        if (!res.promptly_license) return;
-        activePacks = res.promptly_packs || [];
-        customRules = (res.promptly_custom_rules || []).map(r => {
+        if (!res.promptolian_license) return;
+        activePacks = res.promptolian_packs || [];
+        customRules = (res.promptolian_custom_rules || []).map(r => {
           try { return [new RegExp('\\b' + r.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), r.replacement]; }
           catch (_) { return null; }
         }).filter(Boolean);
-        autoCompress = res.promptly_auto === true;
+        autoCompress = res.promptolian_auto === true;
         // Refresh quota cache
         const today = getTodayKey();
-        const daily = (res.promptly_daily && res.promptly_daily.date === today) ? res.promptly_daily : { date: today, count: 0 };
-        _quotaCache = { ok: res.promptly_license ? true : daily.count < FREE_LIMIT, pro: !!res.promptly_license, count: daily.count };
+        const daily = (res.promptolian_daily && res.promptolian_daily.date === today) ? res.promptolian_daily : { date: today, count: 0 };
+        _quotaCache = { ok: res.promptolian_license ? true : daily.count < FREE_LIMIT, pro: !!res.promptolian_license, count: daily.count };
       }
     );
   }
 
   function trackCompression(et, pt, site) {
     const entry = { ts: Date.now(), site, et, pt, pct: et > 0 ? Math.round((et - pt) / et * 100) : 0 };
-    chrome.storage.local.get(['promptly_history'], res => {
-      const hist = (res.promptly_history || []);
+    chrome.storage.local.get(['promptolian_history'], res => {
+      const hist = (res.promptolian_history || []);
       hist.unshift(entry);
-      chrome.storage.local.set({ promptly_history: hist.slice(0, 500) });
+      chrome.storage.local.set({ promptolian_history: hist.slice(0, 500) });
     });
   }
 
@@ -812,11 +812,11 @@
 
   function checkQuota() {
     return new Promise(resolve => {
-      chrome.storage.local.get(['promptly_license', 'promptly_daily'], res => {
-        if (res.promptly_license) return resolve({ ok: true, pro: true });
+      chrome.storage.local.get(['promptolian_license', 'promptolian_daily'], res => {
+        if (res.promptolian_license) return resolve({ ok: true, pro: true });
         const today = getTodayKey();
-        const daily = (res.promptly_daily && res.promptly_daily.date === today)
-          ? res.promptly_daily : { date: today, count: 0 };
+        const daily = (res.promptolian_daily && res.promptolian_daily.date === today)
+          ? res.promptolian_daily : { date: today, count: 0 };
         resolve({ ok: daily.count < FREE_LIMIT, count: daily.count, pro: false });
       });
     });
@@ -824,12 +824,12 @@
 
   function incrementQuota() {
     return new Promise(resolve => {
-      chrome.storage.local.get(['promptly_daily'], res => {
+      chrome.storage.local.get(['promptolian_daily'], res => {
         const today = getTodayKey();
-        const prev = (res.promptly_daily && res.promptly_daily.date === today)
-          ? res.promptly_daily : { date: today, count: 0 };
+        const prev = (res.promptolian_daily && res.promptolian_daily.date === today)
+          ? res.promptolian_daily : { date: today, count: 0 };
         const next = { date: today, count: prev.count + 1 };
-        chrome.storage.local.set({ promptly_daily: next });
+        chrome.storage.local.set({ promptolian_daily: next });
         resolve(next.count);
       });
     });
@@ -843,14 +843,14 @@
 
   // ── Toolbar ───────────────────────────────────────────────────────────────
   function injectToolbar() {
-    if (document.getElementById('promptly-bar')) return;
+    if (document.getElementById('promptolian-bar')) return;
     const site = getSite();
     if (!site) return;
     // Don't inject until the input exists
     if (!getInput()) return;
 
     const bar = document.createElement('div');
-    bar.id = 'promptly-bar';
+    bar.id = 'promptolian-bar';
     bar.innerHTML = `
       <span class="p-logo">P→</span>
       <span class="p-stats" id="p-stats">Promptolian ready</span>
@@ -864,9 +864,9 @@
     `;
     document.body.appendChild(bar);
 
-    chrome.storage.local.get(['promptly_enabled', 'promptly_tele'], (res) => {
-      updateToggle(res.promptly_enabled !== false);
-      teleMode = res.promptly_tele === true;
+    chrome.storage.local.get(['promptolian_enabled', 'promptolian_tele'], (res) => {
+      updateToggle(res.promptolian_enabled !== false);
+      teleMode = res.promptolian_tele === true;
       updateTele(teleMode);
     });
 
@@ -917,7 +917,7 @@
 
     document.getElementById('p-tele').addEventListener('click', () => {
       teleMode = !teleMode;
-      chrome.storage.local.set({ promptly_tele: teleMode });
+      chrome.storage.local.set({ promptolian_tele: teleMode });
       updateTele(teleMode);
     });
 
@@ -935,9 +935,9 @@
     });
 
     document.getElementById('p-toggle').addEventListener('click', () => {
-      chrome.storage.local.get(['promptly_enabled'], (res) => {
-        const next = !(res.promptly_enabled !== false);
-        chrome.storage.local.set({ promptly_enabled: next });
+      chrome.storage.local.get(['promptolian_enabled'], (res) => {
+        const next = !(res.promptolian_enabled !== false);
+        chrome.storage.local.set({ promptolian_enabled: next });
         updateToggle(next);
       });
     });
@@ -972,7 +972,7 @@
       <span style="font-size:11px;color:#f87171">
         Daily limit reached (${count}/${FREE_LIMIT}) ·
       </span>
-      <a href="https://promptly.so/#pricing" target="_blank"
+      <a href="https://promptolian.com/#pricing" target="_blank"
          style="font-size:11px;color:#c8f135;text-decoration:none;font-weight:600;margin-left:4px">
         Upgrade to Pro →
       </a>
@@ -1027,7 +1027,7 @@
 
   let _obsTimer = null;
   const obs = new MutationObserver(() => {
-    if (!document.getElementById('promptly-bar')) {
+    if (!document.getElementById('promptolian-bar')) {
       clearTimeout(_obsTimer);
       _obsTimer = setTimeout(injectToolbar, 800);
     }
