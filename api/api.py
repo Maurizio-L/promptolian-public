@@ -18,6 +18,7 @@ Endpoints:
   POST /compress          body: {"text":"...","tier":"standard|pro|developer","lang":"auto"}
   GET  /stats
   POST /feedback          body: {"original":"...","compressed":"...","rating":1-5}
+  POST /compress-context  body: {"messages":[...],"model":"...","summary":""} — proxy session reset (requires X-API-Key)
   POST /optimize-context  body: {"messages":[...],"query":"...","summary":"","mode":"lossless","use_kv_geometry":true}
   POST /compress-tools    body: {"tools":[...], "session_id":"optional-string"}
 """
@@ -578,7 +579,7 @@ def health():
         'version':          '2.2.0',
         'engine_v4':        _ENGINE_AVAILABLE,
         'tiers_available':  ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
-        'endpoints':        ['/compress', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
+        'endpoints':        ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
         'timestamp':        datetime.now().isoformat(),
     })
 
@@ -705,6 +706,88 @@ def optimize_context():
         )
 
         return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/compress-context', methods=['POST'])
+def compress_context():
+    """KV-sandwich compression for proxy session reset.
+
+    Called by the Promptolian proxy (pip install users) when
+    PROMPTOLIAN_API_KEY is set and context_engine is not available locally.
+
+    Request:
+      X-API-Key: <key>          (required — 401 if missing)
+      {
+        "messages": [...],      (required)
+        "model":    "claude-...",
+        "summary":  ""          (optional — previous session summary)
+      }
+
+    Response 200:
+      { "optimized_prompt": "...", "new_summary": "..." }
+
+    Errors:
+      401  missing or invalid API key
+      400  bad request body
+      500  compression failed
+    """
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'API key required. Set PROMPTOLIAN_API_KEY and get a key at promptolian.com/pricing'}), 401
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'request body required'}), 400
+
+    messages = data.get('messages')
+    model    = data.get('model', '')
+    summary  = data.get('summary', '')
+
+    if not isinstance(messages, list) or not messages:
+        return jsonify({'error': '"messages" must be a non-empty array'}), 400
+
+    # Extract last user turn as query for the context engine
+    query = ''
+    for m in reversed(messages):
+        content = m.get('content', '')
+        if m.get('role') == 'user':
+            if isinstance(content, str):
+                query = content
+            elif isinstance(content, list):
+                query = ' '.join(
+                    b.get('text', '') for b in content
+                    if isinstance(b, dict) and b.get('type') == 'text'
+                )
+            break
+
+    if not query:
+        return jsonify({'error': 'no user message found in messages array'}), 400
+
+    try:
+        from context_engine import ContextEngine  # type: ignore
+        ce     = ContextEngine()
+        result = ce.optimize(messages, query=query, summary=summary)
+
+        _repo.log_context_event(
+            api_key          = api_key,
+            mode             = 'kv-sandwich',
+            original_tokens  = result.get('original_tokens', 0),
+            optimized_tokens = result.get('optimized_tokens', 0),
+            tokens_saved     = result.get('tokens_saved_estimate', 0),
+            messages_total   = len(messages),
+            messages_pruned  = result.get('messages_pruned', 0),
+            summary_tokens   = _count_tokens(result.get('new_summary', '')),
+            platform         = 'proxy',
+        )
+
+        return jsonify({
+            'optimized_prompt': result.get('optimized_prompt', ''),
+            'new_summary':      result.get('new_summary', ''),
+        })
+    except ImportError:
+        return jsonify({'error': 'context_engine not available on this server'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
