@@ -329,12 +329,13 @@ footer a:hover{color:#aaa}
       <ul class="price-features">
         <li><span class="check">✓</span>Open source (MIT)</li>
         <li><span class="check">✓</span><code style="font-size:11px">pip install "promptolian[proxy]"</code></li>
+        <li><span class="check">✓</span>Tool result dedup — REF + DIFF (34.6% savings)</li>
         <li><span class="check">✓</span>Tool schema caching (~90% savings)</li>
-        <li><span class="check">✓</span>Text prompt compression (~20%)</li>
         <li><span class="check">✓</span>Claude + OpenAI Responses API</li>
         <li><span class="check">✓</span>SQLite sessions (local, resets on restart)</li>
         <li><span class="check">✓</span>Community support (GitHub issues)</li>
-        <li><span class="price-dim">✗ Hosted proxy uptime</span></li>
+        <li><span class="price-dim">✗ KV-sandwich context compression</span></li>
+        <li><span class="price-dim">✗ Session reset (context wall prevention)</span></li>
         <li><span class="price-dim">✗ Persistent cloud sessions</span></li>
         <li><span class="price-dim">✗ Savings dashboard</span></li>
       </ul>
@@ -351,13 +352,13 @@ footer a:hover{color:#aaa}
       </div>
       <ul class="price-features">
         <li><span class="check">✓</span>Everything in Free</li>
+        <li><span class="check">✓</span><strong>KV-sandwich compression</strong> — 4.26/5 quality</li>
+        <li><span class="check">✓</span><strong>Session reset</strong> — never hit the context wall</li>
         <li><span class="check">✓</span><strong>Hosted at proxy.promptolian.com</strong></li>
         <li><span class="check">✓</span><strong>PostgreSQL sessions</strong> — always-on, never lost</li>
-        <li><span class="check">✓</span><strong>1 project API key</strong> (X-Promptolian-Key)</li>
+        <li><span class="check">✓</span><strong>1 API key</strong> (PROMPTOLIAN_API_KEY)</li>
         <li><span class="check">✓</span><strong>Savings dashboard</strong> — tokens saved + $ saved</li>
-        <li><span class="check">✓</span>Cache hit rate analytics</li>
         <li><span class="check">✓</span>Email support</li>
-        <li><span class="check">✓</span>Key rotation on demand</li>
       </ul>
       <button class="price-btn" onclick="openSignup('solo')">Get Solo &#x2192;</button>
     </div>
@@ -426,16 +427,28 @@ footer a:hover{color:#aaa}
         <td class="yes">Per-project breakdown</td>
       </tr>
       <tr>
+        <td class="row-label">Tool result dedup (REF + DIFF)</td>
+        <td class="yes">✓ 34.6% savings</td>
+        <td class="featured-col yes">✓ 34.6% savings</td>
+        <td class="yes">✓ 34.6% savings</td>
+      </tr>
+      <tr>
         <td class="row-label">Tool schema caching</td>
         <td class="yes">✓ ~90% savings</td>
         <td class="featured-col yes">✓ ~90% savings</td>
         <td class="yes">✓ ~90% savings</td>
       </tr>
       <tr>
-        <td class="row-label">Text compression</td>
-        <td class="yes">✓ ~20%</td>
-        <td class="featured-col yes">✓ ~20%</td>
-        <td class="yes">✓ ~20%</td>
+        <td class="row-label">KV-sandwich compression</td>
+        <td class="no">—</td>
+        <td class="featured-col yes">✓ 4.26/5 quality</td>
+        <td class="yes">✓ 4.26/5 quality</td>
+      </tr>
+      <tr>
+        <td class="row-label">Session reset</td>
+        <td class="no">—</td>
+        <td class="featured-col yes">✓</td>
+        <td class="yes">✓</td>
       </tr>
       <tr>
         <td class="row-label">Key rotation</td>
@@ -652,7 +665,7 @@ async function submitSignup(){
     [['openai','gpt','responses api'],
      'The proxy supports both Anthropic (api.anthropic.com) and OpenAI Responses API (api.openai.com/v1/responses). Tool schema caching works on both.'],
     [['how','work','compress','token','shrink','shorter'],
-     'The proxy sits between your agent and the AI provider. It tags your tool schemas with cache_control so Claude\'s prompt cache kicks in from the second call. It also applies text compression to message content (~20% reduction).'],
+     'The proxy sits between your agent and the AI provider. It deduplicates repeated tool outputs (34.6% savings on tool tokens, free). It tags tool schemas with cache_control so Claude\'s prompt cache kicks in from the second call (~90% schema savings, free). With an API key, it also runs KV-sandwich context compression (4.26/5 quality) and resets sessions before the context wall.'],
   ];
 
   function localFAQ(msg){

@@ -926,16 +926,16 @@
       <div class="stat-label">Context quality score</div>
     </div>
     <div class="stat-cell">
-      <div class="stat-value">22%</div>
-      <div class="stat-label">Tokens removed</div>
+      <div class="stat-value">34.6%</div>
+      <div class="stat-label">Tool output token savings</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">~90%</div>
       <div class="stat-label">Tool schema savings</div>
     </div>
     <div class="stat-cell">
-      <div class="stat-value">3.5 min</div>
-      <div class="stat-label">Break-even threshold</div>
+      <div class="stat-value">99%</div>
+      <div class="stat-label">Fact retention after compression</div>
     </div>
   </div>
 </div>
@@ -1014,6 +1014,32 @@
     <div class="problem-stat">
       <span class="pstat"><strong>4.26/5</strong> quality score</span>
       <span class="pstat"><strong>14.8%</strong> fact-loss rate</span>
+    </div>
+  </div>
+
+  <!-- Problem 3 -->
+  <div class="problem-block">
+    <div class="problem-tag">Problem 3</div>
+    <h3 class="problem-title">Repeated tool outputs</h3>
+    <p class="problem-desc">Agentic workflows read the same files, run the same bash commands, and fetch the same API responses across multiple turns. Each repeat costs full tokens.</p>
+
+    <div class="code-visual">
+<span class="cv-dim">Without Promptolian:</span>
+<span class="cv-line"><span class="cv-normal">Call 1:</span>  read_file("config.yaml")  <span class="cv-dim">→ 400 tokens</span></span>
+<span class="cv-line"><span class="cv-normal">Call 2:</span>  read_file("config.yaml")  <span class="cv-dim">→ 400 tokens</span>  <span class="cv-wasted">← wasted</span></span>
+<span class="cv-line"><span class="cv-normal">Call 3:</span>  read_file("config.yaml")  <span class="cv-dim">→ 400 tokens</span>  <span class="cv-wasted">← wasted</span></span></div>
+
+    <div class="fix-label">Fix: Tool result deduplication (REF + DIFF)</div>
+
+    <div class="code-visual">
+<span class="cv-dim">With Promptolian:</span>
+<span class="cv-line"><span class="cv-normal">Call 2:</span>  <span class="cv-saved">[TOOL_CACHE_REF: same as call #1]</span>  <span class="cv-dim">→ 5 tokens</span>  <span class="cv-saved">✓</span></span>
+<span class="cv-line"><span class="cv-normal">Call 3:</span>  <span class="cv-saved">[TOOL_CACHE_DIFF from call #1: +port: 5433]</span>  <span class="cv-dim">→ 12 tokens</span>  <span class="cv-saved">✓</span></span></div>
+
+    <div class="problem-stat">
+      <span class="pstat"><strong>34.6%</strong> token savings on tool outputs</span>
+      <span class="pstat"><strong>99%</strong> fact retention</span>
+      <span class="pstat"><strong>Free</strong> — no API key needed</span>
     </div>
   </div>
 </section>
@@ -1161,19 +1187,19 @@
 <section id="pricing" class="section section-sep">
   <div class="section-label">Pricing</div>
   <h2 class="section-title">Start free. Scale when you need it.</h2>
-  <p class="section-sub">All plans include tool schema caching. Context compression on Solo and Team.</p>
+  <p class="section-sub">Tool deduplication and schema caching are free. KV-sandwich context compression requires an API key.</p>
 
   <div class="pricing-grid">
     <!-- Free -->
     <div class="pricing-card">
       <div class="pricing-plan">Free</div>
       <div class="pricing-price">$0</div>
-      <div class="pricing-period">Self-hosted</div>
+      <div class="pricing-period">Self-hosted · no key needed</div>
       <ul class="pricing-features">
-        <li>SQLite storage</li>
-        <li>pip install</li>
-        <li>Unlimited sessions locally</li>
-        <li>Tool schema caching</li>
+        <li>Tool result dedup (34.6% savings)</li>
+        <li>Tool schema caching (~90% savings)</li>
+        <li>SQLite sessions</li>
+        <li>Claude + OpenAI compatible</li>
       </ul>
       <a href="#quickstart" class="btn-pricing-ghost">Get started</a>
     </div>
@@ -1183,12 +1209,12 @@
       <div class="featured-tag">FEATURED</div>
       <div class="pricing-plan">Solo</div>
       <div class="pricing-price">$9<span style="font-size:18px;font-weight:500;color:var(--muted)">/mo</span></div>
-      <div class="pricing-period">Hosted · proxy.promptolian.com</div>
+      <div class="pricing-period">+ API key · cloud KV-sandwich</div>
       <ul class="pricing-features">
-        <li>1 API key</li>
-        <li>PostgreSQL storage</li>
-        <li>Tool schema caching</li>
-        <li>Context compression</li>
+        <li>Everything in Free</li>
+        <li>KV-sandwich compression (4.26/5)</li>
+        <li>Session reset — no context wall</li>
+        <li>PostgreSQL sessions</li>
         <li>Savings dashboard</li>
       </ul>
       <a href="pricing.html" class="btn-pricing-primary">Subscribe</a>
@@ -1198,13 +1224,12 @@
     <div class="pricing-card">
       <div class="pricing-plan">Team</div>
       <div class="pricing-price">$49<span style="font-size:18px;font-weight:500;color:var(--muted)">/mo</span></div>
-      <div class="pricing-period">Hosted · multi-key</div>
+      <div class="pricing-period">Up to 10 keys · per-project analytics</div>
       <ul class="pricing-features">
+        <li>Everything in Solo</li>
         <li>Up to 10 API keys</li>
-        <li>Per-project breakdown</li>
-        <li>PostgreSQL storage</li>
-        <li>Tool schema caching</li>
-        <li>Context compression</li>
+        <li>Per-project cost breakdown</li>
+        <li>Priority support</li>
       </ul>
       <a href="pricing.html" class="btn-pricing-ghost">Subscribe</a>
     </div>
@@ -1232,7 +1257,7 @@
           <div class="step-num"></div>
           <div class="step-body">
             <div class="step-title">Start the proxy</div>
-            <div class="step-desc"><code class="inline-code">promptolian proxy --compress</code></div>
+            <div class="step-desc"><code class="inline-code">python -m promptolian.proxy</code></div>
           </div>
         </li>
         <li class="step-item">
@@ -1271,8 +1296,8 @@
 <span class="ck">client</span> = anthropic.Anthropic(
     base_url=<span class="cs">"http://localhost:3002"</span>
 )
-<span class="cc"># Tool caching: automatic</span>
-<span class="cc"># Context compression: automatic (--compress flag)</span></div>
+<span class="cc"># Tool dedup + schema caching: automatic (free)</span>
+<span class="cc"># Context compression: add PROMPTOLIAN_API_KEY for cloud KV-sandwich</span></div>
     </div>
   </div>
 </section>
