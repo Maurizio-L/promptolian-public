@@ -4,7 +4,7 @@
 
 A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK changes. No new abstractions.
 
-**[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Docs](https://promptolian.com/docs.html) · [Benchmarks](https://promptolian.com/benchmarks.html)
+**[promptolian.com](https://promptolian.com)** · [Developer Guide](GUIDE.md) · [Pricing](https://promptolian.com/pricing.html) · [Docs](https://promptolian.com/docs.html) · [Benchmarks](https://promptolian.com/benchmarks.html)
 
 ---
 
