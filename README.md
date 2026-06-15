@@ -1,26 +1,25 @@
 # Promptolian
 
-> Proxy layer for AI agents — keeps context intact across long conversations and eliminates redundant token costs. One line to add, zero changes to your agent logic.
+**AI agents burn tokens repeating themselves. Promptolian stops that — transparently, with one line of code.**
 
-**[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Dashboard](https://promptolian.com/dashboard.html) · [Docs](https://promptolian.com/docs.html)
+A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK changes. No new abstractions.
+
+**[promptolian.com](https://promptolian.com)** · [Pricing](https://promptolian.com/pricing.html) · [Docs](https://promptolian.com/docs.html) · [Benchmarks](https://promptolian.com/benchmarks.html)
 
 ---
 
-## Two problems, one proxy
+## Three problems, one proxy
 
-**Problem 1 — Your agent forgets things.**
-Built-in context management (Anthropic, OpenAI) compresses old turns aggressively. Specific facts — config values, resource names, exact numbers — get lost. The agent hallucinates or asks you to repeat yourself. That's rework.
+**Problem 1 — Tool outputs repeat across turns.**
+Agentic workflows read the same files, run the same bash commands, get the same API responses — turn after turn. Each repeat costs full tokens.
 
-**Problem 2 — Your agent re-sends the same tool list on every call.**
-Every time your agent calls the API, it re-sends the full tool schema — even if nothing changed. For 5 tools that's ~600 tokens wasted on every single call.
+**Problem 2 — Tool schemas re-sent on every call.**
+Every API call re-sends the full tool schema JSON even if nothing changed. 5 tools ≈ 600 tokens wasted per call, silently, forever.
 
-```
-Call 1:  [system] + [tools: 600 tok] + [message]   → full price
-Call 2:  [system] + [tools: 600 tok] + [message]   → full price again
-Call 3:  [system] + [tools: 600 tok] + [message]   → full price again
-```
+**Problem 3 — Context window fills up and quality collapses.**
+Built-in compression (Anthropic, OpenAI) removes 98–99% of context tokens. Specific facts — config values, file paths, exact numbers — disappear. The agent hallucinates or asks you to repeat yourself.
 
-Promptolian fixes both with one line of code.
+Promptolian fixes all three. The first two are free. The third requires an API key.
 
 ---
 
@@ -32,51 +31,43 @@ sequenceDiagram
     participant P as Promptolian proxy
     participant C as Anthropic API
 
-    A->>P: POST /v1/messages (tools + message)
-    P->>P: Store tool schemas, add cache_control
-    P->>C: Forward with cache_control on tools
-    C-->>P: Response (tools cached for 5 min)
-    P-->>A: Response + X-Promptolian-Cache-Hit: false
-
-    A->>P: POST /v1/messages (message only)
-    P->>P: Re-inject cached tools + cache_control
-    P->>C: Forward — Anthropic bills at 10%
+    A->>P: POST /v1/messages (tools + messages)
+    P->>P: Dedup tool results · cache schemas · check token count
+    P->>C: Forward (cache_control on schemas)
     C-->>P: Response
-    P-->>A: Response + X-Promptolian-Cache-Hit: true ✓
+    P-->>A: Response + X-Promptolian-Tokens-Saved: 1240
 ```
-
-On call 2 onwards, Anthropic charges 10% of the normal tool token price. You save ~90% on tool tokens across the session.
 
 ---
 
 ## Savings
 
-```mermaid
-xychart-beta
-    title "Token reduction by layer (measured)"
-    x-axis ["Tool schemas", "Conversation history", "Prompt text"]
-    y-axis "Tokens saved %" 0 --> 100
-    bar [90, 52.9, 20]
-```
-
-| Layer | Savings | Mechanism |
+| Feature | Savings | Free? |
 |---|---|---|
-| **Tool schemas** | **~90%** session avg | Proxy caches via Anthropic prompt cache — 10% billed on hit |
-| **Conversation history** | **~22%** tokens · **4.26/5** quality | KV-sandwich — fact-rich turns kept verbatim, filler pruned |
-| **Prompt text** | **~20%** | Symbol rules, filler removal, grammar cleanup |
+| Tool result dedup (REF + DIFF) | **34.6%** on tool output tokens · 99% fact retention | Yes |
+| Tool schema caching | **~90%** session average | Yes |
+| KV-sandwich context compression | **4.26/5** quality score · 22% tokens removed | Paid (API key) |
+| Session reset | Never hit the context wall | Paid (API key) |
 
 Context quality benchmark (25 sessions, Factory.ai 6-dimension scoring):
 
 | | Promptolian | Anthropic built-in | OpenAI built-in |
 |---|---|---|---|
-| Quality | **4.26 / 5** | 3.44 / 5 | 3.35 / 5 |
-| Compression | 21.8% | 98.7% | 99.3% |
+| Quality score | **4.26 / 5** | 3.44 / 5 | 3.35 / 5 |
+| Tokens kept | 78.2% | 1.3% | 0.7% |
 
-Baselines from Factory.ai (May 2026). Promptolian benchmark: internal, same scoring methodology.
+Tool compression benchmark (9 synthetic agentic sessions, 49 tool results):
+
+| | Result |
+|---|---|
+| Token savings on tool outputs | 34.6% |
+| Fact retention after compression | 99.0% |
+| REF compressions (exact dedup) | 12 |
+| DIFF compressions (similar content) | 6 |
 
 ---
 
-## Cost impact
+## Cost impact — tool schema caching
 
 For an agent making **500 calls/day** with **5 tools**:
 
@@ -84,7 +75,7 @@ For an agent making **500 calls/day** with **5 tools**:
 Tool tokens per call  : 5 × 120 = 600 tok
 Monthly without proxy : 500 × 30 × 600 = 9,000,000 tok → $27.00
 Monthly with proxy    : 9,000,000 × 10% = 900,000 tok  → $2.70
-Monthly saving        : $24.30  (at Claude Sonnet 4 pricing, $3/1M tokens)
+Monthly saving        : $24.30  (Claude Sonnet 4 pricing, $3/1M tokens)
 ```
 
 ---
@@ -93,23 +84,20 @@ Monthly saving        : $24.30  (at Claude Sonnet 4 pricing, $3/1M tokens)
 
 ### Option A — Transparent proxy (any language)
 
-One line to start, one line to switch:
-
 ```bash
 pip install "promptolian[proxy]"
-promptolian proxy              # localhost:3002 — tool caching only
-promptolian proxy --compress   # + context history compression
+python -m promptolian.proxy                                     # localhost:3002
+PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70  # + KV-sandwich
 ```
 
 ```python
 import anthropic
 
-client = anthropic.Anthropic(
-    base_url="http://localhost:3002",   # only change needed
-)
+# Only change needed
+client = anthropic.Anthropic(base_url="http://localhost:3002")
 ```
 
-The proxy handles caching automatically. Pass tools on call 1; omit them on call 2+, or pass them every time — the proxy does the right thing either way.
+Tool result dedup and schema caching are automatic with no key. Session reset + KV-sandwich require `PROMPTOLIAN_API_KEY`.
 
 ### Option B — Python SDK wrapper
 
@@ -122,21 +110,33 @@ from promptolian import patch_anthropic
 patch_anthropic()   # call once at startup — all clients patched globally
 
 import anthropic
-client = anthropic.Anthropic()  # unchanged — compression is transparent
+client = anthropic.Anthropic()  # unchanged
 ```
 
 ### Option C — Claude Code MCP
 
 ```bash
 pip install "promptolian[mcp]"
-promptolian mcp install   # adds to ~/.claude/settings.json, then restart Claude Code
 ```
+
+Add to `~/.claude/settings.json`:
+```json
+{
+  "mcpServers": {
+    "promptolian": {
+      "command": "promptolian-mcp"
+    }
+  }
+}
+```
+
+Restart Claude Code. Adds `compress_prompt`, `compress_tools_schema`, `compression_stats` tools.
 
 ---
 
 ## Cloud proxy
 
-Skip self-hosting entirely. Use `proxy.promptolian.com`:
+Skip self-hosting. Use `proxy.promptolian.com`:
 
 ```python
 client = anthropic.Anthropic(
@@ -145,97 +145,78 @@ client = anthropic.Anthropic(
 )
 ```
 
-```mermaid
-flowchart LR
-    A[Your agent] -->|X-Promptolian-Key| B[proxy.promptolian.com]
-    B <-->|Sessions| D[(PostgreSQL)]
-    B -->|Forwarded + cached| C[Anthropic API]
-    C --> B --> A
+| Plan | Price | API keys | Sessions | KV-sandwich |
+|---|---|---|---|---|
+| **Free** | $0 | — | SQLite · self-hosted | — |
+| **Solo** | $9/mo | 1 | PostgreSQL · always-on | Yes |
+| **Team** | $49/mo | Up to 10 | PostgreSQL · per-project | Yes |
+
+→ [promptolian.com/pricing.html](https://promptolian.com/pricing.html)
+
+---
+
+## Tool result compression
+
+In agentic workflows, the same files get read repeatedly, bash outputs recur, search results repeat. The proxy deduplicates automatically before forwarding to the provider:
+
+- **Exact repeat** → `[TOOL_CACHE_REF: same as call #N]` — ~5 tokens instead of thousands
+- **Similar content** → compact diff showing only changed lines
+
+Works for both Anthropic (`type=tool_result`) and OpenAI (`role=tool`) formats. No configuration needed — fires automatically on every request.
+
+Run the benchmark yourself:
+```bash
+python3 tools/scripts/benchmark_tool_compression.py
+python3 tools/scripts/benchmark_tool_compression.py --verbose
 ```
 
-| Plan | Price | API keys | Sessions |
-|---|---|---|---|
-| **Free** | $0 | — | SQLite · self-hosted |
-| **Solo** | $9/mo | 1 | PostgreSQL · always-on |
-| **Team** | $49/mo | Up to 10 | PostgreSQL · per-project breakdown |
+---
 
-→ [Sign up at promptolian.com/pricing.html](https://promptolian.com/pricing.html)
+## Session reset
+
+The proxy tracks cumulative token usage per session. When usage approaches the model's context window limit, it compresses history and starts a fresh session — injecting the compressed context as a system prompt.
+
+```bash
+PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70
+```
+
+Startup shows which compression mode is active:
+```
+Session reset : at 70% · compression: cloud (https://api.promptolian.com)
+```
+
+Compression priority: local `context_engine` → cloud API (`PROMPTOLIAN_API_KEY`) → skip reset.
+
+Response header on reset: `X-Promptolian-Reset: true`
 
 ---
 
 ## Sensitive data detection
 
-The proxy scans every message for credentials and data-dump patterns before forwarding. Events are stored per account and exposed only to the account holder — never aggregated.
+The proxy scans messages for credentials before forwarding. Events are stored per account and exposed only to the account holder.
 
 | Category | Risk | Detects |
 |---|---|---|
-| `CONNECTION_STRING` | **HIGH** | `postgres://`, `mysql://`, `mongodb://`, `redis://` URIs with credentials |
-| `API_KEY` | **HIGH** | OpenAI `sk-`, AWS `AKIA`, GitHub `ghp_`/`gho_`, Slack `xoxb-`, Google `AIza` |
+| `CONNECTION_STRING` | **HIGH** | postgres://, mysql://, mongodb://, redis:// URIs with credentials |
+| `API_KEY` | **HIGH** | OpenAI sk-, AWS AKIA, GitHub ghp_/gho_, Slack xoxb-, Google AIza |
 | `PRIVATE_KEY` | **HIGH** | RSA / EC / OPENSSH private key PEM blocks |
-| `JWT` | **HIGH** | Three-part `eyXXX.eyXXX.XXX` bearer tokens |
-| `ENV_FILE` | **HIGH** | 3+ consecutive `KEY=value` lines (.env pastes) |
-| `SQL_DUMP` | MEDIUM | 3+ consecutive `INSERT INTO` statements |
-| `STACK_TRACE` | MEDIUM | Python `Traceback (most recent call last)` |
-| `CSV_DATA` | MEDIUM | 3+ rows × 5+ columns of comma-separated data |
-| `LARGE_JSON` | MEDIUM | Array of 10+ JSON objects |
+| `JWT` | **HIGH** | Three-part eyXXX.eyXXX.XXX bearer tokens |
+| `ENV_FILE` | **HIGH** | 3+ consecutive KEY=value lines |
+| `SQL_DUMP` | MEDIUM | 3+ consecutive INSERT INTO statements |
+| `STACK_TRACE` | MEDIUM | Python Traceback blocks |
 
-When a pattern fires the response includes a diagnostic header:
-```http
-X-Promptolian-Sensitive: HIGH
-```
-
-Retrieve your account's event log:
-```bash
-curl https://proxy.promptolian.com/proxy/pii-events \
-  -H "X-Promptolian-Key: pk_..."
-```
-```json
-{
-  "count": 2,
-  "events": [
-    {
-      "session_id": "a3f9c1d2",
-      "risk_level": "HIGH",
-      "categories": ["CONNECTION_STRING"],
-      "timestamp": 1748131200.0
-    }
-  ]
-}
-```
-
-### What is and isn't stored (GDPR)
-
-**Cloud proxy — `proxy.promptolian.com`**
-
-| Data | Stored server-side? | Who can access? | Retention |
-|---|---|---|---|
-| Message content (prompts, chat history) | **No** — processed in RAM, discarded after forwarding | Nobody | 0 |
-| LLM responses | **No** — forwarded only | Nobody | 0 |
-| Your Anthropic / OpenAI API key | **No** — forwarded in-flight only, never written to disk | Nobody | 0 |
-| Tool schemas | **Yes** — stored for session caching | You (account holder) | Session TTL (~5 min) |
-| Detection event: category name(s) | **Yes** — when a pattern fires | You only via `/proxy/pii-events` | Until account deletion |
-| Tokens saved counter | **Yes** | You | Subscription lifetime |
-| Email address | **Yes** — via Stripe at signup | Promptolian (billing only) | Subscription duration |
-
-> No message content ever touches server-side storage. Only the category name (e.g. `CONNECTION_STRING`) and risk level are stored — enough to know what to rotate, nothing that could reconstruct the original text.
-
-**Self-hosted proxy — `promptolian proxy` (local / SQLite)**
-
-| Data | Where it goes |
-|---|---|
-| Everything | Stays in your local SQLite file (`~/.promptolian/sessions.db`). Nothing is sent to Promptolian's servers. |
+Response header when pattern fires: `X-Promptolian-Sensitive: HIGH`
 
 ---
 
 ## Response headers
 
-Every proxied response includes diagnostic headers:
-
 ```http
-X-Promptolian-Cache-Hit: true
-X-Promptolian-Tokens-Saved: 540
 X-Promptolian-Session: a3f9c1d2
-X-Promptolian-Note: Tools re-injected from session cache. ~540 tokens billed at 10%.
+X-Promptolian-Tokens-Saved: 540
+X-Promptolian-Tool-Tokens-Saved: 320
+X-Promptolian-Cache-Hit: true
+X-Promptolian-Reset: true
 X-Promptolian-Sensitive: HIGH
 ```
 
@@ -246,12 +227,12 @@ X-Promptolian-Sensitive: HIGH
 ```bash
 pip install -r requirements-selfhost.txt
 python api/api.py          # REST API on :3001
-# or
-promptolian proxy          # transparent proxy on :3002
+python -m promptolian.proxy  # transparent proxy on :3002
 ```
 
 | Env var | Required | Description |
 |---|---|---|
+| `PROMPTOLIAN_API_KEY` | No | Key for cloud KV-sandwich compression on session reset |
 | `DATABASE_URL` | No | PostgreSQL URL — defaults to SQLite |
 | `PROMPTOLIAN_MASTER_KEY` | Cloud only | Activates API key auth |
 | `STRIPE_SECRET_KEY` | Cloud only | Billing |
@@ -263,21 +244,21 @@ promptolian proxy          # transparent proxy on :3002
 
 | Metric | Value |
 |---|---|
-| Tool schema savings (session avg) | ~90% |
+| Tool result token savings | **34.6%** (9 sessions, 49 tool results) |
+| Tool result fact retention | **99.0%** |
+| Tool schema savings | **~90%** session average |
 | Context quality score | **4.26 / 5** (vs Anthropic 3.44, OpenAI 3.35) |
-| Context compression | ~22% tokens removed |
+| Context compression | 22% tokens removed |
 | Proxy overhead | < 10ms |
 
-Context quality measured across 25 sessions, 5 task domains, using Factory.ai's 6-dimension probe scoring (Accuracy, Context, Artifact, Completeness, Continuity, Instruction). Baselines from Factory.ai May 2026 study.
-
-Full methodology: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
+Context quality measured across 25 sessions, 5 task domains, Factory.ai 6-dimension probe scoring. Full methodology: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
 
 ---
 
 ## Further reading
 
 - **Article**: [Everyone compresses their agent's context. Nobody measures what it forgets.](https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3) — Dev.to
-- **Interactive cost chart**: [promptolian.com/ucurve.html](https://promptolian.com/ucurve.html) — quality vs compression rate + break-even analysis
+- **Interactive cost chart**: [promptolian.com/ucurve.html](https://promptolian.com/ucurve.html)
 - **Full benchmarks**: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
 
 ---
@@ -291,15 +272,19 @@ website/
   benchmarks.html     context quality benchmark results
   ucurve.html         interactive cost/quality chart
   docs.html           integration docs
-  images/             article images (charts, diagrams)
 
 api/
   api.py              Flask REST API (port 3001)
   context_engine.py   KV-sandwich context compression pipeline
 
-promptolian/
+promptolian/          pip package (github.com/Maurizio-L/promptolian)
   proxy.py            transparent proxy (port 3002)
-  __main__.py         CLI entry point
+  compress.py         rule-based compression (no deps)
+  mcp_server.py       Claude Code MCP server
+
+tools/scripts/
+  gen_agentic_sessions.py       synthetic agentic session generator
+  benchmark_tool_compression.py tool compression benchmark runner
 
 extension/            browser extension (Chrome + Firefox)
 docs/                 OpenAPI spec
