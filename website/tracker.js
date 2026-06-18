@@ -17,13 +17,23 @@
     sessionStorage.setItem('_ptl_sid', sid);
   }
 
+  function getVisitorId() {
+    try {
+      if (localStorage.getItem('promptolian_gdpr') === 'declined') return null;
+      var vid = localStorage.getItem('_ptl_vid');
+      if (!vid) {
+        vid = 'v_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+        localStorage.setItem('_ptl_vid', vid);
+      }
+      return vid;
+    } catch (e) { return null; }
+  }
+
   function getUserId() {
     if (typeof window._ptlUserId === 'string' && window._ptlUserId) return window._ptlUserId;
-    // API key stored by dashboard.html — identifies paid/logged-in users
     try { var k = localStorage.getItem('promptolian_api_key'); if (k) return k; } catch (e) {}
-    // Email stored when user submits signup modal in pricing.html
-    try { var e = localStorage.getItem('promptolian_email'); if (e) return e; } catch (e) {}
-    return null;
+    try { var em = localStorage.getItem('promptolian_email'); if (em) return em; } catch (e) {}
+    return getVisitorId();
   }
 
   // text/plain avoids CORS preflight (simple request) — bypasses Firefox ETP blocking

@@ -265,6 +265,14 @@ tbody td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 12px
 </style>
 </head>
 <body>
+<div id="gdpr-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0e0e0e;color:#e0e0e0;padding:16px 24px;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid #333;font-size:13px;line-height:1.5;box-shadow:0 -4px 24px rgba(0,0,0,.3)">
+  <p style="margin:0;max-width:700px">We use <strong>no tracking cookies</strong>. This site loads Google Fonts which may set cookies. By continuing you accept our <a href="privacy.html" style="color:#c8f135;text-decoration:none">Privacy Policy</a>.</p>
+  <div style="display:flex;gap:10px;flex-shrink:0">
+    <button onclick="gdprDecline()" style="padding:8px 18px;border-radius:8px;border:1px solid #444;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:#aaa">Decline non-essential</button>
+    <button onclick="gdprAccept()" style="padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#c8f135;color:#0e0e0e">Accept &amp; continue</button>
+  </div>
+</div>
+<script>(function(){var k='promptolian_gdpr';if(!localStorage.getItem(k))document.getElementById('gdpr-banner').style.display='flex';window.gdprAccept=function(){localStorage.setItem(k,'accepted');document.getElementById('gdpr-banner').style.display='none';};window.gdprDecline=function(){localStorage.setItem(k,'declined');document.getElementById('gdpr-banner').style.display='none';try{localStorage.removeItem('_ptl_vid');}catch(e){}};})();</script>
 
 <header class="topnav">
   <a href="index.html" class="nav-logo">

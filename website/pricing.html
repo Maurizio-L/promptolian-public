@@ -209,6 +209,7 @@ footer a:hover{color:#aaa}
   window.gdprAccept = function(){ localStorage.setItem(k,'accepted'); document.getElementById('gdpr-banner').style.display='none'; };
   window.gdprDecline = function(){
     localStorage.setItem(k,'declined'); document.getElementById('gdpr-banner').style.display='none';
+    try { localStorage.removeItem('_ptl_vid'); } catch(e) {}
     var sheets = document.styleSheets;
     for(var i=0;i<sheets.length;i++){try{var rules=sheets[i].cssRules||[];for(var j=0;j<rules.length;j++){if(rules[j].href&&rules[j].href.includes('fonts.googleapis')){sheets[i].deleteRule(j);break;}}}catch(e){}}
   };
