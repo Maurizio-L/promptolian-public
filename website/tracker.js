@@ -21,7 +21,7 @@
     return (typeof window._ptlUserId === 'string' && window._ptlUserId) ? window._ptlUserId : null;
   }
 
-  // fetch-based send — visible in Network panel, logs errors to console
+  // text/plain avoids CORS preflight (simple request) — bypasses Firefox ETP blocking
   function send(payload) {
     var body = JSON.stringify(Object.assign(
       { session_id: sid, page: PAGE, referrer: REF, user_id: getUserId() },
@@ -29,27 +29,26 @@
     ));
     fetch(API + '/website-event', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: body,
       keepalive: true,
     }).catch(function (err) {
-      console.warn('[promptolian tracker] failed to send event:', err);
+      console.warn('[promptolian tracker]', err);
     });
   }
 
-  // sendBeacon — for unload events only (browser may kill fetch on tab close)
+  // sendBeacon for unload — text/plain also skips preflight here
   function sendBeacon(payload) {
     var body = JSON.stringify(Object.assign(
       { session_id: sid, page: PAGE, referrer: REF, user_id: getUserId() },
       payload
     ));
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(API + '/website-event', new Blob([body], { type: 'application/json' }));
+      navigator.sendBeacon(API + '/website-event', new Blob([body], { type: 'text/plain' }));
     } else {
-      // keepalive fetch as fallback
       fetch(API + '/website-event', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: body,
         keepalive: true,
       }).catch(function () {});

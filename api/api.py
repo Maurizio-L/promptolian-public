@@ -821,7 +821,8 @@ def website_event():
     if request.headers.get('DNT') == '1':
         return '', 204
 
-    data = request.get_json(silent=True) or {}
+    # force=True: accept text/plain sent by tracker to avoid CORS preflight
+    data = request.get_json(force=True, silent=True) or {}
     session_id = str(data.get('session_id', '')).strip()[:64]
     page       = str(data.get('page', '')).strip()[:200]
     event_type = str(data.get('event_type', '')).strip()[:32]
