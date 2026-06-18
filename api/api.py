@@ -758,7 +758,7 @@ def health():
         'engine_v4':          _ENGINE_AVAILABLE,
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
-        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
+        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats'],
         'timestamp':          datetime.now().isoformat(),
     })
 
