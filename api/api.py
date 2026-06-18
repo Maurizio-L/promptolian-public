@@ -202,24 +202,49 @@ class CompressionRepository:
 
     def get_stats(self) -> dict:
         conn = self._connect()
-        row = conn.execute('''
-            SELECT COUNT(*) as total,
-                   SUM(original_tokens - compressed_tokens) as total_saved,
-                   ROUND(AVG(pct_saved),1) as avg_pct
-            FROM compression_events
-        ''').fetchone()
-        by_tier = conn.execute('''
-            SELECT mode, COUNT(*) as n, ROUND(AVG(pct_saved),1) as avg_pct
-            FROM compression_events GROUP BY mode
-        ''').fetchall()
-        conn.close()
-        return {
-            'total_compressions':  row['total'] or 0,
-            'total_tokens_saved':  row['total_saved'] or 0,
-            'avg_compression_pct': row['avg_pct'] or 0,
-            'by_tier': {r['mode']: {'count': r['n'], 'avg_pct': r['avg_pct']}
-                        for r in by_tier},
-        }
+        try:
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute('''
+                    SELECT COUNT(*) AS total,
+                           SUM(original_tokens - compressed_tokens) AS total_saved,
+                           ROUND(AVG(pct_saved)::numeric, 1) AS avg_pct
+                    FROM compression_events
+                ''')
+                row = cur.fetchone()
+                cur.execute('''
+                    SELECT mode, COUNT(*) AS n, ROUND(AVG(pct_saved)::numeric, 1) AS avg_pct
+                    FROM compression_events GROUP BY mode
+                ''')
+                by_tier = cur.fetchall()
+                cur.close()
+                return {
+                    'total_compressions':  row[0] or 0,
+                    'total_tokens_saved':  row[1] or 0,
+                    'avg_compression_pct': float(row[2] or 0),
+                    'by_tier': {r[0]: {'count': r[1], 'avg_pct': float(r[2] or 0)}
+                                for r in by_tier},
+                }
+            else:
+                row = conn.execute('''
+                    SELECT COUNT(*) as total,
+                           SUM(original_tokens - compressed_tokens) as total_saved,
+                           ROUND(AVG(pct_saved),1) as avg_pct
+                    FROM compression_events
+                ''').fetchone()
+                by_tier = conn.execute('''
+                    SELECT mode, COUNT(*) as n, ROUND(AVG(pct_saved),1) as avg_pct
+                    FROM compression_events GROUP BY mode
+                ''').fetchall()
+                return {
+                    'total_compressions':  row['total'] or 0,
+                    'total_tokens_saved':  row['total_saved'] or 0,
+                    'avg_compression_pct': row['avg_pct'] or 0,
+                    'by_tier': {r['mode']: {'count': r['n'], 'avg_pct': r['avg_pct']}
+                                for r in by_tier},
+                }
+        finally:
+            conn.close()
 
     def log_context_event(
         self,
@@ -234,16 +259,20 @@ class CompressionRepository:
         platform: str,
     ) -> None:
         try:
+            p = self._placeholder()
             conn = self._connect()
-            conn.execute(
-                'INSERT INTO context_events '
-                '(api_key, mode, original_tokens, optimized_tokens, tokens_saved, '
-                'messages_total, messages_pruned, summary_tokens, platform) '
-                'VALUES (?,?,?,?,?,?,?,?,?)',
-                (api_key, mode, original_tokens, optimized_tokens, tokens_saved,
-                 messages_total, messages_pruned, summary_tokens, platform),
+            sql = (
+                f'INSERT INTO context_events '
+                f'(api_key, mode, original_tokens, optimized_tokens, tokens_saved, '
+                f'messages_total, messages_pruned, summary_tokens, platform) '
+                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p})'
             )
-            conn.commit()
+            vals = (api_key, mode, original_tokens, optimized_tokens, tokens_saved,
+                    messages_total, messages_pruned, summary_tokens, platform)
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, vals); conn.commit()
             conn.close()
         except Exception:
             pass
@@ -261,16 +290,20 @@ class CompressionRepository:
         claude_session_id: Optional[str],
     ) -> None:
         try:
+            p = self._placeholder()
             conn = self._connect()
-            conn.execute(
-                'INSERT INTO mcp_events '
-                '(api_key, tool_name, tier, tool_session_id, original_tokens, '
-                'compressed_tokens, pct_saved, cache_hit, claude_session_id) '
-                'VALUES (?,?,?,?,?,?,?,?,?)',
-                (api_key, tool_name, tier, tool_session_id, original_tokens,
-                 compressed_tokens, pct_saved, 1 if cache_hit else 0, claude_session_id),
+            sql = (
+                f'INSERT INTO mcp_events '
+                f'(api_key, tool_name, tier, tool_session_id, original_tokens, '
+                f'compressed_tokens, pct_saved, cache_hit, claude_session_id) '
+                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p})'
             )
-            conn.commit()
+            vals = (api_key, tool_name, tier, tool_session_id, original_tokens,
+                    compressed_tokens, pct_saved, 1 if cache_hit else 0, claude_session_id)
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, vals); conn.commit()
             conn.close()
         except Exception:
             pass
@@ -306,28 +339,53 @@ class CompressionRepository:
     ) -> None:
         try:
             cr = round(1 - dsl_tokens / raw_tokens, 4) if raw_tokens else 0.0
+            p = self._placeholder()
             conn = self._connect()
-            if is_first_turn:
-                conn.execute(
-                    'INSERT OR IGNORE INTO mcp_tool_sessions '
-                    '(session_id, api_key, tool_names, tool_count, raw_tokens, dsl_tokens, '
-                    'cr_turn1, turn_count, tokens_saved_total, cr_session_avg) '
-                    'VALUES (?,?,?,?,?,?,?,1,?,?)',
-                    (session_id, api_key, json.dumps(tool_names), len(tool_names),
-                     raw_tokens, dsl_tokens, cr, tokens_saved, cr),
-                )
+            if self._is_pg():
+                cur = conn.cursor()
+                if is_first_turn:
+                    cur.execute(
+                        f'INSERT INTO mcp_tool_sessions '
+                        f'(session_id, api_key, tool_names, tool_count, raw_tokens, dsl_tokens, '
+                        f'cr_turn1, turn_count, tokens_saved_total, cr_session_avg) '
+                        f'VALUES ({p},{p},{p},{p},{p},{p},{p},1,{p},{p}) ON CONFLICT (session_id) DO NOTHING',
+                        (session_id, api_key, json.dumps(tool_names), len(tool_names),
+                         raw_tokens, dsl_tokens, cr, tokens_saved, cr),
+                    )
+                else:
+                    cur.execute(
+                        f'UPDATE mcp_tool_sessions SET '
+                        f'turn_count = turn_count + 1, '
+                        f'tokens_saved_total = tokens_saved_total + {p}, '
+                        f'cr_session_avg = ROUND((tokens_saved_total + {p}) * 1.0 / '
+                        f'    (raw_tokens * (turn_count + 1)), 4), '
+                        f'last_used_at = NOW() '
+                        f'WHERE session_id = {p}',
+                        (tokens_saved, tokens_saved, session_id),
+                    )
+                conn.commit(); cur.close()
             else:
-                conn.execute(
-                    'UPDATE mcp_tool_sessions SET '
-                    'turn_count = turn_count + 1, '
-                    'tokens_saved_total = tokens_saved_total + ?, '
-                    'cr_session_avg = ROUND((tokens_saved_total + ?) * 1.0 / '
-                    '    (raw_tokens * (turn_count + 1)), 4), '
-                    'last_used_at = datetime("now") '
-                    'WHERE session_id = ?',
-                    (tokens_saved, tokens_saved, session_id),
-                )
-            conn.commit()
+                if is_first_turn:
+                    conn.execute(
+                        'INSERT OR IGNORE INTO mcp_tool_sessions '
+                        '(session_id, api_key, tool_names, tool_count, raw_tokens, dsl_tokens, '
+                        'cr_turn1, turn_count, tokens_saved_total, cr_session_avg) '
+                        'VALUES (?,?,?,?,?,?,?,1,?,?)',
+                        (session_id, api_key, json.dumps(tool_names), len(tool_names),
+                         raw_tokens, dsl_tokens, cr, tokens_saved, cr),
+                    )
+                else:
+                    conn.execute(
+                        'UPDATE mcp_tool_sessions SET '
+                        'turn_count = turn_count + 1, '
+                        'tokens_saved_total = tokens_saved_total + ?, '
+                        'cr_session_avg = ROUND((tokens_saved_total + ?) * 1.0 / '
+                        '    (raw_tokens * (turn_count + 1)), 4), '
+                        'last_used_at = datetime("now") '
+                        'WHERE session_id = ?',
+                        (tokens_saved, tokens_saved, session_id),
+                    )
+                conn.commit()
             conn.close()
         except Exception:
             pass
@@ -372,13 +430,17 @@ class CompressionRepository:
         rating: int,
         comment: str,
     ) -> None:
-        conn = self._connect()
-        conn.execute(
-            'INSERT INTO feedback (original, compressed, rating, comment) VALUES (?,?,?,?)',
-            (original, compressed, rating, comment),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = f'INSERT INTO feedback (original, compressed, rating, comment) VALUES ({p},{p},{p},{p})'
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, (original, compressed, rating, comment)); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, (original, compressed, rating, comment)); conn.commit()
+            conn.close()
+        except Exception:
+            pass
 
     def log_chat(self, session_id: str, user_message: str, bot_response: str) -> None:
         try:
@@ -561,6 +623,13 @@ except Exception as _e:
     _engine_instance  = None
     _ENGINE_AVAILABLE = False
 
+try:
+    import context_engine as _ce_module  # type: ignore
+    _ce_module.ContextEngine()  # verify it initialises
+    _CONTEXT_ENGINE_AVAILABLE = True
+except Exception:
+    _CONTEXT_ENGINE_AVAILABLE = False
+
 _svc = CompressionService(engine=_engine_instance)
 
 # In-process session cache for /compress-tools  (keyed by session_id)
@@ -574,13 +643,15 @@ _TOOL_SESSION_CACHE: dict[str, set] = {}
 @app.route('/health')
 def health():
     return jsonify({
-        'status':           'ok',
-        'service':          'Promptolian API',
-        'version':          '2.2.0',
-        'engine_v4':        _ENGINE_AVAILABLE,
-        'tiers_available':  ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
-        'endpoints':        ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
-        'timestamp':        datetime.now().isoformat(),
+        'status':             'ok',
+        'service':            'Promptolian API',
+        'version':            '2.3.5',
+        'context_engine':     _CONTEXT_ENGINE_AVAILABLE,
+        'engine_v4':          _ENGINE_AVAILABLE,
+        'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
+        'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
+        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback'],
+        'timestamp':          datetime.now().isoformat(),
     })
 
 
