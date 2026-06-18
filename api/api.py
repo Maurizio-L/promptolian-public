@@ -758,7 +758,7 @@ def health():
         'engine_v4':          _ENGINE_AVAILABLE,
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
-        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats', '/visit-count'],
+        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats', '/visit-count', '/admin/subscription'],
         'timestamp':          datetime.now().isoformat(),
     })
 
@@ -878,6 +878,23 @@ def website_stats():
         return jsonify(_repo.get_website_stats(days))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/subscription', methods=['POST'])
+def admin_subscription():
+    if not _MASTER_KEY or request.headers.get('X-Master-Key') != _MASTER_KEY:
+        return jsonify({'error': 'unauthorized'}), 401
+    data = request.get_json(force=True, silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    plan  = (data.get('plan')  or 'free').strip()
+    if not email:
+        return jsonify({'error': 'email required'}), 400
+    if plan not in ('free', 'solo', 'team'):
+        return jsonify({'error': 'plan must be free, solo, or team'}), 400
+    import secrets
+    sub_id = data.get('stripe_sub_id') or f'manual_{secrets.token_hex(8)}'
+    _repo.activate_subscription(email, plan, sub_id)
+    return jsonify({'ok': True, 'email': email, 'plan': plan, 'sub_id': sub_id})
 
 
 @app.route('/visit-count')
