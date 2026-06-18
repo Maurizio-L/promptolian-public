@@ -612,6 +612,7 @@ async function submitSignup(){
     });
     var data = await res.json();
     if (data.url) {
+      try { localStorage.setItem('promptolian_email', email); } catch(e) {}
       window.location.href = data.url;
     } else {
       errEl.textContent = data.error || 'Something went wrong. Try again.';

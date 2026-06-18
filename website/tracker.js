@@ -18,7 +18,12 @@
   }
 
   function getUserId() {
-    return (typeof window._ptlUserId === 'string' && window._ptlUserId) ? window._ptlUserId : null;
+    if (typeof window._ptlUserId === 'string' && window._ptlUserId) return window._ptlUserId;
+    // API key stored by dashboard.html — identifies paid/logged-in users
+    try { var k = localStorage.getItem('promptolian_api_key'); if (k) return k; } catch (e) {}
+    // Email stored when user submits signup modal in pricing.html
+    try { var e = localStorage.getItem('promptolian_email'); if (e) return e; } catch (e) {}
+    return null;
   }
 
   // text/plain avoids CORS preflight (simple request) — bypasses Firefox ETP blocking
