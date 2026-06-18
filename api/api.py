@@ -72,6 +72,21 @@ class CompressionRepository:
             rating INTEGER CHECK (rating BETWEEN 1 AND 5), comment TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS website_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            user_id TEXT,
+            page TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            element TEXT,
+            duration_sec INTEGER,
+            scroll_pct INTEGER,
+            country TEXT,
+            region TEXT,
+            referrer TEXT,
+            device_type TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
     """
 
     def __init__(self, db_path: str) -> None:
@@ -149,6 +164,23 @@ class CompressionRepository:
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS website_events (
+                id SERIAL PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                user_id TEXT,
+                page TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                element TEXT,
+                duration_sec INTEGER,
+                scroll_pct INTEGER,
+                country TEXT,
+                region TEXT,
+                referrer TEXT,
+                device_type TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
         conn.commit()
         cur.close()
         conn.close()
@@ -199,6 +231,82 @@ class CompressionRepository:
             return row[0] if row else 0
         except Exception:
             return 0
+
+    def log_website_event(
+        self,
+        session_id: str,
+        page: str,
+        event_type: str,
+        user_id: Optional[str] = None,
+        element: Optional[str] = None,
+        duration_sec: Optional[int] = None,
+        scroll_pct: Optional[int] = None,
+        country: Optional[str] = None,
+        region: Optional[str] = None,
+        referrer: Optional[str] = None,
+        device_type: Optional[str] = None,
+    ) -> None:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = (
+                f'INSERT INTO website_events '
+                f'(session_id, user_id, page, event_type, element, duration_sec, scroll_pct, '
+                f'country, region, referrer, device_type) '
+                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p},{p})'
+            )
+            vals = (session_id, user_id, page, event_type, element, duration_sec, scroll_pct,
+                    country, region, referrer, device_type)
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, vals); conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    def get_website_stats(self, days: int = 30) -> dict:
+        conn = self._connect()
+        try:
+            if self._is_pg():
+                cur = conn.cursor()
+                interval = 'INTERVAL \'1 day\' * %s'
+                cur.execute(f'SELECT COUNT(*) FROM website_events WHERE event_type=%s AND created_at > NOW() - {interval}', ('pageview', days))
+                total_pageviews = cur.fetchone()[0] or 0
+                cur.execute(f'SELECT COUNT(DISTINCT session_id) FROM website_events WHERE created_at > NOW() - {interval}', (days,))
+                unique_sessions = cur.fetchone()[0] or 0
+                cur.execute(f'SELECT page, COUNT(*) AS n FROM website_events WHERE event_type=%s AND created_at > NOW() - {interval} GROUP BY page ORDER BY n DESC LIMIT 10', ('pageview', days))
+                top_pages = [{'page': r[0], 'views': r[1]} for r in cur.fetchall()]
+                cur.execute(f'SELECT country, COUNT(*) AS n FROM website_events WHERE event_type=%s AND country IS NOT NULL AND created_at > NOW() - {interval} GROUP BY country ORDER BY n DESC LIMIT 20', ('pageview', days))
+                top_countries = [{'country': r[0], 'views': r[1]} for r in cur.fetchall()]
+                cur.execute(f'SELECT device_type, COUNT(*) AS n FROM website_events WHERE event_type=%s AND device_type IS NOT NULL AND created_at > NOW() - {interval} GROUP BY device_type', ('pageview', days))
+                devices = {r[0]: r[1] for r in cur.fetchall()}
+                cur.execute(f'SELECT page, ROUND(AVG(duration_sec)::numeric,1) FROM website_events WHERE event_type=%s AND created_at > NOW() - {interval} GROUP BY page ORDER BY 2 DESC LIMIT 10', ('time_on_page', days))
+                avg_time = [{'page': r[0], 'avg_sec': float(r[1] or 0)} for r in cur.fetchall()]
+                cur.execute(f'SELECT scroll_pct, COUNT(*) FROM website_events WHERE event_type=%s AND scroll_pct IS NOT NULL AND created_at > NOW() - {interval} GROUP BY scroll_pct ORDER BY scroll_pct', ('scroll_depth', days))
+                scroll = {str(r[0]): r[1] for r in cur.fetchall()}
+                cur.close()
+            else:
+                d = f'-{days} days'
+                total_pageviews = conn.execute("SELECT COUNT(*) FROM website_events WHERE event_type='pageview' AND created_at > datetime('now',?)", (d,)).fetchone()[0] or 0
+                unique_sessions = conn.execute("SELECT COUNT(DISTINCT session_id) FROM website_events WHERE created_at > datetime('now',?)", (d,)).fetchone()[0] or 0
+                top_pages = [{'page': r[0], 'views': r[1]} for r in conn.execute("SELECT page, COUNT(*) AS n FROM website_events WHERE event_type='pageview' AND created_at > datetime('now',?) GROUP BY page ORDER BY n DESC LIMIT 10", (d,)).fetchall()]
+                top_countries = [{'country': r[0], 'views': r[1]} for r in conn.execute("SELECT country, COUNT(*) AS n FROM website_events WHERE event_type='pageview' AND country IS NOT NULL AND created_at > datetime('now',?) GROUP BY country ORDER BY n DESC LIMIT 20", (d,)).fetchall()]
+                devices = {r[0]: r[1] for r in conn.execute("SELECT device_type, COUNT(*) AS n FROM website_events WHERE event_type='pageview' AND device_type IS NOT NULL AND created_at > datetime('now',?) GROUP BY device_type", (d,)).fetchall()}
+                avg_time = [{'page': r[0], 'avg_sec': float(r[1] or 0)} for r in conn.execute("SELECT page, ROUND(AVG(duration_sec),1) FROM website_events WHERE event_type='time_on_page' AND created_at > datetime('now',?) GROUP BY page ORDER BY 2 DESC LIMIT 10", (d,)).fetchall()]
+                scroll = {str(r[0]): r[1] for r in conn.execute("SELECT scroll_pct, COUNT(*) FROM website_events WHERE event_type='scroll_depth' AND scroll_pct IS NOT NULL AND created_at > datetime('now',?) GROUP BY scroll_pct ORDER BY scroll_pct", (d,)).fetchall()}
+            return {
+                'period_days':      days,
+                'total_pageviews':  total_pageviews,
+                'unique_sessions':  unique_sessions,
+                'top_pages':        top_pages,
+                'top_countries':    top_countries,
+                'devices':          devices,
+                'avg_time_on_page': avg_time,
+                'scroll_depth':     scroll,
+            }
+        finally:
+            conn.close()
 
     def get_stats(self) -> dict:
         conn = self._connect()
@@ -701,6 +809,72 @@ def compress_route():
 def stats():
     try:
         return jsonify(_repo.get_stats())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+_MASTER_KEY = os.getenv('PROMPTOLIAN_MASTER_KEY', '')
+
+
+@app.route('/website-event', methods=['POST'])
+def website_event():
+    if request.headers.get('DNT') == '1':
+        return '', 204
+
+    data = request.get_json(silent=True) or {}
+    session_id = str(data.get('session_id', '')).strip()[:64]
+    page       = str(data.get('page', '')).strip()[:200]
+    event_type = str(data.get('event_type', '')).strip()[:32]
+    if not session_id or not page or not event_type:
+        return jsonify({'error': 'session_id, page, event_type required'}), 400
+    if event_type not in ('pageview', 'click', 'scroll_depth', 'time_on_page'):
+        return jsonify({'error': 'invalid event_type'}), 400
+
+    user_id      = str(data.get('user_id', ''))[:64]  or None
+    element      = str(data.get('element', ''))[:64]  or None
+    duration_sec = int(data['duration_sec']) if isinstance(data.get('duration_sec'), (int, float)) else None
+    scroll_pct   = int(data['scroll_pct'])   if isinstance(data.get('scroll_pct'),   (int, float)) else None
+    referrer     = str(data.get('referrer', 'direct'))[:200]
+
+    ua = request.headers.get('User-Agent', '').lower()
+    if 'tablet' in ua or 'ipad' in ua:
+        device_type = 'tablet'
+    elif 'mobile' in ua or 'android' in ua or 'iphone' in ua:
+        device_type = 'mobile'
+    else:
+        device_type = 'desktop'
+
+    country, region = None, None
+    raw_ip = (request.headers.get('X-Forwarded-For', '') or request.remote_addr or '').split(',')[0].strip()
+    if raw_ip and raw_ip not in ('127.0.0.1', '::1', ''):
+        try:
+            import httpx
+            geo = httpx.get(
+                f'http://ip-api.com/json/{raw_ip}?fields=status,countryCode,regionName',
+                timeout=2.0,
+            ).json()
+            if geo.get('status') == 'success':
+                country = geo.get('countryCode')
+                region  = geo.get('regionName')
+        except Exception:
+            pass
+
+    _repo.log_website_event(
+        session_id=session_id, page=page, event_type=event_type,
+        user_id=user_id, element=element, duration_sec=duration_sec,
+        scroll_pct=scroll_pct, country=country, region=region,
+        referrer=referrer, device_type=device_type,
+    )
+    return '', 204
+
+
+@app.route('/website-stats')
+def website_stats():
+    if _MASTER_KEY and request.headers.get('X-Master-Key') != _MASTER_KEY:
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        days = max(1, min(365, int(request.args.get('days', 30))))
+        return jsonify(_repo.get_website_stats(days))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

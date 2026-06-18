@@ -912,8 +912,8 @@
   <h1>Your agent keeps forgetting things.<br><span class="accent">We fixed it.</span></h1>
   <p class="hero-sub">Transparent proxy that preserves context quality and eliminates tool schema waste. One line to add. Zero changes to your agent.</p>
   <div class="hero-ctas">
-    <a href="#quickstart" class="btn-primary">Get started →</a>
-    <a href="benchmarks.html" class="btn-ghost">Read the benchmark →</a>
+    <a href="#quickstart" class="btn-primary" data-track="hero_get_started">Get started →</a>
+    <a href="benchmarks.html" class="btn-ghost" data-track="hero_benchmark">Read the benchmark →</a>
   </div>
   <p class="hero-devto">Published on Dev.to: <a href="https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3" target="_blank" rel="noopener">Everyone compresses their agent's context. Nobody measures what it forgets.</a></p>
 </section>
@@ -1201,7 +1201,7 @@
         <li>SQLite sessions</li>
         <li>Claude + OpenAI compatible</li>
       </ul>
-      <a href="#quickstart" class="btn-pricing-ghost">Get started</a>
+      <a href="#quickstart" class="btn-pricing-ghost" data-track="pricing_free_cta">Get started</a>
     </div>
 
     <!-- Solo -->
@@ -1217,7 +1217,7 @@
         <li>PostgreSQL sessions</li>
         <li>Savings dashboard</li>
       </ul>
-      <a href="pricing.html" class="btn-pricing-primary">Subscribe</a>
+      <a href="pricing.html" class="btn-pricing-primary" data-track="pricing_solo_cta">Subscribe</a>
     </div>
 
     <!-- Team -->
@@ -1231,7 +1231,7 @@
         <li>Per-project cost breakdown</li>
         <li>Priority support</li>
       </ul>
-      <a href="pricing.html" class="btn-pricing-ghost">Subscribe</a>
+      <a href="pricing.html" class="btn-pricing-ghost" data-track="pricing_team_cta">Subscribe</a>
     </div>
   </div>
 
@@ -1348,6 +1348,6 @@
     });
   });
 </script>
-
+<script src="tracker.js" defer></script>
 </body>
 </html>

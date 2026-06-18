@@ -16,7 +16,7 @@ a{color:#0066cc}
 <body>
 
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: 16 May 2026</p>
+<p class="updated">Last updated: 18 June 2026</p>
 
 <h2>1. Who we are</h2>
 <p>Promptolian is operated by Maurizio Lospi, based in Switzerland. Contact: <a href="mailto:support@promptolian.com">support@promptolian.com</a></p>
@@ -25,13 +25,13 @@ a{color:#0066cc}
 <p>We collect the minimum necessary to operate the service:</p>
 <ul>
   <li><strong>Proxy:</strong> The hosted proxy (Solo/Team plans) forwards API requests to Anthropic/OpenAI. Your prompt content is not logged or stored. Only tool schemas are cached (as anonymised JSON) for session continuity.</li>
-  <li><strong>Website:</strong> Anonymous usage counters (total compressions, average compression ratio). No personal data is stored.</li>
+  <li><strong>Website analytics:</strong> We run first-party analytics via a script hosted on our own domain. Each page load generates an anonymous session ID (stored in <code>sessionStorage</code> — deleted when you close the tab, no cross-session tracking). We record: page visited, event type (pageview, click, scroll depth, time on page), element clicked, approximate country and region (derived server-side from your IP address — your IP is never stored), device type (desktop/mobile/tablet), and referring URL. No cookies are set. If your browser sends a <code>DNT: 1</code> (Do Not Track) header, no data is collected at all.</li>
   <li><strong>API users:</strong> Compression event logs tied to your API key — token counts and tier used. No prompt content is stored.</li>
   <li><strong>Subscribers:</strong> Email address and Stripe customer ID for billing. Payment data is handled entirely by Stripe and never touches our servers.</li>
 </ul>
 
 <h2>3. Cookies and third-party services</h2>
-<p>This website uses no analytics cookies (no Google Analytics, no Meta Pixel). We load fonts from Google Fonts, which may set cookies per Google's own privacy policy. You can decline this in our consent banner.</p>
+<p>This website sets <strong>no cookies</strong> and uses no third-party analytics (no Google Analytics, no Meta Pixel). Our analytics script is first-party and uses <code>sessionStorage</code> only. We load fonts from Google Fonts, which may set cookies per Google's own privacy policy.</p>
 
 <h2>4. Your rights (GDPR)</h2>
 <p>If you are in the EEA/UK, you have the right to access, correct, or delete your data at any time. Email <a href="mailto:support@promptolian.com">support@promptolian.com</a> and we will respond within 30 days.</p>
@@ -46,5 +46,6 @@ a{color:#0066cc}
 <p>We will post any material changes to this page and update the "Last updated" date. Continued use after changes constitutes acceptance.</p>
 
 <p style="margin-top:48px"><a href="/">← Back to Promptolian</a></p>
+<script src="tracker.js" defer></script>
 </body>
 </html>

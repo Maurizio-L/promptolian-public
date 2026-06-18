@@ -235,8 +235,8 @@ footer a:hover{color:#aaa}
   <h1>Your agent, <em>without</em><br>the self-hosting.</h1>
   <p>Promptolian runs a cloud proxy that caches your tool schemas automatically. Point your agent at <code style="font-family:monospace;font-size:14px;background:var(--white);padding:2px 7px;border-radius:6px;border:1px solid var(--border)">proxy.promptolian.com</code> and stop paying for the same tokens twice.</p>
   <div class="hero-btns">
-    <a href="docs.html" class="btn btn-primary">Read the docs &#x2192;</a>
-    <a href="#pricing" class="btn btn-secondary">See pricing</a>
+    <a href="docs.html" class="btn btn-primary" data-track="pricing_hero_docs">Read the docs &#x2192;</a>
+    <a href="#pricing" class="btn btn-secondary" data-track="pricing_hero_plans">See pricing</a>
   </div>
 </div>
 
@@ -339,7 +339,7 @@ footer a:hover{color:#aaa}
         <li><span class="price-dim">✗ Persistent cloud sessions</span></li>
         <li><span class="price-dim">✗ Savings dashboard</span></li>
       </ul>
-      <a href="docs.html" class="price-btn" style="text-align:center;text-decoration:none;display:block;line-height:1.6">Get started free</a>
+      <a href="docs.html" class="price-btn" style="text-align:center;text-decoration:none;display:block;line-height:1.6" data-track="plan_free_cta">Get started free</a>
     </div>
 
     <!-- SOLO -->
@@ -360,7 +360,7 @@ footer a:hover{color:#aaa}
         <li><span class="check">✓</span><strong>Savings dashboard</strong> — tokens saved + $ saved</li>
         <li><span class="check">✓</span>Email support</li>
       </ul>
-      <button class="price-btn" onclick="openSignup('solo')">Get Solo &#x2192;</button>
+      <button class="price-btn" onclick="openSignup('solo')" data-track="plan_solo_cta">Get Solo &#x2192;</button>
     </div>
 
     <!-- TEAM -->
@@ -380,7 +380,7 @@ footer a:hover{color:#aaa}
         <li><span class="check">✓</span>Priority email support</li>
         <li><span class="check">✓</span>Key rotation for all project keys</li>
       </ul>
-      <button class="price-btn" onclick="openSignup('team')">Get Team &#x2192;</button>
+      <button class="price-btn" onclick="openSignup('team')" data-track="plan_team_cta">Get Team &#x2192;</button>
     </div>
 
   </div>
@@ -729,5 +729,6 @@ async function submitSignup(){
   }
 })();
 </script>
+<script src="tracker.js" defer></script>
 </body>
 </html>
