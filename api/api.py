@@ -758,7 +758,7 @@ def health():
         'engine_v4':          _ENGINE_AVAILABLE,
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
-        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats'],
+        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats', '/visit-count'],
         'timestamp':          datetime.now().isoformat(),
     })
 
@@ -878,6 +878,25 @@ def website_stats():
         return jsonify(_repo.get_website_stats(days))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/visit-count')
+def visit_count():
+    try:
+        conn = _repo._connect()
+        if _repo._is_pg():
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM website_events WHERE event_type='pageview'")
+            count = cur.fetchone()[0] or 0
+            cur.close()
+        else:
+            count = conn.execute("SELECT COUNT(*) FROM website_events WHERE event_type='pageview'").fetchone()[0] or 0
+        conn.close()
+        resp = jsonify({'count': int(count)})
+        resp.headers['Cache-Control'] = 'public, max-age=300'
+        return resp
+    except Exception:
+        return jsonify({'count': 0})
 
 
 @app.route('/feedback', methods=['POST'])

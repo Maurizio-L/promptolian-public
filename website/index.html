@@ -234,10 +234,10 @@
     }
 
     .stats-inner {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       padding: 0 32px;
     }
 
@@ -899,7 +899,8 @@
         padding: 0 20px;
       }
       .stat-cell:nth-child(2) { border-right: none; }
-      .stat-cell:nth-child(3) { border-right: none; }
+      .stat-cell:nth-child(4) { border-right: none; }
+      .stat-cell:nth-child(6) { border-right: none; }
 
       .section { padding: 56px 20px; }
 
@@ -981,15 +982,23 @@
     </div>
     <div class="stat-cell">
       <div class="stat-value">34.6%</div>
-      <div class="stat-label">Tool output token savings</div>
+      <div class="stat-label">Tool output savings</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">~90%</div>
-      <div class="stat-label">Tool schema savings</div>
+      <div class="stat-label">Schema savings</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">99%</div>
-      <div class="stat-label">Fact retention after compression</div>
+      <div class="stat-label">Fact retention</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value" id="stat-gh-stars">—</div>
+      <div class="stat-label">GitHub stars</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value" id="stat-visits">—</div>
+      <div class="stat-label">Developer visits</div>
     </div>
   </div>
 </div>
@@ -1403,5 +1412,29 @@
   });
 </script>
 <script src="tracker.js" defer></script>
+<script>
+(function () {
+  function fmt(n) {
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  // GitHub stars
+  fetch('https://api.github.com/repos/Maurizio-L/promptolian-public')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.stargazers_count != null) set('stat-gh-stars', fmt(d.stargazers_count)); })
+    .catch(function() {});
+
+  // Website visit count
+  fetch('https://api.promptolian.com/visit-count')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.count != null) set('stat-visits', fmt(d.count)); })
+    .catch(function() {});
+})();
+</script>
 </body>
 </html>
