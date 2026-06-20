@@ -196,10 +196,12 @@ async function login() {
   const err = document.getElementById('login-err');
   btn.disabled = true; btn.textContent = 'Checking…';
   err.style.display = 'none';
+  err.textContent = 'Invalid or expired key. Subscribe to get one.';
   try {
     const res  = await fetch(API + '/stats/me', { headers: { 'X-API-Key': key } });
     const data = await res.json();
-    if (!res.ok || data.error) { err.style.display = 'block'; return; }
+    if (res.status === 401) { err.style.display = 'block'; return; }
+    if (!res.ok || data.error) { err.textContent = data.error || 'Server error. Try again.'; err.style.display = 'block'; return; }
     localStorage.setItem(LS, key);
     _key = key;
     renderKPIs(data);
