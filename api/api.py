@@ -876,7 +876,7 @@ _SMTP_HOST   = os.getenv('SMTP_HOST', '')
 _SMTP_PORT   = int(os.getenv('SMTP_PORT', '587'))
 _SMTP_USER   = os.getenv('SMTP_USER', '')
 _SMTP_PASS   = os.getenv('SMTP_PASS', '')
-_SMTP_FROM   = os.getenv('SMTP_FROM', _SMTP_USER)
+_SMTP_FROM   = os.getenv('SMTP_FROM', 'noreply@promptolian.com')
 
 
 def _send_key_email(to_email: str, api_key: str, plan: str, expires_at: Optional[str] = None) -> bool:
@@ -921,7 +921,7 @@ The Promptolian team
     msg['From']    = _SMTP_FROM
     msg['To']      = to_email
     try:
-        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT) as s:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT, timeout=10) as s:
             s.starttls()
             s.login(_SMTP_USER, _SMTP_PASS)
             s.sendmail(_SMTP_FROM, [to_email], msg.as_string())
