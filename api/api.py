@@ -87,6 +87,18 @@ class CompressionRepository:
             device_type TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS context_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_key TEXT, mode TEXT,
+            original_tokens INTEGER NOT NULL DEFAULT 0,
+            optimized_tokens INTEGER NOT NULL DEFAULT 0,
+            tokens_saved INTEGER NOT NULL DEFAULT 0,
+            messages_total INTEGER NOT NULL DEFAULT 0,
+            messages_pruned INTEGER NOT NULL DEFAULT 0,
+            summary_tokens INTEGER NOT NULL DEFAULT 0,
+            platform TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS loop_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             api_key TEXT, tool_name TEXT NOT NULL,
@@ -196,6 +208,20 @@ class CompressionRepository:
                 region TEXT,
                 referrer TEXT,
                 device_type TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS context_events (
+                id SERIAL PRIMARY KEY,
+                api_key TEXT, mode TEXT,
+                original_tokens INTEGER NOT NULL DEFAULT 0,
+                optimized_tokens INTEGER NOT NULL DEFAULT 0,
+                tokens_saved INTEGER NOT NULL DEFAULT 0,
+                messages_total INTEGER NOT NULL DEFAULT 0,
+                messages_pruned INTEGER NOT NULL DEFAULT 0,
+                summary_tokens INTEGER NOT NULL DEFAULT 0,
+                platform TEXT,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
