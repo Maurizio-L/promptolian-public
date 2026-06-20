@@ -160,12 +160,14 @@ class CompressionRepository:
                 plan TEXT NOT NULL DEFAULT 'free',
                 stripe_sub_id TEXT,
                 api_key TEXT UNIQUE,
+                expires_at TIMESTAMPTZ,
                 status TEXT NOT NULL DEFAULT 'active',
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
         cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS api_key TEXT UNIQUE")
+        cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS website_events (
                 id SERIAL PRIMARY KEY,
@@ -500,16 +502,20 @@ class CompressionRepository:
         except Exception:
             pass
 
-    def activate_subscription(self, email: str, plan: str, stripe_sub_id: str, api_key: Optional[str] = None) -> None:
+    def activate_subscription(self, email: str, plan: str, stripe_sub_id: str,
+                              api_key: Optional[str] = None,
+                              expires_at: Optional[str] = None) -> None:
         try:
             p = self._placeholder()
             conn = self._connect()
             sql = (
-                f'INSERT INTO subscriptions (email, plan, stripe_sub_id, api_key, status, created_at) '
-                f'VALUES ({p},{p},{p},{p},{p},CURRENT_TIMESTAMP) '
-                f'ON CONFLICT (email) DO UPDATE SET plan={p}, stripe_sub_id={p}, api_key=COALESCE({p}, subscriptions.api_key), status={p}'
+                f'INSERT INTO subscriptions (email, plan, stripe_sub_id, api_key, expires_at, status, created_at) '
+                f'VALUES ({p},{p},{p},{p},{p},{p},CURRENT_TIMESTAMP) '
+                f'ON CONFLICT (email) DO UPDATE SET plan={p}, stripe_sub_id={p}, '
+                f'api_key=COALESCE({p}, subscriptions.api_key), expires_at={p}, status={p}'
             )
-            vals = (email, plan, stripe_sub_id, api_key, 'active', plan, stripe_sub_id, api_key, 'active')
+            vals = (email, plan, stripe_sub_id, api_key, expires_at, 'active',
+                    plan, stripe_sub_id, api_key, expires_at, 'active')
             if self._is_pg():
                 cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
             else:
@@ -524,19 +530,40 @@ class CompressionRepository:
         try:
             p = self._placeholder()
             conn = self._connect()
-            sql = f"SELECT email, plan, status FROM subscriptions WHERE api_key={p}"
+            sql = f"SELECT email, plan, status, expires_at FROM subscriptions WHERE api_key={p}"
             if self._is_pg():
                 cur = conn.cursor()
                 cur.execute(sql, (api_key,))
                 row = cur.fetchone()
                 cur.close(); conn.close()
-                return {'email': row[0], 'plan': row[1], 'status': row[2]} if row else None
+                if not row:
+                    return None
+                return {'email': row[0], 'plan': row[1], 'status': row[2], 'expires_at': row[3]}
             else:
                 row = conn.execute(sql, (api_key,)).fetchone()
                 conn.close()
                 return dict(row) if row else None
         except Exception:
             return None
+
+    def count_key_usage_month(self, api_key: str) -> int:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            month_start = datetime.now().strftime('%Y-%m-01')
+            sql = f"SELECT COUNT(*) FROM context_events WHERE api_key={p} AND created_at >= {p}"
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute(sql, (api_key, month_start))
+                count = cur.fetchone()[0] or 0
+                cur.close(); conn.close()
+                return int(count)
+            else:
+                count = conn.execute(sql, (api_key, month_start)).fetchone()[0] or 0
+                conn.close()
+                return int(count)
+        except Exception:
+            return 0
 
     def deactivate_subscription(self, stripe_sub_id: str) -> None:
         try:
@@ -608,10 +635,17 @@ class RateLimiter:
     """
     Monthly free-tier cap for unauthenticated Pro/Developer callers.
     Standard tier is rule-based (zero cost) and always exempt.
-    Authenticated callers bypass this limiter entirely.
+    Authenticated callers are checked against per-plan monthly limits.
     """
 
     FREE_MONTHLY_LIMIT = 5_000
+
+    PLAN_LIMITS: dict = {
+        'free':  0,
+        'solo':  1_000,
+        'team':  10_000,
+        'gift':  1_000,
+    }
 
     def __init__(self, repository: CompressionRepository) -> None:
         self._repo = repository
@@ -845,14 +879,22 @@ _SMTP_PASS   = os.getenv('SMTP_PASS', '')
 _SMTP_FROM   = os.getenv('SMTP_FROM', _SMTP_USER)
 
 
-def _send_key_email(to_email: str, api_key: str, plan: str) -> bool:
+def _send_key_email(to_email: str, api_key: str, plan: str, expires_at: Optional[str] = None) -> bool:
     if not (_SMTP_HOST and _SMTP_USER and _SMTP_PASS):
         return False
     import smtplib
     from email.mime.text import MIMEText
+    expiry_note = ''
+    if expires_at:
+        try:
+            exp_date = expires_at[:10]
+            expiry_note = f'\nThis key is valid until {exp_date}.\n'
+        except Exception:
+            pass
     body = f"""Hi,
 
 You've been given a Promptolian API key ({plan} plan) — a gift from a friend.
+{expiry_note}
 
 Your API key:
 
@@ -957,18 +999,28 @@ def admin_subscription():
     if not _MASTER_KEY or request.headers.get('X-Master-Key') != _MASTER_KEY:
         return jsonify({'error': 'unauthorized'}), 401
     data = request.get_json(force=True, silent=True) or {}
-    email = (data.get('email') or '').strip().lower()
-    plan  = (data.get('plan')  or 'free').strip()
+    email    = (data.get('email')    or '').strip().lower()
+    plan     = (data.get('plan')     or 'gift').strip()
+    duration = (data.get('duration') or '').strip()   # 1m, 3m, 1y — only for gift
     if not email:
         return jsonify({'error': 'email required'}), 400
-    if plan not in ('free', 'solo', 'team'):
-        return jsonify({'error': 'plan must be free, solo, or team'}), 400
+    if plan not in ('free', 'solo', 'team', 'gift'):
+        return jsonify({'error': 'plan must be free, solo, team, or gift'}), 400
+
+    expires_at = None
+    if plan == 'gift' or duration:
+        from datetime import timezone, timedelta
+        _dur_map = {'1m': 31, '3m': 92, '1y': 365}
+        days = _dur_map.get(duration, 31)
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
+
     import secrets
     sub_id  = data.get('stripe_sub_id') or f'manual_{secrets.token_hex(8)}'
     api_key = f'ptl_{secrets.token_urlsafe(24)}'
-    _repo.activate_subscription(email, plan, sub_id, api_key)
-    emailed = _send_key_email(email, api_key, plan)
-    return jsonify({'ok': True, 'email': email, 'plan': plan, 'api_key': api_key, 'emailed': emailed})
+    _repo.activate_subscription(email, plan, sub_id, api_key, expires_at)
+    emailed = _send_key_email(email, api_key, plan, expires_at)
+    return jsonify({'ok': True, 'email': email, 'plan': plan, 'api_key': api_key,
+                    'expires_at': expires_at, 'emailed': emailed})
 
 
 @app.route('/visit-count')
@@ -1091,7 +1143,41 @@ def compress_context():
     """
     api_key = request.headers.get('X-API-Key', '').strip()
     if not api_key:
-        return jsonify({'error': 'API key required. Set PROMPTOLIAN_API_KEY and get a key at promptolian.com/pricing'}), 401
+        return jsonify({'error': 'API key required. Get one at promptolian.com/pricing'}), 401
+
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub or sub['status'] != 'active':
+        return jsonify({'error': 'Invalid or inactive API key'}), 401
+
+    # Check expiry (gift subs)
+    if sub.get('expires_at'):
+        from datetime import timezone
+        exp = sub['expires_at']
+        if hasattr(exp, 'tzinfo'):
+            now = datetime.now(timezone.utc)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now > exp:
+                return jsonify({'error': 'Subscription expired. Renew at promptolian.com/pricing'}), 402
+        else:
+            from datetime import timezone
+            if datetime.now() > datetime.fromisoformat(str(exp)):
+                return jsonify({'error': 'Subscription expired. Renew at promptolian.com/pricing'}), 402
+
+    # Enforce per-plan monthly limit
+    plan = sub.get('plan', 'free')
+    monthly_limit = RateLimiter.PLAN_LIMITS.get(plan, 0)
+    if monthly_limit == 0:
+        return jsonify({'error': 'Plan does not include cloud compression. Upgrade at promptolian.com/pricing'}), 402
+    used = _repo.count_key_usage_month(api_key)
+    if used >= monthly_limit:
+        return jsonify({
+            'error':       'Monthly limit reached',
+            'plan':        plan,
+            'used':        used,
+            'limit':       monthly_limit,
+            'upgrade_url': 'https://promptolian.com/pricing',
+        }), 429
 
     data = request.get_json(silent=True)
     if not data:
@@ -1237,10 +1323,10 @@ def compress_tools_route():
 _STRIPE_KEY      = os.getenv('STRIPE_SECRET_KEY', '')
 _STRIPE_WEBHOOK  = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 _STRIPE_PRICES   = {
-    'pro_monthly':       os.getenv('STRIPE_PRO_MONTHLY', ''),
-    'pro_annual':        os.getenv('STRIPE_PRO_ANNUAL', ''),
-    'builder_monthly':   os.getenv('STRIPE_BUILDER_MONTHLY', ''),
-    'builder_annual':    os.getenv('STRIPE_BUILDER_ANNUAL', ''),
+    'solo_monthly':  os.getenv('STRIPE_SOLO_MONTHLY', ''),
+    'solo_annual':   os.getenv('STRIPE_SOLO_ANNUAL',  ''),
+    'team_monthly':  os.getenv('STRIPE_TEAM_MONTHLY', ''),
+    'team_annual':   os.getenv('STRIPE_TEAM_ANNUAL',  ''),
 }
 _BASE_URL   = os.getenv('BASE_URL', 'https://promptolian.com')
 _GROQ_KEY   = os.getenv('GROQ_API_KEY', '')
@@ -1397,9 +1483,12 @@ def billing_webhook():
     obj   = event['data']['object']
 
     if etype == 'checkout.session.completed':
+        import secrets as _sec
         customer_email = obj.get('customer_email', '')
-        plan = _resolve_plan_from_session(obj)
-        _repo.activate_subscription(customer_email, plan, obj.get('subscription', ''))
+        plan    = _resolve_plan_from_session(obj)
+        api_key = f'ptl_{_sec.token_urlsafe(24)}'
+        _repo.activate_subscription(customer_email, plan, obj.get('subscription', ''), api_key)
+        _send_key_email(customer_email, api_key, plan)
 
     elif etype in ('customer.subscription.deleted', 'customer.subscription.updated'):
         sub    = obj
@@ -1411,16 +1500,17 @@ def billing_webhook():
 
 
 def _resolve_plan_from_session(session_obj: dict) -> str:
-    """Map Stripe price ID back to plan name."""
+    """Map Stripe price ID back to plan name (solo/team)."""
+    # Try line_items first, fall back to display_items (older API versions)
+    items = session_obj.get('line_items', {}).get('data', []) or session_obj.get('display_items') or []
     price_id = ''
-    items = session_obj.get('display_items') or []
-    if not items:
-        return 'pro'
-    price_id = items[0].get('price', {}).get('id', '') if isinstance(items[0], dict) else ''
+    if items:
+        item = items[0]
+        price_id = (item.get('price') or {}).get('id', '') if isinstance(item, dict) else ''
     for key, pid in _STRIPE_PRICES.items():
-        if pid == price_id:
-            return key.split('_')[0]
-    return 'pro'
+        if pid and pid == price_id:
+            return key.split('_')[0]  # 'solo_monthly' → 'solo'
+    return 'solo'  # safe default
 
 
 if __name__ == '__main__':
