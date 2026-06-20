@@ -6,7 +6,7 @@
   <title>Promptolian — Context Reliability Proxy for AI Agents</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,6 +23,7 @@
       --radius-card: 3px;
       --radius-btn: 3px;
       --font: 'Inter', sans-serif;
+      --font-heading: 'Space Grotesk', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -116,7 +117,7 @@
       max-width: 860px;
       margin: 0 auto;
       padding: 120px 32px 96px;
-      text-align: center;
+      text-align: left;
       position: relative;
     }
     .hero::before {
@@ -155,6 +156,7 @@
     }
 
     .hero h1 {
+      font-family: var(--font-heading);
       font-size: clamp(40px, 7vw, 76px);
       font-weight: 800;
       line-height: 1.06;
@@ -168,7 +170,7 @@
       font-size: 18px;
       color: var(--muted);
       max-width: 540px;
-      margin: 0 auto 40px;
+      margin: 0 0 40px;
       line-height: 1.7;
       font-weight: 400;
     }
@@ -176,7 +178,7 @@
     .hero-ctas {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 12px;
       flex-wrap: wrap;
       margin-bottom: 20px;
@@ -290,10 +292,11 @@
     }
 
     .section-title {
-      font-size: clamp(28px, 4vw, 42px);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
+      font-family: var(--font-heading);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
       margin-bottom: 14px;
     }
 
@@ -342,6 +345,7 @@
     }
 
     .problem-title {
+      font-family: var(--font-heading);
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 10px;
@@ -661,6 +665,7 @@
     }
 
     .pricing-price {
+      font-family: var(--font-heading);
       font-size: 36px;
       font-weight: 700;
       line-height: 1;
@@ -957,17 +962,16 @@
     <li><a href="docs.html">Docs</a></li>
     <li><a href="https://github.com/Maurizio-L/promptolian-public" target="_blank" rel="noopener">GitHub</a></li>
   </ul>
-  <a href="#quickstart" class="btn-nav">Get started →</a>
+  <a href="#quickstart" class="btn-nav">Get access</a>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">Context Reliability Proxy · Open source</div>
   <h1>Smart Token Discipline<br><span class="accent">for Claude Developers.</span></h1>
   <p class="hero-sub">Drop your tool-schema token overhead instantly. Promptolian intercepts your LLM loops to compress context and output.</p>
   <div class="hero-ctas">
-    <a href="#quickstart" class="btn-primary" data-track="hero_get_started">Get started →</a>
-    <a href="benchmarks.html" class="btn-ghost" data-track="hero_benchmark">Read the benchmark →</a>
+    <a href="#quickstart" class="btn-primary" data-track="hero_get_started">Try it free</a>
+    <a href="benchmarks.html" class="btn-ghost" data-track="hero_benchmark">See the numbers</a>
   </div>
   <p class="hero-devto">Published on Dev.to: <a href="https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3" target="_blank" rel="noopener">Everyone compresses their agent's context. Nobody measures what it forgets.</a></p>
 </section>
