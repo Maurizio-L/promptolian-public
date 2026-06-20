@@ -1,6 +1,6 @@
 # Promptolian
 
-**AI agents burn tokens repeating themselves. Promptolian stops that — transparently, with one line of code.**
+**AI agents burn tokens repeating themselves. Promptolian stops that, transparently, with one line of code.**
 
 A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK changes. No new abstractions.
 
@@ -11,7 +11,7 @@ A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK
 ## Three problems, one proxy
 
 **Problem 1 — Tool outputs repeat across turns.**
-Agentic workflows read the same files, run the same bash commands, get the same API responses — turn after turn. Each repeat costs full tokens.
+Agentic workflows read the same files, run the same bash commands, get the same API responses, turn after turn. Each repeat costs full tokens.
 
 **Problem 2 — Tool schemas re-sent on every call.**
 Every API call re-sends the full tool schema JSON even if nothing changed. 5 tools ≈ 600 tokens wasted per call, silently, forever.
