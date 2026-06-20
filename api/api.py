@@ -159,11 +159,13 @@ class CompressionRepository:
                 email TEXT UNIQUE NOT NULL,
                 plan TEXT NOT NULL DEFAULT 'free',
                 stripe_sub_id TEXT,
+                api_key TEXT UNIQUE,
                 status TEXT NOT NULL DEFAULT 'active',
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
+        cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS api_key TEXT UNIQUE")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS website_events (
                 id SERIAL PRIMARY KEY,
@@ -498,16 +500,16 @@ class CompressionRepository:
         except Exception:
             pass
 
-    def activate_subscription(self, email: str, plan: str, stripe_sub_id: str) -> None:
+    def activate_subscription(self, email: str, plan: str, stripe_sub_id: str, api_key: Optional[str] = None) -> None:
         try:
             p = self._placeholder()
             conn = self._connect()
             sql = (
-                f'INSERT INTO subscriptions (email, plan, stripe_sub_id, status, created_at) '
-                f'VALUES ({p},{p},{p},{p},CURRENT_TIMESTAMP) '
-                f'ON CONFLICT (email) DO UPDATE SET plan={p}, stripe_sub_id={p}, status={p}'
+                f'INSERT INTO subscriptions (email, plan, stripe_sub_id, api_key, status, created_at) '
+                f'VALUES ({p},{p},{p},{p},{p},CURRENT_TIMESTAMP) '
+                f'ON CONFLICT (email) DO UPDATE SET plan={p}, stripe_sub_id={p}, api_key=COALESCE({p}, subscriptions.api_key), status={p}'
             )
-            vals = (email, plan, stripe_sub_id, 'active', plan, stripe_sub_id, 'active')
+            vals = (email, plan, stripe_sub_id, api_key, 'active', plan, stripe_sub_id, api_key, 'active')
             if self._is_pg():
                 cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
             else:
@@ -517,6 +519,24 @@ class CompressionRepository:
             conn.close()
         except Exception:
             pass
+
+    def get_subscription_by_key(self, api_key: str) -> Optional[dict]:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = f"SELECT email, plan, status FROM subscriptions WHERE api_key={p}"
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute(sql, (api_key,))
+                row = cur.fetchone()
+                cur.close(); conn.close()
+                return {'email': row[0], 'plan': row[1], 'status': row[2]} if row else None
+            else:
+                row = conn.execute(sql, (api_key,)).fetchone()
+                conn.close()
+                return dict(row) if row else None
+        except Exception:
+            return None
 
     def deactivate_subscription(self, stripe_sub_id: str) -> None:
         try:
@@ -601,7 +621,10 @@ class RateLimiter:
     ) -> tuple[bool, int, int]:
         """Returns (allowed, used, limit)."""
         if api_key:
-            return True, 0, 0          # authenticated — billing layer enforces plan limits
+            sub = self._repo.get_subscription_by_key(api_key)
+            if sub and sub['status'] == 'active':
+                return True, 0, 0
+            return False, 0, 0         # key not found or inactive
         if tier == 'standard':
             return True, 0, 0          # standard is free / unlimited
 
@@ -813,7 +836,55 @@ def stats():
         return jsonify({'error': str(e)}), 500
 
 
-_MASTER_KEY = os.getenv('PROMPTOLIAN_MASTER_KEY', '')
+_MASTER_KEY  = os.getenv('PROMPTOLIAN_MASTER_KEY', '')
+_SMTP_HOST   = os.getenv('SMTP_HOST', '')
+_SMTP_PORT   = int(os.getenv('SMTP_PORT', '587'))
+_SMTP_USER   = os.getenv('SMTP_USER', '')
+_SMTP_PASS   = os.getenv('SMTP_PASS', '')
+_SMTP_FROM   = os.getenv('SMTP_FROM', _SMTP_USER)
+
+
+def _send_key_email(to_email: str, api_key: str, plan: str) -> bool:
+    if not (_SMTP_HOST and _SMTP_USER and _SMTP_PASS):
+        return False
+    import smtplib
+    from email.mime.text import MIMEText
+    body = f"""Hi,
+
+You've been given a Promptolian API key ({plan} plan) — a gift from a friend.
+
+Your API key:
+
+  {api_key}
+
+To use it, add it to your requests:
+
+  curl https://api.promptolian.com/compress \\
+    -H "X-API-Key: {api_key}" \\
+    -H "Content-Type: application/json" \\
+    -d '{{"text": "your text here", "tier": "standard"}}'
+
+Or set it once in your environment:
+
+  export PROMPTOLIAN_API_KEY={api_key}
+
+Docs: https://promptolian.com/docs.html
+
+Enjoy — and let us know how it goes.
+The Promptolian team
+"""
+    msg = MIMEText(body)
+    msg['Subject'] = 'Your Promptolian API key'
+    msg['From']    = _SMTP_FROM
+    msg['To']      = to_email
+    try:
+        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT) as s:
+            s.starttls()
+            s.login(_SMTP_USER, _SMTP_PASS)
+            s.sendmail(_SMTP_FROM, [to_email], msg.as_string())
+        return True
+    except Exception:
+        return False
 
 
 @app.route('/website-event', methods=['POST'])
@@ -892,9 +963,11 @@ def admin_subscription():
     if plan not in ('free', 'solo', 'team'):
         return jsonify({'error': 'plan must be free, solo, or team'}), 400
     import secrets
-    sub_id = data.get('stripe_sub_id') or f'manual_{secrets.token_hex(8)}'
-    _repo.activate_subscription(email, plan, sub_id)
-    return jsonify({'ok': True, 'email': email, 'plan': plan, 'sub_id': sub_id})
+    sub_id  = data.get('stripe_sub_id') or f'manual_{secrets.token_hex(8)}'
+    api_key = f'ptl_{secrets.token_urlsafe(24)}'
+    _repo.activate_subscription(email, plan, sub_id, api_key)
+    emailed = _send_key_email(email, api_key, plan)
+    return jsonify({'ok': True, 'email': email, 'plan': plan, 'api_key': api_key, 'emailed': emailed})
 
 
 @app.route('/visit-count')
