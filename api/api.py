@@ -87,6 +87,19 @@ class CompressionRepository:
             device_type TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS loop_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_key TEXT, tool_name TEXT NOT NULL,
+            loop_type TEXT NOT NULL, loop_count INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS session_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_key TEXT, session_id TEXT,
+            tokens_used INTEGER NOT NULL DEFAULT 0,
+            task_completed INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
     """
 
     def __init__(self, db_path: str) -> None:
@@ -183,6 +196,23 @@ class CompressionRepository:
                 region TEXT,
                 referrer TEXT,
                 device_type TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS loop_events (
+                id SERIAL PRIMARY KEY,
+                api_key TEXT, tool_name TEXT NOT NULL,
+                loop_type TEXT NOT NULL, loop_count INTEGER NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS session_metrics (
+                id SERIAL PRIMARY KEY,
+                api_key TEXT, session_id TEXT,
+                tokens_used INTEGER NOT NULL DEFAULT 0,
+                task_completed BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
@@ -320,7 +350,7 @@ class CompressionRepository:
                 cur = conn.cursor()
                 cur.execute('''
                     SELECT COUNT(*) AS total,
-                           SUM(original_tokens - compressed_tokens) AS total_saved,
+                           COALESCE(SUM(original_tokens - compressed_tokens), 0) AS total_saved,
                            ROUND(AVG(pct_saved)::numeric, 1) AS avg_pct
                     FROM compression_events
                 ''')
@@ -330,31 +360,73 @@ class CompressionRepository:
                     FROM compression_events GROUP BY mode
                 ''')
                 by_tier = cur.fetchall()
+                cur.execute('''
+                    SELECT COUNT(*), COALESCE(SUM(tokens_saved), 0),
+                           ROUND(AVG(tokens_saved*100.0/NULLIF(original_tokens,0))::numeric, 1)
+                    FROM context_events
+                ''')
+                ctx = cur.fetchone()
+                cur.execute('SELECT COUNT(*), COALESCE(SUM(loop_count), 0) FROM loop_events')
+                lps = cur.fetchone()
+                cur.execute('''
+                    SELECT COUNT(*), COALESCE(SUM(CASE WHEN task_completed THEN 1 ELSE 0 END), 0)
+                    FROM session_metrics
+                ''')
+                eff = cur.fetchone()
                 cur.close()
+                tasks_done    = int(eff[1] or 0)
+                tasks_tracked = int(eff[0] or 0)
                 return {
-                    'total_compressions':  row[0] or 0,
-                    'total_tokens_saved':  row[1] or 0,
-                    'avg_compression_pct': float(row[2] or 0),
-                    'by_tier': {r[0]: {'count': r[1], 'avg_pct': float(r[2] or 0)}
-                                for r in by_tier},
+                    'total_compressions':            row[0] or 0,
+                    'total_tokens_saved':            (row[1] or 0) + (ctx[1] or 0),
+                    'avg_compression_pct':           float(row[2] or 0),
+                    'by_tier': {r[0]: {'count': r[1], 'avg_pct': float(r[2] or 0)} for r in by_tier},
+                    'context_compressions':          int(ctx[0] or 0),
+                    'context_tokens_saved':          int(ctx[1] or 0),
+                    'context_avg_pct':               float(ctx[2] or 0),
+                    'loops_detected_total':          int(lps[0] or 0),
+                    'total_loop_iterations_blocked': int(lps[1] or 0),
+                    'sessions_tracked':              tasks_tracked,
+                    'tasks_completed':               tasks_done,
+                    'task_completion_rate_pct':      round(tasks_done / max(1, tasks_tracked) * 100, 1) if tasks_tracked else None,
                 }
             else:
                 row = conn.execute('''
                     SELECT COUNT(*) as total,
-                           SUM(original_tokens - compressed_tokens) as total_saved,
-                           ROUND(AVG(pct_saved),1) as avg_pct
+                           COALESCE(SUM(original_tokens - compressed_tokens), 0) as total_saved,
+                           ROUND(AVG(pct_saved), 1) as avg_pct
                     FROM compression_events
                 ''').fetchone()
                 by_tier = conn.execute('''
-                    SELECT mode, COUNT(*) as n, ROUND(AVG(pct_saved),1) as avg_pct
+                    SELECT mode, COUNT(*) as n, ROUND(AVG(pct_saved), 1) as avg_pct
                     FROM compression_events GROUP BY mode
                 ''').fetchall()
+                ctx = conn.execute('''
+                    SELECT COUNT(*), COALESCE(SUM(tokens_saved), 0),
+                           ROUND(AVG(tokens_saved*100.0/NULLIF(original_tokens,0)), 1)
+                    FROM context_events
+                ''').fetchone()
+                lps = conn.execute(
+                    'SELECT COUNT(*), COALESCE(SUM(loop_count), 0) FROM loop_events'
+                ).fetchone()
+                eff = conn.execute(
+                    'SELECT COUNT(*), COALESCE(SUM(task_completed), 0) FROM session_metrics'
+                ).fetchone()
+                tasks_done    = int(eff[1] or 0)
+                tasks_tracked = int(eff[0] or 0)
                 return {
-                    'total_compressions':  row['total'] or 0,
-                    'total_tokens_saved':  row['total_saved'] or 0,
-                    'avg_compression_pct': row['avg_pct'] or 0,
-                    'by_tier': {r['mode']: {'count': r['n'], 'avg_pct': r['avg_pct']}
-                                for r in by_tier},
+                    'total_compressions':            row['total'] or 0,
+                    'total_tokens_saved':            (row['total_saved'] or 0) + (ctx[1] or 0),
+                    'avg_compression_pct':           row['avg_pct'] or 0,
+                    'by_tier': {r['mode']: {'count': r['n'], 'avg_pct': r['avg_pct']} for r in by_tier},
+                    'context_compressions':          int(ctx[0] or 0),
+                    'context_tokens_saved':          int(ctx[1] or 0),
+                    'context_avg_pct':               float(ctx[2] or 0) if ctx[2] else 0,
+                    'loops_detected_total':          int(lps[0] or 0),
+                    'total_loop_iterations_blocked': int(lps[1] or 0),
+                    'sessions_tracked':              tasks_tracked,
+                    'tasks_completed':               tasks_done,
+                    'task_completion_rate_pct':      round(tasks_done / max(1, tasks_tracked) * 100, 1) if tasks_tracked else None,
                 }
         finally:
             conn.close()
@@ -657,6 +729,170 @@ class CompressionRepository:
         except Exception:
             return 0
 
+    def get_timeseries(self, api_key: str, days: int = 30) -> dict:
+        """Return daily buckets for context calls, tokens saved, and loops."""
+        from datetime import date, timedelta
+
+        conn = self._connect()
+        try:
+            p = self._placeholder()
+            if self._is_pg():
+                cur = conn.cursor()
+                interval = f"INTERVAL '{days} days'"
+                cur.execute(
+                    f"SELECT DATE(created_at) AS day, COUNT(*) AS calls, "
+                    f"COALESCE(SUM(tokens_saved), 0) AS saved "
+                    f"FROM context_events WHERE api_key={p} AND created_at >= NOW() - {interval} "
+                    f"GROUP BY DATE(created_at) ORDER BY day",
+                    (api_key,),
+                )
+                ctx_rows = {str(r[0]): (int(r[1]), int(r[2])) for r in cur.fetchall()}
+                cur.execute(
+                    f"SELECT DATE(created_at) AS day, COUNT(*) AS n, "
+                    f"COALESCE(SUM(loop_count), 0) AS iters "
+                    f"FROM loop_events WHERE api_key={p} AND created_at >= NOW() - {interval} "
+                    f"GROUP BY DATE(created_at) ORDER BY day",
+                    (api_key,),
+                )
+                loop_rows = {str(r[0]): (int(r[1]), int(r[2])) for r in cur.fetchall()}
+                cur.close()
+            else:
+                offset = f'-{days} days'
+                ctx_rows = {
+                    str(r[0]): (int(r[1]), int(r[2]))
+                    for r in conn.execute(
+                        f"SELECT DATE(created_at) AS day, COUNT(*) AS calls, "
+                        f"COALESCE(SUM(tokens_saved), 0) AS saved "
+                        f"FROM context_events WHERE api_key={p} AND created_at >= datetime('now',{p}) "
+                        f"GROUP BY DATE(created_at) ORDER BY day",
+                        (api_key, offset),
+                    ).fetchall()
+                }
+                loop_rows = {
+                    str(r[0]): (int(r[1]), int(r[2]))
+                    for r in conn.execute(
+                        f"SELECT DATE(created_at) AS day, COUNT(*) AS n, "
+                        f"COALESCE(SUM(loop_count), 0) AS iters "
+                        f"FROM loop_events WHERE api_key={p} AND created_at >= datetime('now',{p}) "
+                        f"GROUP BY DATE(created_at) ORDER BY day",
+                        (api_key, offset),
+                    ).fetchall()
+                }
+
+            # Fill missing days with zeroes so charts have continuous x-axis
+            start = date.today() - timedelta(days=days - 1)
+            daily = []
+            for i in range(days):
+                d = str(start + timedelta(days=i))
+                calls, saved = ctx_rows.get(d, (0, 0))
+                loops, iters = loop_rows.get(d, (0, 0))
+                daily.append({
+                    'date':         d,
+                    'calls':        calls,
+                    'tokens_saved': saved,
+                    'loops':        loops,
+                    'loop_iters':   iters,
+                })
+
+            return {'days': days, 'daily': daily}
+        finally:
+            conn.close()
+
+    def log_loop_event(self, api_key: Optional[str], tool_name: str,
+                       loop_type: str, loop_count: int) -> None:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = (f'INSERT INTO loop_events (api_key, tool_name, loop_type, loop_count) '
+                   f'VALUES ({p},{p},{p},{p})')
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, (api_key, tool_name, loop_type, loop_count))
+                conn.commit(); cur.close()
+            else:
+                conn.execute(sql, (api_key, tool_name, loop_type, loop_count)); conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    def log_session_complete(self, api_key: Optional[str], session_id: Optional[str],
+                             tokens_used: int, task_completed: bool) -> None:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = (f'INSERT INTO session_metrics (api_key, session_id, tokens_used, task_completed) '
+                   f'VALUES ({p},{p},{p},{p})')
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, (api_key, session_id, tokens_used, task_completed))
+                conn.commit(); cur.close()
+            else:
+                conn.execute(sql, (api_key, session_id, tokens_used, int(task_completed))); conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    def get_key_stats(self, api_key: str) -> dict:
+        conn = self._connect()
+        try:
+            p = self._placeholder()
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(tokens_saved),0), "
+                    f"ROUND(AVG(tokens_saved*100.0/NULLIF(original_tokens,0))::numeric,1) "
+                    f"FROM context_events WHERE api_key={p}", (api_key,))
+                ctx = cur.fetchone()
+                cur.execute(
+                    f"SELECT COUNT(*) FROM context_events WHERE api_key={p} "
+                    f"AND created_at >= date_trunc('month', NOW())", (api_key,))
+                monthly = cur.fetchone()
+                cur.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(loop_count),0) FROM loop_events WHERE api_key={p}",
+                    (api_key,))
+                lps = cur.fetchone()
+                cur.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(CASE WHEN task_completed THEN 1 ELSE 0 END),0), "
+                    f"COALESCE(AVG(tokens_used),0) FROM session_metrics WHERE api_key={p}", (api_key,))
+                eff = cur.fetchone()
+                cur.close()
+            else:
+                ctx = conn.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(tokens_saved),0), "
+                    f"ROUND(AVG(tokens_saved*100.0/NULLIF(original_tokens,0)),1) "
+                    f"FROM context_events WHERE api_key={p}", (api_key,)).fetchone()
+                monthly = conn.execute(
+                    f"SELECT COUNT(*) FROM context_events WHERE api_key={p} "
+                    f"AND created_at >= strftime('%Y-%m-01','now')", (api_key,)).fetchone()
+                lps = conn.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(loop_count),0) FROM loop_events WHERE api_key={p}",
+                    (api_key,)).fetchone()
+                eff = conn.execute(
+                    f"SELECT COUNT(*), COALESCE(SUM(task_completed),0), COALESCE(AVG(tokens_used),0) "
+                    f"FROM session_metrics WHERE api_key={p}", (api_key,)).fetchone()
+
+            sessions   = int(ctx[0]     or 0)
+            saved      = int(ctx[1]     or 0)
+            avg_pct    = float(ctx[2]   or 0)
+            mo_calls   = int(monthly[0] or 0)
+            loop_n     = int(lps[0]     or 0)
+            loop_iters = int(lps[1]     or 0)
+            tracked    = int(eff[0]     or 0)
+            done       = int(eff[1]     or 0)
+            avg_tok    = float(eff[2]   or 0)
+            return {
+                'compress_context_calls_total':      sessions,
+                'compress_context_calls_this_month': mo_calls,
+                'tokens_saved_total':                saved,
+                'avg_compression_pct':               avg_pct,
+                'loops_detected_total':              loop_n,
+                'total_loop_iterations_blocked':     loop_iters,
+                'sessions_with_outcome_tracked':     tracked,
+                'tasks_completed':                   done,
+                'task_completion_rate_pct':          round(done / max(1, tracked) * 100, 1) if tracked else None,
+                'avg_tokens_per_session':            round(avg_tok, 0),
+            }
+        finally:
+            conn.close()
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # INFRASTRUCTURE — RateLimiter  (SRP: owns rate-limit policy; OCP: extend by
@@ -829,8 +1065,205 @@ except Exception:
 
 _svc = CompressionService(engine=_engine_instance)
 
+# Ensure schema is up to date on every startup (idempotent — uses IF NOT EXISTS)
+try:
+    _repo.init_schema()
+except Exception:
+    pass
+
 # In-process session cache for /compress-tools  (keyed by session_id)
 _TOOL_SESSION_CACHE: dict[str, set] = {}
+
+# CCR — in-memory store of original tool-result content before compression
+_CCR_CACHE: dict[str, str] = {}
+_CCR_MAX = 1_000
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FEATURE FUNCTIONS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _detect_loops(messages: list, threshold: int = 3, window: int = 20) -> list:
+    """Scan recent messages for stuck tool-call loops.
+
+    Returns a list of loop dicts; empty list if none found.
+    Only counts single-tool turns (skips parallel multi-tool turns) to avoid
+    false positives on legitimate parallel calls.
+    """
+    import hashlib
+    from collections import Counter
+
+    recent     = messages[-window:]
+    tool_calls = []
+
+    for i, msg in enumerate(recent):
+        if msg.get('role') != 'assistant':
+            continue
+        content = msg.get('content', [])
+        if not isinstance(content, list):
+            continue
+        uses = [b for b in content if isinstance(b, dict) and b.get('type') == 'tool_use']
+        if len(uses) != 1:          # skip parallel multi-tool turns
+            continue
+        block       = uses[0]
+        result_text = ''
+        if i + 1 < len(recent) and recent[i + 1].get('role') == 'user':
+            for rb in (recent[i + 1].get('content') or []):
+                if isinstance(rb, dict) and rb.get('type') == 'tool_result':
+                    rc          = rb.get('content', '')
+                    result_text = rc if isinstance(rc, str) else json.dumps(rc)
+        tool_calls.append({
+            'name':       block.get('name', ''),
+            'input_hash': hashlib.md5(
+                json.dumps(block.get('input', {}), sort_keys=True).encode()
+            ).hexdigest()[:8],
+            'result':     result_text,
+        })
+
+    if not tool_calls:
+        return []
+
+    _ERR = ('error', 'not found', 'failed', 'exception',
+            'timeout', 'denied', 'cannot', 'unable', 'no results')
+    loops: list = []
+
+    # Type A — identical call (tool + input hash) ≥ threshold times
+    call_counts = Counter((tc['name'], tc['input_hash']) for tc in tool_calls)
+    for (tool_name, _), count in call_counts.items():
+        if count >= threshold:
+            sample = next(tc for tc in tool_calls if tc['name'] == tool_name)
+            loops.append({
+                'tool':   tool_name,
+                'type':   'identical_call',
+                'count':  count,
+                'sample': sample['result'][:120],
+            })
+
+    # Type B — same tool, varied inputs, majority return errors
+    if not loops:
+        by_tool: dict = {}
+        for tc in tool_calls:
+            by_tool.setdefault(tc['name'], []).append(tc)
+        for tool_name, calls in by_tool.items():
+            if len(calls) < threshold:
+                continue
+            errors = [c for c in calls if any(s in c['result'].lower() for s in _ERR)]
+            if len(errors) >= threshold:
+                loops.append({
+                    'tool':        tool_name,
+                    'type':        'error_pattern',
+                    'count':       len(calls),
+                    'error_count': len(errors),
+                    'sample':      errors[0]['result'][:120],
+                })
+
+    return loops
+
+
+def _ccr_annotate(messages: list) -> tuple:
+    """For tool_result blocks > 200 tokens, store original in _CCR_CACHE
+    and append a retrieval hint. Non-destructive: original content is kept.
+    Returns (annotated_messages, list_of_new_ccr_keys).
+    """
+    import hashlib
+
+    _THRESHOLD = 200
+
+    if len(_CCR_CACHE) >= _CCR_MAX:
+        evict = list(_CCR_CACHE.keys())[:_CCR_MAX // 10]
+        for k in evict:
+            _CCR_CACHE.pop(k, None)
+
+    annotated  = []
+    added_keys = []
+
+    for msg in messages:
+        if msg.get('role') != 'user' or not isinstance(msg.get('content'), list):
+            annotated.append(msg)
+            continue
+
+        new_content = []
+        for block in msg['content']:
+            if not (isinstance(block, dict) and block.get('type') == 'tool_result'):
+                new_content.append(block)
+                continue
+            rc   = block.get('content', '')
+            text = rc if isinstance(rc, str) else json.dumps(rc)
+            tok  = _count_tokens(text)
+            if tok > _THRESHOLD:
+                key = 'ccr_' + hashlib.md5(text.encode()).hexdigest()[:12]
+                _CCR_CACHE[key] = text
+                added_keys.append(key)
+                hint      = f'\n[CCR:{key}] {tok} tokens cached. Retrieve via GET /ccr/retrieve/{key}'
+                new_block = dict(block)
+                new_block['content'] = text + hint
+                new_content.append(new_block)
+            else:
+                new_content.append(block)
+
+        new_msg            = dict(msg)
+        new_msg['content'] = new_content
+        annotated.append(new_msg)
+
+    return annotated, added_keys
+
+
+def _classify_complexity(messages: list, loops: list) -> dict:
+    """Heuristic complexity scorer 0–100 → suggested model family."""
+    score = 0
+
+    total_tokens = sum(
+        _count_tokens(m['content']) if isinstance(m.get('content'), str)
+        else _count_tokens(json.dumps(m.get('content', '')))
+        for m in messages
+    )
+    if   total_tokens > 80_000: score += 30
+    elif total_tokens > 40_000: score += 20
+    elif total_tokens > 20_000: score += 10
+
+    tool_turns = sum(
+        1 for m in messages
+        if m.get('role') == 'assistant'
+        and isinstance(m.get('content'), list)
+        and any(b.get('type') == 'tool_use' for b in m['content'] if isinstance(b, dict))
+    )
+    if   tool_turns > 20: score += 25
+    elif tool_turns > 10: score += 15
+    elif tool_turns >  5: score += 8
+
+    _ERR = ('error', 'not found', 'failed', 'exception', 'timeout', 'denied')
+    recent_results = []
+    for m in messages[-10:]:
+        if m.get('role') == 'user' and isinstance(m.get('content'), list):
+            for b in m['content']:
+                if isinstance(b, dict) and b.get('type') == 'tool_result':
+                    rc = b.get('content', '')
+                    recent_results.append(rc if isinstance(rc, str) else json.dumps(rc))
+    err_count = sum(1 for r in recent_results if any(s in r.lower() for s in _ERR))
+    score += min(25, err_count * 8)
+
+    last_user_text = ''
+    for m in reversed(messages):
+        if m.get('role') == 'user':
+            c = m.get('content', '')
+            last_user_text = c if isinstance(c, str) else json.dumps(c)
+            break
+    _COMPLEX = ('```', 'algorithm', 'implement', 'architecture',
+                'optimize', 'theorem', 'proof', 'refactor', 'migrate')
+    if any(k in last_user_text.lower() for k in _COMPLEX):
+        score += 15
+
+    if loops:
+        score += 20
+
+    score = min(100, score)
+
+    if   score <= 25: model, reason = 'haiku',        'Simple task, small context'
+    elif score <= 50: model, reason = 'sonnet',        'Standard complexity'
+    elif score <= 75: model, reason = 'sonnet-latest', 'Complex — large context or errors'
+    else:             model, reason = 'opus',          f'High complexity (score {score})'
+
+    return {'complexity_score': score, 'suggested_model': model, 'reason': reason}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -842,12 +1275,18 @@ def health():
     return jsonify({
         'status':             'ok',
         'service':            'Promptolian API',
-        'version':            '2.3.6',
+        'version':            '2.4.0',
         'context_engine':     _CONTEXT_ENGINE_AVAILABLE,
         'engine_v4':          _ENGINE_AVAILABLE,
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
-        'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats', '/visit-count', '/admin/subscription'],
+        'endpoints':          [
+            '/compress', '/compress-context', '/compress-tools', '/optimize-context',
+            '/stats', '/stats/me', '/session/complete',
+            '/ccr/retrieve/<key>',
+            '/feedback', '/website-event', '/website-stats', '/visit-count',
+            '/admin/subscription',
+        ],
         'smtp_configured':    bool(_SMTP_HOST and _SMTP_USER and _SMTP_PASS),
         'timestamp':          datetime.now().isoformat(),
     })
@@ -901,6 +1340,70 @@ def stats():
         return jsonify(_repo.get_stats())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/stats/timeseries')
+def stats_timeseries():
+    """Daily time-series for the last N days (7–90). Requires X-API-Key."""
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'X-API-Key header required'}), 401
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub:
+        return jsonify({'error': 'Invalid API key'}), 401
+    days = max(7, min(90, int(request.args.get('days', 30))))
+    try:
+        return jsonify(_repo.get_timeseries(api_key, days))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/stats/me')
+def stats_me():
+    """Per-key usage, savings, loops caught, and efficiency stats."""
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'X-API-Key header required'}), 401
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub:
+        return jsonify({'error': 'Invalid API key'}), 401
+    try:
+        return jsonify(_repo.get_key_stats(api_key))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/session/complete', methods=['POST'])
+def session_complete():
+    """Signal that an agent session finished a task.
+
+    Body: {"session_id": "...", "tokens_used": 1234, "success": true}
+    Enables efficiency tracking (feature #7).
+    """
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'X-API-Key header required'}), 401
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub:
+        return jsonify({'error': 'Invalid API key'}), 401
+
+    data        = request.get_json(silent=True) or {}
+    session_id  = str(data.get('session_id', ''))[:64] or None
+    tokens_used = max(0, int(data.get('tokens_used', 0)))
+    success     = bool(data.get('success', True))
+
+    _repo.log_session_complete(api_key, session_id, tokens_used, success)
+    return jsonify({'ok': True, 'session_id': session_id, 'success': success,
+                    'tokens_used': tokens_used})
+
+
+@app.route('/ccr/retrieve/<key>')
+def ccr_retrieve(key: str):
+    """Return the original (pre-compression) content cached under a CCR key."""
+    content = _CCR_CACHE.get(key)
+    if content is None:
+        return jsonify({'error': 'key not found or expired (server restart clears cache)'}), 404
+    return jsonify({'key': key, 'content': content, 'tokens': _count_tokens(content)})
 
 
 _MASTER_KEY  = os.getenv('PROMPTOLIAN_MASTER_KEY', '')
@@ -1267,10 +1770,22 @@ def compress_context():
     if not query:
         return jsonify({'error': 'no user message found in messages array'}), 400
 
+    # — Loop detection: find stuck tool-call patterns before compressing
+    loops = _detect_loops(messages)
+    if loops:
+        for lp in loops:
+            _repo.log_loop_event(api_key, lp['tool'], lp['type'], lp['count'])
+
+    # — CCR: annotate large tool results with retrieval hints
+    annotated_messages, ccr_keys = _ccr_annotate(messages)
+
+    # — Complexity: heuristic model-family suggestion
+    complexity = _classify_complexity(messages, loops)
+
     try:
         from context_engine import ContextEngine  # type: ignore
         ce     = ContextEngine()
-        result = ce.optimize(messages, query=query, summary=summary)
+        result = ce.optimize(annotated_messages, query=query, summary=summary)
 
         _repo.log_context_event(
             api_key          = api_key,
@@ -1284,10 +1799,17 @@ def compress_context():
             platform         = 'proxy',
         )
 
-        return jsonify({
+        resp: dict = {
             'optimized_prompt': result.get('optimized_prompt', ''),
             'new_summary':      result.get('new_summary', ''),
-        })
+            'complexity':       complexity,
+        }
+        if loops:
+            resp['loops_detected'] = loops
+        if ccr_keys:
+            resp['ccr_keys'] = ccr_keys
+
+        return jsonify(resp)
     except ImportError:
         return jsonify({'error': 'context_engine not available on this server'}), 500
     except Exception as e:
