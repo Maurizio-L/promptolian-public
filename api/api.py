@@ -782,6 +782,7 @@ def health():
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
         'endpoints':          ['/compress', '/compress-context', '/compress-tools', '/optimize-context', '/stats', '/feedback', '/website-event', '/website-stats', '/visit-count', '/admin/subscription'],
+        'smtp_configured':    bool(_SMTP_HOST and _SMTP_USER and _SMTP_PASS),
         'timestamp':          datetime.now().isoformat(),
     })
 
