@@ -810,7 +810,7 @@ def health():
     return jsonify({
         'status':             'ok',
         'service':            'Promptolian API',
-        'version':            '2.3.5',
+        'version':            '2.3.6',
         'context_engine':     _CONTEXT_ENGINE_AVAILABLE,
         'engine_v4':          _ENGINE_AVAILABLE,
         'tiers_available':    ['standard', 'pro', 'developer'] if _ENGINE_AVAILABLE else ['standard'],
