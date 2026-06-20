@@ -168,6 +168,7 @@ class CompressionRepository:
         """)
         cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS api_key TEXT UNIQUE")
         cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ")
+        cur.execute("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS emailed_at TIMESTAMPTZ")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS website_events (
                 id SERIAL PRIMARY KEY,
@@ -545,6 +546,37 @@ class CompressionRepository:
                 return dict(row) if row else None
         except Exception:
             return None
+
+    def mark_emailed(self, api_key: str) -> None:
+        try:
+            p = self._placeholder()
+            conn = self._connect()
+            sql = f"UPDATE subscriptions SET emailed_at=CURRENT_TIMESTAMP WHERE api_key={p}"
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql, (api_key,)); conn.commit(); cur.close()
+            else:
+                conn.execute(sql, (api_key,)); conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    def get_email_failures(self) -> list:
+        try:
+            conn = self._connect()
+            sql = ("SELECT email, plan, api_key, expires_at, created_at FROM subscriptions "
+                   "WHERE status='active' AND api_key IS NOT NULL AND emailed_at IS NULL "
+                   "ORDER BY created_at DESC")
+            if self._is_pg():
+                cur = conn.cursor(); cur.execute(sql)
+                rows = cur.fetchall(); cur.close(); conn.close()
+                return [{'email': r[0], 'plan': r[1], 'api_key': r[2],
+                         'expires_at': str(r[3]) if r[3] else None,
+                         'created_at': str(r[4])} for r in rows]
+            else:
+                rows = conn.execute(sql).fetchall(); conn.close()
+                return [dict(r) for r in rows]
+        except Exception:
+            return []
 
     def count_key_usage_month(self, api_key: str) -> int:
         try:
@@ -1019,8 +1051,36 @@ def admin_subscription():
     api_key = f'ptl_{secrets.token_urlsafe(24)}'
     _repo.activate_subscription(email, plan, sub_id, api_key, expires_at)
     emailed = _send_key_email(email, api_key, plan, expires_at)
+    if emailed:
+        _repo.mark_emailed(api_key)
     return jsonify({'ok': True, 'email': email, 'plan': plan, 'api_key': api_key,
                     'expires_at': expires_at, 'emailed': emailed})
+
+
+@app.route('/admin/email-failures')
+def admin_email_failures():
+    if not _MASTER_KEY or request.headers.get('X-Master-Key') != _MASTER_KEY:
+        return jsonify({'error': 'unauthorized'}), 401
+    failures = _repo.get_email_failures()
+    return jsonify({'count': len(failures), 'failures': failures})
+
+
+@app.route('/admin/resend-email', methods=['POST'])
+def admin_resend_email():
+    if not _MASTER_KEY or request.headers.get('X-Master-Key') != _MASTER_KEY:
+        return jsonify({'error': 'unauthorized'}), 401
+    data  = request.get_json(force=True, silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'email required'}), 400
+    failures = _repo.get_email_failures()
+    match = next((f for f in failures if f['email'] == email), None)
+    if not match:
+        return jsonify({'error': 'no pending failure for that email'}), 404
+    sent = _send_key_email(match['email'], match['api_key'], match['plan'], match.get('expires_at'))
+    if sent:
+        _repo.mark_emailed(match['api_key'])
+    return jsonify({'ok': sent, 'email': email, 'emailed': sent})
 
 
 @app.route('/visit-count')
@@ -1488,7 +1548,8 @@ def billing_webhook():
         plan    = _resolve_plan_from_session(obj)
         api_key = f'ptl_{_sec.token_urlsafe(24)}'
         _repo.activate_subscription(customer_email, plan, obj.get('subscription', ''), api_key)
-        _send_key_email(customer_email, api_key, plan)
+        if _send_key_email(customer_email, api_key, plan):
+            _repo.mark_emailed(api_key)
 
     elif etype in ('customer.subscription.deleted', 'customer.subscription.updated'):
         sub    = obj
