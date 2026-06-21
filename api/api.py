@@ -1053,16 +1053,14 @@ class CompressionRepository:
                     SELECT s.email, s.plan, s.status, s.api_key,
                            s.created_at, s.expires_at,
                            COALESCE(c.calls,0), COALESCE(c.tokens_saved,0),
-                           COALESCE(c.loops,0), COALESCE(c.loop_iters,0),
+                           COALESCE(l.loops,0), COALESCE(l.loop_iters,0),
                            COALESCE(r.routing_calls,0),
                            COALESCE(r.actual_cost,0), COALESCE(r.opus_cost,0)
                     FROM subscriptions s
                     LEFT JOIN (
                         SELECT api_key,
                                COUNT(*) AS calls,
-                               COALESCE(SUM(tokens_saved),0) AS tokens_saved,
-                               COUNT(DISTINCT CASE WHEN suggested_model IS NOT NULL THEN 1 END) AS loops,
-                               0 AS loops2
+                               COALESCE(SUM(tokens_saved),0) AS tokens_saved
                         FROM context_events GROUP BY api_key
                     ) c ON c.api_key = s.api_key
                     LEFT JOIN (
