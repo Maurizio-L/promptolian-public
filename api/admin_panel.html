@@ -540,16 +540,10 @@
 
   // ── BOOT ───────────────────────────────────────────────────────────────────
   (function() {
-    // If Flask injected the key, use it directly (served via /admin-panel)
-    if (MASTER_KEY && MASTER_KEY !== '__MASTER_KEY__') {
-      apiFetch('/admin/users').then(d => {
-        if (d.error) { document.getElementById('login-screen').style.display = 'flex'; return; }
-        showApp(d);
-      }).catch(() => { document.getElementById('login-screen').style.display = 'flex'; });
-      return;
-    }
-    // Fallback: show login form (direct static file access)
-    document.getElementById('login-screen').style.display = 'flex';
+    apiFetch('/admin/users').then(d => {
+      if (d.error) { document.getElementById('login-screen').style.display = 'flex'; return; }
+      showApp(d);
+    }).catch(() => { document.getElementById('login-screen').style.display = 'flex'; });
   })();
 </script>
 </body>
