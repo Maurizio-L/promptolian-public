@@ -1370,6 +1370,100 @@ _CCR_MAX = 1_000
 # FEATURE FUNCTIONS
 # ══════════════════════════════════════════════════════════════════════════════
 
+import hashlib as _hashlib
+import difflib as _difflib
+
+_MIN_TOOL_CONTENT = 80    # chars — skip tiny outputs
+_DIFF_THRESHOLD   = 0.60  # use diff only if shorter than 60% of original
+
+
+def _hash_content(content: str) -> str:
+    return _hashlib.sha256(content.encode()).hexdigest()[:20]
+
+
+def _make_diff(old: str, new: str) -> str:
+    old_lines, new_lines = old.splitlines(), new.splitlines()
+    parts = []
+    for tag, i1, i2, j1, j2 in _difflib.SequenceMatcher(None, old_lines, new_lines).get_opcodes():
+        if tag == 'equal':
+            continue
+        if tag in ('replace', 'delete'):
+            parts.extend(f'-{l}' for l in old_lines[i1:i2])
+        if tag in ('replace', 'insert'):
+            parts.extend(f'+{l}' for l in new_lines[j1:j2])
+    return '\n'.join(parts)
+
+
+def _compress_tool_results(messages: list) -> tuple:
+    """Stateless tool result dedup — processes full message history in one pass.
+
+    Returns (new_messages, total_tokens_saved).
+    Exact repeats → [TOOL_CACHE_REF: same as call #N]
+    Similar content → [TOOL_CACHE_DIFF from call #N: ...]
+    """
+    cache: list = []
+    new_messages = []
+    total_saved = 0
+
+    def _compress_single(content: str) -> tuple:
+        if len(content) < _MIN_TOOL_CONTENT:
+            return content, 0
+        h = _hash_content(content)
+        orig_tokens = max(1, len(content.split()) * 4 // 3)
+
+        match = next((c for c in cache if c['hash'] == h), None)
+        if match:
+            return f'[TOOL_CACHE_REF: same as call #{match["idx"]}]', orig_tokens - 5
+
+        best_match, best_ratio = None, 0.70
+        for c in cache:
+            ratio = _difflib.SequenceMatcher(None, c['content'][:600], content[:600]).ratio()
+            if ratio > best_ratio:
+                best_ratio, best_match = ratio, c
+
+        new_content, tokens_saved = content, 0
+        if best_match:
+            diff = _make_diff(best_match['content'], content)
+            diff_ref = f'[TOOL_CACHE_DIFF from call #{best_match["idx"]}:\n{diff}]'
+            if len(diff_ref) < len(content) * _DIFF_THRESHOLD:
+                tokens_saved = orig_tokens - max(1, len(diff_ref.split()) * 4 // 3)
+                new_content = diff_ref
+
+        cache.append({'hash': h, 'content': content, 'idx': len(cache)})
+        return new_content, tokens_saved
+
+    for msg in messages:
+        if isinstance(msg.get('content'), list):
+            new_blocks = []
+            for block in msg['content']:
+                if block.get('type') == 'tool_result':
+                    raw = block.get('content', '')
+                    if isinstance(raw, str):
+                        compressed, saved = _compress_single(raw)
+                        total_saved += saved
+                        block = {**block, 'content': compressed}
+                    elif isinstance(raw, list):
+                        new_raw = []
+                        for sub in raw:
+                            if isinstance(sub, dict) and sub.get('type') == 'text':
+                                compressed, saved = _compress_single(sub.get('text', ''))
+                                total_saved += saved
+                                sub = {**sub, 'text': compressed}
+                            new_raw.append(sub)
+                        block = {**block, 'content': new_raw}
+                new_blocks.append(block)
+            msg = {**msg, 'content': new_blocks}
+        elif msg.get('role') == 'tool':
+            content = msg.get('content', '')
+            if isinstance(content, str):
+                compressed, saved = _compress_single(content)
+                total_saved += saved
+                msg = {**msg, 'content': compressed}
+        new_messages.append(msg)
+
+    return new_messages, total_saved
+
+
 def _detect_loops(messages: list, threshold: int = 3, window: int = 20) -> list:
     """Scan recent messages for stuck tool-call loops.
 
@@ -2541,6 +2635,9 @@ def proxy_messages():
         return jsonify({'error': '"messages" required in request body'}), 400
 
     messages = data.get('messages', [])
+
+    # — Tool result dedup (exact repeat → ref, similar → diff)
+    messages, tool_tokens_saved = _compress_tool_results(messages)
 
     # — Loop detection
     loops = _detect_loops(messages)
