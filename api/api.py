@@ -1044,6 +1044,144 @@ class CompressionRepository:
         finally:
             conn.close()
 
+    def get_all_users_stats(self) -> dict:
+        conn = self._connect()
+        try:
+            if self._is_pg():
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT s.email, s.plan, s.status, s.api_key,
+                           s.created_at, s.expires_at,
+                           COALESCE(c.calls,0), COALESCE(c.tokens_saved,0),
+                           COALESCE(c.loops,0), COALESCE(c.loop_iters,0),
+                           COALESCE(r.routing_calls,0),
+                           COALESCE(r.actual_cost,0), COALESCE(r.opus_cost,0)
+                    FROM subscriptions s
+                    LEFT JOIN (
+                        SELECT api_key,
+                               COUNT(*) AS calls,
+                               COALESCE(SUM(tokens_saved),0) AS tokens_saved,
+                               COUNT(DISTINCT CASE WHEN suggested_model IS NOT NULL THEN 1 END) AS loops,
+                               0 AS loops2
+                        FROM context_events GROUP BY api_key
+                    ) c ON c.api_key = s.api_key
+                    LEFT JOIN (
+                        SELECT api_key, COUNT(*) AS loops, COALESCE(SUM(loop_count),0) AS loop_iters
+                        FROM loop_events GROUP BY api_key
+                    ) l ON l.api_key = s.api_key
+                    LEFT JOIN (
+                        SELECT api_key, COUNT(*) AS routing_calls,
+                               COALESCE(SUM(estimated_cost_usd),0) AS actual_cost,
+                               COALESCE(SUM(input_tokens+output_tokens)*15.0/1e6,0) AS opus_cost
+                        FROM routing_events GROUP BY api_key
+                    ) r ON r.api_key = s.api_key
+                    ORDER BY s.created_at DESC
+                """)
+                rows = cur.fetchall()
+                cur.execute("SELECT COUNT(*), COUNT(*) FILTER (WHERE status='active') FROM subscriptions")
+                totals = cur.fetchone()
+                cur.execute("SELECT COALESCE(SUM(tokens_saved),0) FROM context_events")
+                total_saved = cur.fetchone()[0] or 0
+                cur.execute("SELECT COALESCE(SUM(loop_count),0) FROM loop_events")
+                total_loops = cur.fetchone()[0] or 0
+                cur.close()
+            else:
+                rows = conn.execute("""
+                    SELECT s.email, s.plan, s.status, s.api_key,
+                           s.created_at, s.expires_at,
+                           COALESCE(c.calls,0), COALESCE(c.tokens_saved,0),
+                           COALESCE(l.loops,0), COALESCE(l.loop_iters,0),
+                           COALESCE(r.routing_calls,0),
+                           COALESCE(r.actual_cost,0.0), COALESCE(r.opus_cost,0.0)
+                    FROM subscriptions s
+                    LEFT JOIN (
+                        SELECT api_key, COUNT(*) AS calls,
+                               COALESCE(SUM(tokens_saved),0) AS tokens_saved
+                        FROM context_events GROUP BY api_key
+                    ) c ON c.api_key = s.api_key
+                    LEFT JOIN (
+                        SELECT api_key, COUNT(*) AS loops,
+                               COALESCE(SUM(loop_count),0) AS loop_iters
+                        FROM loop_events GROUP BY api_key
+                    ) l ON l.api_key = s.api_key
+                    LEFT JOIN (
+                        SELECT api_key, COUNT(*) AS routing_calls,
+                               COALESCE(SUM(estimated_cost_usd),0.0) AS actual_cost,
+                               COALESCE(SUM(input_tokens+output_tokens)*15.0/1000000,0.0) AS opus_cost
+                        FROM routing_events GROUP BY api_key
+                    ) r ON r.api_key = s.api_key
+                    ORDER BY s.created_at DESC
+                """).fetchall()
+                totals = conn.execute(
+                    "SELECT COUNT(*), SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) FROM subscriptions"
+                ).fetchone()
+                total_saved = conn.execute("SELECT COALESCE(SUM(tokens_saved),0) FROM context_events").fetchone()[0] or 0
+                total_loops = conn.execute("SELECT COALESCE(SUM(loop_count),0) FROM loop_events").fetchone()[0] or 0
+
+            users = []
+            for r in rows:
+                key = str(r[3] or '')
+                users.append({
+                    'email':        r[0], 'plan': r[1], 'status': r[2],
+                    'api_key_hint': (key[:8] + '…' + key[-4:]) if len(key) > 12 else key,
+                    'created_at':   str(r[4] or ''), 'expires_at': str(r[5] or ''),
+                    'calls':        int(r[6]  or 0), 'tokens_saved': int(r[7] or 0),
+                    'loops':        int(r[8]  or 0), 'loop_iters':   int(r[9] or 0),
+                    'routing_calls': int(r[10] or 0),
+                    'actual_cost':  round(float(r[11] or 0), 4),
+                    'opus_cost':    round(float(r[12] or 0), 4),
+                })
+            return {
+                'total_keys':    int(totals[0] or 0),
+                'active_keys':   int(totals[1] or 0),
+                'total_tokens_saved': int(total_saved),
+                'total_loops_blocked': int(total_loops),
+                'users': users,
+            }
+        finally:
+            conn.close()
+
+    def get_db_stats(self) -> dict:
+        conn = self._connect()
+        tables = [
+            'subscriptions', 'compression_events', 'context_events',
+            'routing_events', 'loop_events', 'session_metrics',
+            'website_events', 'feedback', 'chat_events',
+        ]
+        try:
+            counts = {}
+            if self._is_pg():
+                cur = conn.cursor()
+                for t in tables:
+                    try:
+                        cur.execute(f"SELECT COUNT(*) FROM {t}")
+                        counts[t] = cur.fetchone()[0] or 0
+                    except Exception:
+                        counts[t] = None
+                try:
+                    cur.execute("""
+                        SELECT pg_size_pretty(pg_database_size(current_database())),
+                               pg_database_size(current_database())
+                    """)
+                    sz = cur.fetchone()
+                    db_size_pretty = sz[0]
+                    db_size_bytes  = int(sz[1])
+                except Exception:
+                    db_size_pretty, db_size_bytes = 'n/a', 0
+                cur.close()
+            else:
+                for t in tables:
+                    try:
+                        counts[t] = conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] or 0
+                    except Exception:
+                        counts[t] = None
+                import os as _os
+                db_size_bytes  = _os.path.getsize(self._db_path) if hasattr(self, '_db_path') else 0
+                db_size_pretty = f"{db_size_bytes/1024:.1f} KB"
+            return {'table_counts': counts, 'db_size': db_size_pretty, 'db_size_bytes': db_size_bytes}
+        finally:
+            conn.close()
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # INFRASTRUCTURE — RateLimiter  (SRP: owns rate-limit policy; OCP: extend by
@@ -1766,6 +1904,41 @@ def admin_resend_email():
     if sent:
         _repo.mark_emailed(match['api_key'])
     return jsonify({'ok': sent, 'email': email, 'emailed': sent})
+
+
+def _admin_auth():
+    return _MASTER_KEY and request.headers.get('X-Master-Key') == _MASTER_KEY
+
+
+@app.route('/admin/users')
+def admin_users():
+    if not _admin_auth():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        return jsonify(_repo.get_all_users_stats())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/website')
+def admin_website():
+    if not _admin_auth():
+        return jsonify({'error': 'unauthorized'}), 401
+    days = max(7, min(90, int(request.args.get('days', 30))))
+    try:
+        return jsonify(_repo.get_website_stats(days))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/db')
+def admin_db():
+    if not _admin_auth():
+        return jsonify({'error': 'unauthorized'}), 401
+    try:
+        return jsonify(_repo.get_db_stats())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/visit-count')
