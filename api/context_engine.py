@@ -637,14 +637,17 @@ class ContextEngine:
         tail = msgs[-keep_n:] if len(msgs) > keep_n else msgs[:]
         head = msgs[:-keep_n] if len(msgs) > keep_n else []
 
-        tail_tokens = sum(_msg_tokens(m) for m in tail)
-        remaining   = max(0, budget - tail_tokens)
+        # Pinned messages (source of a TOOL_CACHE_REF) must always survive
+        pinned_head = [m for m in head if m.get('_ptl_pinned')]
+        free_head   = [m for m in head if not m.get('_ptl_pinned')]
 
-        if query and head:
-            # Blend query relevance (Jaccard) with entity density so fact-rich
-            # turns survive pruning regardless of position in the conversation.
+        tail_tokens   = sum(_msg_tokens(m) for m in tail)
+        pinned_tokens = sum(_msg_tokens(m) for m in pinned_head)
+        remaining     = max(0, budget - tail_tokens - pinned_tokens)
+
+        if query and free_head:
             scored = sorted(
-                head,
+                free_head,
                 key=lambda m: (
                     0.5 * _jaccard(m.get('content', ''), query)
                     + 0.5 * _entity_density(m.get('content', ''))
@@ -652,19 +655,18 @@ class ContextEngine:
                 reverse=True,
             )
         else:
-            # No query — rank by entity density alone so fact-rich turns win
-            scored = sorted(head, key=lambda m: _entity_density(m.get('content', '')), reverse=True)
+            scored = sorted(free_head, key=lambda m: _entity_density(m.get('content', '')), reverse=True)
 
-        kept_head: list[dict] = []
+        kept_free: list[dict] = []
         for msg in scored:
             t = _msg_tokens(msg)
             if t <= remaining:
-                kept_head.append(msg)
+                kept_free.append(msg)
                 remaining -= t
 
         # Restore chronological order
-        head_set = {id(m) for m in kept_head}
-        kept_head = [m for m in head if id(m) in head_set]
+        kept_ids  = {id(m) for m in kept_free} | {id(m) for m in pinned_head}
+        kept_head = [m for m in head if id(m) in kept_ids]
 
         return kept_head + tail
 
@@ -700,6 +702,7 @@ class ContextEngine:
             new_words = words - known - _STOP
 
             if (msg.get('role') == 'system'
+                    or msg.get('_ptl_pinned')
                     or not entities.issubset(known)
                     or len(new_words) > 5):
                 kept.append(msg)
@@ -1131,7 +1134,7 @@ class ContextEngine:
         result: list[dict] = []
         for i, msg in enumerate(messages):
             role = msg.get('role', 'user')
-            if role == 'system':
+            if role == 'system' or msg.get('_ptl_pinned'):
                 result.append(msg)
                 continue
 

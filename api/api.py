@@ -1401,11 +1401,12 @@ def _compress_tool_results(messages: list) -> tuple:
     Exact repeats → [TOOL_CACHE_REF: same as call #N]
     Similar content → [TOOL_CACHE_DIFF from call #N: ...]
     """
-    cache: list = []
-    new_messages = []
-    total_saved = 0
+    cache: list = []      # {hash, content, idx, msg_idx}
+    new_messages: list = []
+    total_saved  = 0
+    pinned_msg_indices: set = set()  # message indices that must survive pruning
 
-    def _compress_single(content: str) -> tuple:
+    def _compress_single(content: str, msg_idx: int) -> tuple:
         if len(content) < _MIN_TOOL_CONTENT:
             return content, 0
         h = _hash_content(content)
@@ -1413,6 +1414,8 @@ def _compress_tool_results(messages: list) -> tuple:
 
         match = next((c for c in cache if c['hash'] == h), None)
         if match:
+            # Pin the source message so pruning can't remove it
+            pinned_msg_indices.add(match['msg_idx'])
             return f'[TOOL_CACHE_REF: same as call #{match["idx"]}]', orig_tokens - 5
 
         best_match, best_ratio = None, 0.70
@@ -1428,25 +1431,26 @@ def _compress_tool_results(messages: list) -> tuple:
             if len(diff_ref) < len(content) * _DIFF_THRESHOLD:
                 tokens_saved = orig_tokens - max(1, len(diff_ref.split()) * 4 // 3)
                 new_content = diff_ref
+                pinned_msg_indices.add(best_match['msg_idx'])
 
-        cache.append({'hash': h, 'content': content, 'idx': len(cache)})
+        cache.append({'hash': h, 'content': content, 'idx': len(cache), 'msg_idx': msg_idx})
         return new_content, tokens_saved
 
-    for msg in messages:
+    for msg_idx, msg in enumerate(messages):
         if isinstance(msg.get('content'), list):
             new_blocks = []
             for block in msg['content']:
                 if block.get('type') == 'tool_result':
                     raw = block.get('content', '')
                     if isinstance(raw, str):
-                        compressed, saved = _compress_single(raw)
+                        compressed, saved = _compress_single(raw, msg_idx)
                         total_saved += saved
                         block = {**block, 'content': compressed}
                     elif isinstance(raw, list):
                         new_raw = []
                         for sub in raw:
                             if isinstance(sub, dict) and sub.get('type') == 'text':
-                                compressed, saved = _compress_single(sub.get('text', ''))
+                                compressed, saved = _compress_single(sub.get('text', ''), msg_idx)
                                 total_saved += saved
                                 sub = {**sub, 'text': compressed}
                             new_raw.append(sub)
@@ -1456,10 +1460,15 @@ def _compress_tool_results(messages: list) -> tuple:
         elif msg.get('role') == 'tool':
             content = msg.get('content', '')
             if isinstance(content, str):
-                compressed, saved = _compress_single(content)
+                compressed, saved = _compress_single(content, msg_idx)
                 total_saved += saved
                 msg = {**msg, 'content': compressed}
         new_messages.append(msg)
+
+    # Mark pinned messages so ContextEngine.prune() won't drop them
+    for i in pinned_msg_indices:
+        if i < len(new_messages):
+            new_messages[i] = {**new_messages[i], '_ptl_pinned': True}
 
     return new_messages, total_saved
 
