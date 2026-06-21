@@ -1846,6 +1846,7 @@ def optimize_context():
         )
 
         summary_tokens = _count_tokens(result.get('new_summary', ''))
+        complexity = _classify_complexity(messages, [])
         _repo.log_context_event(
             api_key          = api_key,
             mode             = mode,
