@@ -1215,7 +1215,11 @@ class ContextEngine:
         budget = budget_tokens or self.budget_tokens
 
         # Baseline
-        original_text   = ' '.join(m.get('content', '') for m in messages) + ' ' + query
+        def _content_str(c):
+            if isinstance(c, str):  return c
+            if isinstance(c, list): return ' '.join(b.get('text', '') if isinstance(b, dict) else str(b) for b in c)
+            return ''
+        original_text   = ' '.join(_content_str(m.get('content', '')) for m in messages) + ' ' + query
         original_tokens = _tokens(original_text)
 
         # Step 1: delta prune — drop zero-new-info turns

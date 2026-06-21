@@ -1803,7 +1803,24 @@ def compress_context():
             _repo.log_loop_event(api_key, lp['tool'], lp['type'], lp['count'])
 
     # — CCR: annotate large tool results with retrieval hints
+    def _flatten_content(msgs):
+        """Normalize list-typed content blocks to plain strings for context engine."""
+        out = []
+        for m in msgs:
+            c = m.get('content', '')
+            if isinstance(c, list):
+                parts = []
+                for b in c:
+                    if not isinstance(b, dict): continue
+                    if b.get('type') == 'text':        parts.append(b.get('text', ''))
+                    elif b.get('type') == 'tool_use':  parts.append(f"[tool:{b.get('name','')} input:{json.dumps(b.get('input',''))}]")
+                    elif b.get('type') == 'tool_result': parts.append(f"[result:{b.get('content','')}]")
+                c = ' '.join(parts)
+            out.append({**m, 'content': c})
+        return out
+
     annotated_messages, ccr_keys = _ccr_annotate(messages)
+    annotated_messages = _flatten_content(annotated_messages)
 
     # — Complexity: heuristic model-family suggestion
     complexity = _classify_complexity(messages, loops)
