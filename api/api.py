@@ -99,6 +99,14 @@ class CompressionRepository:
             platform TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS routing_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_key TEXT, provider TEXT NOT NULL, model TEXT NOT NULL,
+            input_tokens INTEGER NOT NULL DEFAULT 0,
+            output_tokens INTEGER NOT NULL DEFAULT 0,
+            estimated_cost_usd REAL NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS loop_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             api_key TEXT, tool_name TEXT NOT NULL,
@@ -222,6 +230,16 @@ class CompressionRepository:
                 messages_pruned INTEGER NOT NULL DEFAULT 0,
                 summary_tokens INTEGER NOT NULL DEFAULT 0,
                 platform TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS routing_events (
+                id SERIAL PRIMARY KEY,
+                api_key TEXT, provider TEXT NOT NULL, model TEXT NOT NULL,
+                input_tokens INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                estimated_cost_usd NUMERIC(10,6) NOT NULL DEFAULT 0,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
