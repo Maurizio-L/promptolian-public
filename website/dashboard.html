@@ -72,6 +72,11 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
 .key-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink);transition:all .15s;white-space:nowrap}
 .key-btn:hover{background:var(--soft)}
 .toast{font-size:13px;margin-top:10px;display:none;padding:9px 14px;border-radius:8px}
+.routing-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.routing-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden}
+.routing-bar{height:100%;border-radius:4px;background:var(--ink);transition:width .4s}
+.routing-model{font-family:'DM Mono',monospace;font-size:12px;min-width:160px;color:var(--ink)}
+.routing-pct{min-width:38px;text-align:right;color:var(--muted);font-size:12px}
 .toast.ok{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0}
 .toast.err{background:#fef2f2;color:var(--red);border:1px solid #fca5a5}
 
@@ -169,6 +174,28 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 4
     </div>
   </div>
 
+  <!-- Provider routing breakdown -->
+  <div class="section-header" id="routing-section" style="display:none">
+    <div class="section-title">Provider routing</div>
+  </div>
+  <div class="key-box" id="routing-box" style="display:none;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Saved vs all-Opus</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--green)" id="routing-saved">—</div>
+      </div>
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Actual spend</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px" id="routing-actual">—</div>
+      </div>
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Opus equivalent</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--muted)" id="routing-opus">—</div>
+      </div>
+    </div>
+    <div id="routing-rows" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+
   <!-- Key -->
   <div class="key-box">
     <div class="key-box-title">Your API key</div>
@@ -216,6 +243,7 @@ async function login() {
     document.getElementById('plan-label').textContent = guessPlan(data);
 
     loadTimeseries(_days);
+    loadRouting(_days);
   } catch(e) {
     err.style.display = 'block';
   } finally {
@@ -263,7 +291,7 @@ async function loadTimeseries(days) {
   } catch(e) {}
 }
 
-function setDays(d) { loadTimeseries(d); }
+function setDays(d) { loadTimeseries(d); loadRouting(d); }
 
 function renderCharts(daily) {
   const labels  = daily.map(d => shortDate(d.date));
@@ -336,6 +364,36 @@ function chartOpts() {
 function destroyCharts() {
   Object.values(_charts).forEach(c => c.destroy());
   _charts = {};
+}
+
+// ── Provider routing ──────────────────────────────────────────────────────────
+async function loadRouting(days) {
+  try {
+    const res  = await fetch(API + `/stats/routing?days=${days}`, { headers: { 'X-API-Key': _key } });
+    const data = await res.json();
+    if (!res.ok || !data.by_model || data.by_model.length === 0) return;
+
+    document.getElementById('routing-section').style.display = 'flex';
+    document.getElementById('routing-box').style.display     = 'block';
+
+    set('routing-saved',  '$' + data.saved_vs_opus_usd.toFixed(2));
+    set('routing-actual', '$' + data.total_actual_cost_usd.toFixed(2));
+    set('routing-opus',   '$' + data.opus_equivalent_cost_usd.toFixed(2));
+
+    const colors = ['#c8f135','#0e0e0e','#f97316','#6b6b6b'];
+    const rows = document.getElementById('routing-rows');
+    rows.innerHTML = '';
+    data.by_model.forEach((m, i) => {
+      const color = colors[i % colors.length];
+      rows.innerHTML += `
+        <div class="routing-row">
+          <div class="routing-model">${m.model}</div>
+          <div class="routing-bar-wrap"><div class="routing-bar" style="width:${m.pct_of_requests}%;background:${color}"></div></div>
+          <div class="routing-pct">${m.pct_of_requests}%</div>
+          <div style="font-size:12px;color:var(--muted);min-width:60px;text-align:right">$${m.actual_cost_usd.toFixed(4)}</div>
+        </div>`;
+    });
+  } catch(e) {}
 }
 
 // ── Key ───────────────────────────────────────────────────────────────────────

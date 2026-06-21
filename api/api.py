@@ -874,6 +874,59 @@ class CompressionRepository:
         except Exception:
             pass
 
+    def get_routing_stats(self, api_key: str, days: int = 30) -> dict:
+        OPUS_IN  = 5.0    # $/1M input tokens — Claude Opus 4.8
+        OPUS_OUT = 25.0
+        try:
+            p    = self._placeholder()
+            conn = self._connect()
+            if self._is_pg():
+                interval = f"NOW() - INTERVAL '{days} days'"
+                sql = (f"SELECT model, provider, "
+                       f"COUNT(*) as requests, "
+                       f"COALESCE(SUM(input_tokens),0) as input_tokens, "
+                       f"COALESCE(SUM(output_tokens),0) as output_tokens, "
+                       f"COALESCE(SUM(estimated_cost_usd),0) as actual_cost "
+                       f"FROM routing_events WHERE api_key={p} AND created_at >= {interval} "
+                       f"GROUP BY model, provider ORDER BY requests DESC")
+                cur = conn.cursor(); cur.execute(sql, (api_key,))
+                rows = cur.fetchall(); cur.close(); conn.close()
+                by_model = [{'model': r[0], 'provider': r[1], 'requests': r[2],
+                             'input_tokens': r[3], 'output_tokens': r[4],
+                             'actual_cost_usd': float(r[5])} for r in rows]
+            else:
+                since = f"datetime('now', '-{days} days')"
+                sql = (f"SELECT model, provider, COUNT(*) as requests, "
+                       f"COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0), "
+                       f"COALESCE(SUM(estimated_cost_usd),0) "
+                       f"FROM routing_events WHERE api_key={p} AND created_at >= {since} "
+                       f"GROUP BY model, provider ORDER BY requests DESC")
+                rows = conn.execute(sql, (api_key,)).fetchall(); conn.close()
+                by_model = [{'model': r[0], 'provider': r[1], 'requests': r[2],
+                             'input_tokens': r[3], 'output_tokens': r[4],
+                             'actual_cost_usd': float(r[5])} for r in rows]
+
+            total_requests   = sum(m['requests'] for m in by_model)
+            total_actual     = sum(m['actual_cost_usd'] for m in by_model)
+            total_in_tokens  = sum(m['input_tokens'] for m in by_model)
+            total_out_tokens = sum(m['output_tokens'] for m in by_model)
+            opus_cost        = (total_in_tokens * OPUS_IN + total_out_tokens * OPUS_OUT) / 1_000_000
+            saved_vs_opus    = round(max(0.0, opus_cost - total_actual), 4)
+
+            for m in by_model:
+                m['pct_of_requests'] = round(m['requests'] * 100 / total_requests, 1) if total_requests else 0
+
+            return {
+                'days': days,
+                'total_requests': total_requests,
+                'total_actual_cost_usd': round(total_actual, 4),
+                'opus_equivalent_cost_usd': round(opus_cost, 4),
+                'saved_vs_opus_usd': saved_vs_opus,
+                'by_model': by_model,
+            }
+        except Exception as e:
+            raise
+
     def get_key_stats(self, api_key: str) -> dict:
         conn = self._connect()
         try:
@@ -1326,7 +1379,7 @@ def health():
         'kv_sandwich':        _CONTEXT_ENGINE_AVAILABLE,
         'endpoints':          [
             '/compress', '/compress-context', '/compress-tools', '/optimize-context',
-            '/stats', '/stats/me', '/session/complete',
+            '/stats', '/stats/me', '/stats/routing', '/session/complete',
             '/ccr/retrieve/<key>',
             '/feedback', '/website-event', '/website-stats', '/visit-count',
             '/admin/subscription',
@@ -1398,6 +1451,22 @@ def stats_timeseries():
     days = max(7, min(90, int(request.args.get('days', 30))))
     try:
         return jsonify(_repo.get_timeseries(api_key, days))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/stats/routing')
+def stats_routing():
+    """Provider/model breakdown with cost savings vs all-Opus."""
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'X-API-Key header required'}), 401
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub:
+        return jsonify({'error': 'Invalid API key'}), 401
+    days = min(int(request.args.get('days', 30)), 90)
+    try:
+        return jsonify(_repo.get_routing_stats(api_key, days))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
