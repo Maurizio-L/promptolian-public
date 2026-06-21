@@ -158,8 +158,8 @@
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen">
+<!-- LOGIN (shown only when accessed directly without server auth) -->
+<div id="login-screen" style="display:none">
   <div class="login-box">
     <h1>Promptolian</h1>
     <p>Admin dashboard — master key required</p>
@@ -318,7 +318,7 @@
 
 <script>
   const API = 'https://api.promptolian.com';
-  let MASTER_KEY = '';
+  let MASTER_KEY = '__MASTER_KEY__';
 
   function fmt(n) {
     if (n == null) return '—';
@@ -540,14 +540,16 @@
 
   // ── BOOT ───────────────────────────────────────────────────────────────────
   (function() {
-    const saved = sessionStorage.getItem('ptl_admin_key');
-    if (saved) {
-      MASTER_KEY = saved;
+    // If Flask injected the key, use it directly (served via /admin-panel)
+    if (MASTER_KEY && MASTER_KEY !== '__MASTER_KEY__') {
       apiFetch('/admin/users').then(d => {
-        if (d.error) { logout(); return; }
+        if (d.error) { document.getElementById('login-screen').style.display = 'flex'; return; }
         showApp(d);
-      }).catch(logout);
+      }).catch(() => { document.getElementById('login-screen').style.display = 'flex'; });
+      return;
     }
+    // Fallback: show login form (direct static file access)
+    document.getElementById('login-screen').style.display = 'flex';
   })();
 </script>
 </body>

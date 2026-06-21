@@ -1727,6 +1727,7 @@ def ccr_retrieve(key: str):
 
 
 _MASTER_KEY  = os.getenv('PROMPTOLIAN_MASTER_KEY', '')
+_ADMIN_SESSIONS: dict = {}   # token -> expiry timestamp
 _SMTP_HOST   = os.getenv('SMTP_HOST', '')
 _SMTP_PORT   = int(os.getenv('SMTP_PORT', '587'))
 _SMTP_USER   = os.getenv('SMTP_USER', '')
@@ -1907,7 +1908,11 @@ def admin_resend_email():
 
 
 def _admin_auth():
-    return _MASTER_KEY and request.headers.get('X-Master-Key') == _MASTER_KEY
+    import time as _time
+    if _MASTER_KEY and request.headers.get('X-Master-Key') == _MASTER_KEY:
+        return True
+    tok = request.cookies.get('ptl_adm', '')
+    return bool(tok and _ADMIN_SESSIONS.get(tok, 0) > _time.time())
 
 
 @app.route('/admin/users')
@@ -1939,6 +1944,33 @@ def admin_db():
         return jsonify(_repo.get_db_stats())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin-panel')
+def admin_panel():
+    import time as _time, secrets as _sec
+    key = request.args.get('key', '')
+    tok = request.cookies.get('ptl_adm', '')
+    valid_key    = bool(_MASTER_KEY and key == _MASTER_KEY)
+    valid_cookie = bool(tok and _ADMIN_SESSIONS.get(tok, 0) > _time.time())
+    if not valid_key and not valid_cookie:
+        return '', 404
+    if valid_key:
+        tok = _sec.token_hex(32)
+        _ADMIN_SESSIONS[tok] = _time.time() + 8 * 3600
+        # Evict expired tokens
+        now = _time.time()
+        expired = [t for t, exp in _ADMIN_SESSIONS.items() if exp < now]
+        for t in expired: _ADMIN_SESSIONS.pop(t, None)
+    html_path = os.path.join(os.path.dirname(__file__), 'admin_panel.html')
+    try:
+        html = open(html_path).read()
+    except FileNotFoundError:
+        return 'Admin panel file missing', 500
+    html = html.replace('__MASTER_KEY__', _MASTER_KEY)
+    resp = Response(html, mimetype='text/html')
+    resp.set_cookie('ptl_adm', tok, max_age=8 * 3600, httponly=True, samesite='Strict')
+    return resp
 
 
 @app.route('/visit-count')
