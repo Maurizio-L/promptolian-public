@@ -239,7 +239,7 @@
       max-width: 1100px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       padding: 0 32px;
     }
 
@@ -905,6 +905,7 @@
       .stat-cell:nth-child(2) { border-right: none; }
       .stat-cell:nth-child(4) { border-right: none; }
       .stat-cell:nth-child(6) { border-right: none; }
+      .stat-cell:nth-child(7) { border-right: none; }
 
       .section { padding: 56px 20px; }
 
@@ -967,8 +968,8 @@
 
 <!-- HERO -->
 <section class="hero">
-  <h1>Smart Token Discipline<br><span class="accent">for Claude Developers.</span></h1>
-  <p class="hero-sub">Drop your tool-schema token overhead instantly. Promptolian compresses context, detects stuck loops, and routes to the right model, automatically.</p>
+  <h1>Smart Token Discipline<br><span class="accent">for AI Agents.</span></h1>
+  <p class="hero-sub">Drop your tool-schema token overhead instantly. Promptolian compresses context, detects stuck loops, routes to the right model, and proxies to DeepSeek or GLM when Opus is overkill.</p>
   <div class="hero-ctas">
     <a href="#quickstart" class="btn-primary" data-track="hero_get_started">Try it free</a>
     <a href="benchmarks.html" class="btn-ghost" data-track="hero_benchmark">See the numbers</a>
@@ -992,6 +993,10 @@
       <div class="stat-label">Schema savings</div>
     </div>
     <div class="stat-cell">
+      <div class="stat-value">21x</div>
+      <div class="stat-label">DeepSeek vs Opus</div>
+    </div>
+    <div class="stat-cell">
       <div class="stat-value">99%</div>
       <div class="stat-label">Fact retention</div>
     </div>
@@ -1010,11 +1015,11 @@
 <section id="how-it-works" class="section section-sep">
   <div class="hiw-header">
     <div class="hiw-label-col">
-      <div class="section-label">Two problems,<br>one proxy</div>
+      <div class="section-label">Four problems,<br>one proxy</div>
     </div>
     <div>
       <h2 class="section-title">How Promptolian works</h2>
-      <p class="section-sub" style="margin-bottom:0">Two persistent, expensive problems. Fixed transparently, with no code changes required in your agent.</p>
+      <p class="section-sub" style="margin-bottom:0">Four persistent, expensive problems. Fixed transparently, with no code changes required in your agent.</p>
     </div>
   </div>
 
@@ -1106,6 +1111,32 @@
       <span class="pstat"><strong>34.6%</strong> token savings on tool outputs</span>
       <span class="pstat"><strong>99%</strong> fact retention</span>
       <span class="pstat"><strong>Free</strong> — no API key needed</span>
+    </div>
+  </div>
+
+  <!-- Problem 4 -->
+  <div class="problem-block">
+    <div class="problem-tag">Problem 4</div>
+    <h3 class="problem-title">Over-paying for model capacity</h3>
+    <p class="problem-desc">Most agent calls don't need Claude Opus. Simple lookups and drafting tasks get routed to the same expensive model as your hardest reasoning problems. And when you want cheaper alternatives like DeepSeek, switching SDKs breaks your whole stack.</p>
+
+    <div class="code-visual">
+<span class="cv-dim">Without Promptolian:</span>
+<span class="cv-line"><span class="cv-normal">All calls</span>  → claude-opus-4-8  <span class="cv-dim">$15/M tokens</span>  <span class="cv-wasted">← overkill for 80% of tasks</span></span>
+<span class="cv-line"><span class="cv-normal">Switch SDK</span> → deepseek-chat     <span class="cv-wasted">← breaks tool calls, streaming, auth</span></span></div>
+
+    <div class="fix-label">Fix: Complexity routing + multi-provider gateway</div>
+
+    <div class="code-visual">
+<span class="cv-dim">With Promptolian:</span>
+<span class="cv-line"><span class="cv-saved">score: 18</span>  → haiku           <span class="cv-dim">$0.80/M</span>   <span class="cv-saved">✓ simple Q&amp;A</span></span>
+<span class="cv-line"><span class="cv-saved">score: 42</span>  → sonnet          <span class="cv-dim">$3.00/M</span>   <span class="cv-saved">✓ multi-turn</span></span>
+<span class="cv-line"><span class="cv-saved">score: 88</span>  → opus            <span class="cv-dim">$15.00/M</span>  <span class="cv-saved">✓ deep reasoning</span></span>
+<span class="cv-line"><span class="cv-saved">model: deepseek-chat</span>  → same Anthropic SDK  <span class="cv-dim">$0.14/M</span>  <span class="cv-saved">✓</span></span></div>
+
+    <div class="problem-stat">
+      <span class="pstat"><strong>21x</strong> cheaper with DeepSeek vs Opus</span>
+      <span class="pstat"><strong>No SDK change</strong> — just swap the model name</span>
     </div>
   </div>
 </section>
@@ -1282,6 +1313,7 @@
         <li>Session reset, no context wall</li>
         <li>Stuck-loop detection + blocking</li>
         <li>Complexity routing, Haiku to Opus</li>
+        <li>Multi-provider gateway (DeepSeek, GLM)</li>
         <li>Task tracking + savings dashboard</li>
       </ul>
       <a href="pricing.html" class="btn-pricing-primary" data-track="pricing_solo_cta">Subscribe</a>
