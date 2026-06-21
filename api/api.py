@@ -2503,6 +2503,153 @@ def _resolve_plan_from_session(session_obj: dict) -> str:
     return 'solo'  # safe default
 
 
+@app.route('/v1/messages', methods=['POST'])
+def proxy_messages():
+    """Transparent Anthropic proxy with compression + CCR.
+
+    Headers:
+      x-api-key:           user's real Anthropic API key (forwarded to Anthropic)
+      X-Promptolian-Key:   user's Promptolian subscription key (for auth)
+      anthropic-version:   forwarded as-is (default: 2023-06-01)
+
+    Compresses messages before forwarding, streams response back unchanged.
+    """
+    ptl_key = request.headers.get('X-Promptolian-Key', '').strip()
+    if not ptl_key:
+        return jsonify({'error': 'X-Promptolian-Key header required'}), 401
+
+    sub = _repo.get_subscription_by_key(ptl_key)
+    if not sub or sub['status'] != 'active':
+        return jsonify({'error': 'Invalid or inactive Promptolian key'}), 401
+
+    if sub.get('expires_at'):
+        from datetime import timezone as _tz
+        exp = sub['expires_at']
+        if hasattr(exp, 'tzinfo'):
+            now = datetime.now(_tz.utc)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=_tz.utc)
+            if now > exp:
+                return jsonify({'error': 'Subscription expired'}), 402
+
+    anthropic_key = request.headers.get('x-api-key', '').strip()
+    if not anthropic_key:
+        return jsonify({'error': 'x-api-key header (Anthropic key) required'}), 401
+
+    data = request.get_json(silent=True)
+    if not data or 'messages' not in data:
+        return jsonify({'error': '"messages" required in request body'}), 400
+
+    messages = data.get('messages', [])
+
+    # — Loop detection
+    loops = _detect_loops(messages)
+    if loops:
+        for lp in loops:
+            _repo.log_loop_event(ptl_key, lp['tool'], lp['type'], lp['count'])
+
+    # — CCR annotation
+    annotated_messages, ccr_keys = _ccr_annotate(messages)
+
+    # — Complexity
+    complexity = _classify_complexity(messages, loops)
+
+    # — Compress if context_engine available, otherwise pass through
+    optimized_messages = annotated_messages
+    tokens_saved = 0
+    try:
+        from context_engine import ContextEngine  # type: ignore
+        query = ''
+        for m in reversed(messages):
+            if m.get('role') == 'user':
+                c = m.get('content', '')
+                query = c if isinstance(c, str) else ' '.join(
+                    b.get('text', '') for b in c if isinstance(b, dict) and b.get('type') == 'text'
+                )
+                break
+
+        if query:
+            ce = ContextEngine()
+            flat = []
+            for m in annotated_messages:
+                c = m.get('content', '')
+                if isinstance(c, list):
+                    parts = []
+                    for b in c:
+                        if not isinstance(b, dict): continue
+                        if b.get('type') == 'text': parts.append(b.get('text', ''))
+                        elif b.get('type') == 'tool_use': parts.append(f"[tool:{b.get('name','')}]")
+                        elif b.get('type') == 'tool_result': parts.append(f"[result:{b.get('content','')}]")
+                    c = ' '.join(parts)
+                flat.append({**m, 'content': c})
+
+            result = ce.optimize(flat, query=query)
+            optimized_text = result.get('optimized_prompt', '')
+            if optimized_text:
+                # Replace messages with compressed version as a single user message
+                # preserving system prompt if present
+                system_msgs = [m for m in messages if m.get('role') == 'system']
+                optimized_messages = system_msgs + [{'role': 'user', 'content': optimized_text}]
+            tokens_saved = result.get('tokens_saved_estimate', 0)
+
+            original_tokens  = result.get('original_tokens', 0)
+            optimized_tokens = result.get('optimized_tokens', 0)
+            _repo.log_context_event(
+                api_key          = ptl_key,
+                mode             = 'transparent-proxy',
+                original_tokens  = original_tokens,
+                optimized_tokens = optimized_tokens,
+                tokens_saved     = tokens_saved,
+                messages_total   = len(messages),
+                messages_pruned  = result.get('messages_pruned', 0),
+                summary_tokens   = 0,
+                platform         = 'transparent-proxy',
+                complexity_score = complexity.get('complexity_score'),
+                suggested_model  = complexity.get('suggested_model'),
+            )
+    except ImportError:
+        pass  # no compression available, forward as-is
+
+    # — Forward to Anthropic
+    forward_body = {**data, 'messages': optimized_messages}
+    anthropic_version = request.headers.get('anthropic-version', '2023-06-01')
+
+    try:
+        import httpx
+        is_streaming = data.get('stream', False)
+
+        headers = {
+            'x-api-key':         anthropic_key,
+            'anthropic-version': anthropic_version,
+            'content-type':      'application/json',
+        }
+
+        if is_streaming:
+            def generate():
+                with httpx.stream(
+                    'POST',
+                    'https://api.anthropic.com/v1/messages',
+                    headers=headers,
+                    json=forward_body,
+                    timeout=120,
+                ) as r:
+                    for chunk in r.iter_bytes():
+                        yield chunk
+
+            return Response(generate(), content_type='text/event-stream')
+        else:
+            r = httpx.post(
+                'https://api.anthropic.com/v1/messages',
+                headers=headers,
+                json=forward_body,
+                timeout=120,
+            )
+            return Response(r.content, status=r.status_code, content_type='application/json')
+
+    except Exception as e:
+        return jsonify({'error': f'upstream error: {str(e)}'}), 502
+
+
 if __name__ == '__main__':
     _repo.init_schema(
         Path(__file__).parent.parent.parent / 'tools' / 'reports' / 'schema_local.sql'
