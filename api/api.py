@@ -97,6 +97,8 @@ class CompressionRepository:
             messages_pruned INTEGER NOT NULL DEFAULT 0,
             summary_tokens INTEGER NOT NULL DEFAULT 0,
             platform TEXT,
+            complexity_score INTEGER,
+            suggested_model TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
         CREATE TABLE IF NOT EXISTS routing_events (
@@ -230,9 +232,13 @@ class CompressionRepository:
                 messages_pruned INTEGER NOT NULL DEFAULT 0,
                 summary_tokens INTEGER NOT NULL DEFAULT 0,
                 platform TEXT,
+                complexity_score INTEGER,
+                suggested_model TEXT,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
+        cur.execute("ALTER TABLE context_events ADD COLUMN IF NOT EXISTS complexity_score INTEGER")
+        cur.execute("ALTER TABLE context_events ADD COLUMN IF NOT EXISTS suggested_model TEXT")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS routing_events (
                 id SERIAL PRIMARY KEY,
@@ -486,6 +492,8 @@ class CompressionRepository:
         messages_pruned: int,
         summary_tokens: int,
         platform: str,
+        complexity_score: Optional[int] = None,
+        suggested_model: Optional[str] = None,
     ) -> None:
         try:
             p = self._placeholder()
@@ -493,11 +501,13 @@ class CompressionRepository:
             sql = (
                 f'INSERT INTO context_events '
                 f'(api_key, mode, original_tokens, optimized_tokens, tokens_saved, '
-                f'messages_total, messages_pruned, summary_tokens, platform) '
-                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p})'
+                f'messages_total, messages_pruned, summary_tokens, platform, '
+                f'complexity_score, suggested_model) '
+                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p},{p})'
             )
             vals = (api_key, mode, original_tokens, optimized_tokens, tokens_saved,
-                    messages_total, messages_pruned, summary_tokens, platform)
+                    messages_total, messages_pruned, summary_tokens, platform,
+                    complexity_score, suggested_model)
             if self._is_pg():
                 cur = conn.cursor(); cur.execute(sql, vals); conn.commit(); cur.close()
             else:
@@ -873,6 +883,50 @@ class CompressionRepository:
             conn.close()
         except Exception:
             pass
+
+    def get_complexity_stats(self, api_key: str, days: int = 30) -> dict:
+        try:
+            p    = self._placeholder()
+            conn = self._connect()
+            if self._is_pg():
+                interval = f"NOW() - INTERVAL '{days} days'"
+                sql = (f"SELECT suggested_model, COUNT(*) as cnt, "
+                       f"ROUND(AVG(complexity_score),1) as avg_score "
+                       f"FROM context_events WHERE api_key={p} "
+                       f"AND created_at >= {interval} AND suggested_model IS NOT NULL "
+                       f"GROUP BY suggested_model ORDER BY cnt DESC")
+                cur = conn.cursor(); cur.execute(sql, (api_key,))
+                rows = cur.fetchall()
+                total_sql = (f"SELECT COUNT(*), ROUND(AVG(complexity_score),1) "
+                             f"FROM context_events WHERE api_key={p} "
+                             f"AND created_at >= {interval} AND complexity_score IS NOT NULL")
+                cur.execute(total_sql, (api_key,))
+                tot = cur.fetchone(); cur.close(); conn.close()
+            else:
+                since = f"datetime('now', '-{days} days')"
+                sql = (f"SELECT suggested_model, COUNT(*) as cnt, "
+                       f"ROUND(AVG(complexity_score),1) as avg_score "
+                       f"FROM context_events WHERE api_key={p} "
+                       f"AND created_at >= {since} AND suggested_model IS NOT NULL "
+                       f"GROUP BY suggested_model ORDER BY cnt DESC")
+                rows = conn.execute(sql, (api_key,)).fetchall()
+                tot  = conn.execute(
+                    f"SELECT COUNT(*), ROUND(AVG(complexity_score),1) "
+                    f"FROM context_events WHERE api_key={p} "
+                    f"AND created_at >= {since} AND complexity_score IS NOT NULL",
+                    (api_key,)
+                ).fetchone()
+                conn.close()
+
+            total = int(tot[0]) if tot and tot[0] else 0
+            avg   = float(tot[1]) if tot and tot[1] else 0.0
+            by_model = [{'model': r[0], 'count': r[1],
+                         'avg_score': float(r[2]) if r[2] else 0.0,
+                         'pct': round(r[1] * 100 / total, 1) if total else 0}
+                        for r in rows]
+            return {'days': days, 'total': total, 'avg_complexity_score': avg, 'by_model': by_model}
+        except Exception as e:
+            raise
 
     def get_routing_stats(self, api_key: str, days: int = 30) -> dict:
         OPUS_IN  = 5.0    # $/1M input tokens — Claude Opus 4.8
@@ -1455,6 +1509,21 @@ def stats_timeseries():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/stats/complexity')
+def stats_complexity():
+    api_key = request.headers.get('X-API-Key', '').strip()
+    if not api_key:
+        return jsonify({'error': 'X-API-Key header required'}), 401
+    sub = _repo.get_subscription_by_key(api_key)
+    if not sub:
+        return jsonify({'error': 'Invalid API key'}), 401
+    days = min(int(request.args.get('days', 30)), 90)
+    try:
+        return jsonify(_repo.get_complexity_stats(api_key, days))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/stats/routing')
 def stats_routing():
     """Provider/model breakdown with cost savings vs all-Opus."""
@@ -1787,6 +1856,8 @@ def optimize_context():
             messages_pruned  = result.get('messages_pruned', 0),
             summary_tokens   = summary_tokens,
             platform         = platform,
+            complexity_score = complexity.get('complexity_score'),
+            suggested_model  = complexity.get('suggested_model'),
         )
 
         return jsonify(result)
@@ -1927,6 +1998,8 @@ def compress_context():
             messages_pruned  = result.get('messages_pruned', 0),
             summary_tokens   = _count_tokens(result.get('new_summary', '')),
             platform         = 'proxy',
+            complexity_score = complexity.get('complexity_score'),
+            suggested_model  = complexity.get('suggested_model'),
         )
 
         resp: dict = {
