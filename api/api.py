@@ -1373,8 +1373,182 @@ _CCR_MAX = 1_000
 import hashlib as _hashlib
 import difflib as _difflib
 
-_MIN_TOOL_CONTENT = 80    # chars — skip tiny outputs
-_DIFF_THRESHOLD   = 0.60  # use diff only if shorter than 60% of original
+_MIN_TOOL_CONTENT      = 80    # chars — skip tiny outputs
+_DIFF_THRESHOLD        = 0.60  # use diff only if shorter than 60% of original
+_INTENT_EXTRACT_MIN    = 800   # chars — minimum content size to attempt intent extraction
+_INTENT_EXTRACT_RATIO  = 0.40  # only apply if we save at least 40%
+
+
+def _extract_intent_keywords(messages: list) -> list[str]:
+    """Extract intent keywords from the last 5 user text turns."""
+    import re as _re
+    _STOPWORDS = {
+        'i','you','the','a','an','is','are','was','were','be','to','of','in',
+        'it','that','this','and','or','but','so','what','how','why','can','do',
+        'does','did','will','would','could','should','please','tell','show','me',
+        'my','we','our','your','its','their','about','with','for','from','have',
+        'has','had','not','no','on','at','by','up','if','then','else','also',
+        'just','get','let','now','ok','make','use','need','want','look','see',
+    }
+    keywords = []
+    count = 0
+    for m in reversed(messages):
+        if m.get('role') != 'user':
+            continue
+        c = m.get('content', '')
+        if isinstance(c, list):
+            c = ' '.join(b.get('text', '') for b in c if isinstance(b, dict) and b.get('type') == 'text')
+        if not isinstance(c, str):
+            continue
+        words = _re.sub(r'[^\w\s]', ' ', c.lower()).split()
+        for w in words:
+            if len(w) > 3 and w not in _STOPWORDS:
+                keywords.append(w)
+        count += 1
+        if count >= 5:
+            break
+    # Deduplicate preserving order
+    seen: set = set()
+    result = []
+    for w in keywords:
+        if w not in seen:
+            seen.add(w)
+            result.append(w)
+    return result[:30]
+
+
+def _detect_content_type(content: str) -> str:
+    """Detect content type from first 500 chars: python / json / log / generic."""
+    head = content[:500].strip()
+    if head.startswith(('{', '[', '"')):
+        try:
+            import json as _json
+            _json.loads(content[:2000])
+            return 'json'
+        except Exception:
+            pass
+    if any(pat in head for pat in ('def ', 'class ', 'import ', '#!/usr/bin/env python', 'async def ')):
+        return 'python'
+    import re as _re
+    log_pat = _re.compile(
+        r'\d{4}-\d{2}-\d{2}|\[ERROR\]|\[WARN\]|\[INFO\]|ERROR:|WARN:|INFO:|FATAL:|DEBUG:'
+    )
+    if log_pat.search(head):
+        return 'log'
+    return 'generic'
+
+
+def _chunk_content(content: str, content_type: str) -> list[dict]:
+    """Split content into meaningful chunks. Returns [{text, label}]."""
+    import re as _re
+    chunks = []
+
+    if content_type == 'python':
+        # Split at top-level def/class boundaries
+        pattern = _re.compile(r'(?=^(?:def |class |async def |\w.*=.*lambda))', _re.MULTILINE)
+        parts = pattern.split(content)
+        if len(parts) <= 1:
+            # Fall back to N-line blocks
+            lines = content.splitlines()
+            for i in range(0, len(lines), 20):
+                block = '\n'.join(lines[i:i+20])
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+20, len(lines))}'})
+        else:
+            for p in parts:
+                if p.strip():
+                    first_line = p.splitlines()[0][:60] if p.splitlines() else ''
+                    chunks.append({'text': p, 'label': first_line})
+
+    elif content_type == 'json':
+        try:
+            import json as _json
+            data = _json.loads(content)
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    chunk_text = _json.dumps({k: v}, indent=2)
+                    chunks.append({'text': chunk_text, 'label': f'key:{k}'})
+            elif isinstance(data, list):
+                for i, item in enumerate(data):
+                    chunk_text = _json.dumps(item, indent=2)
+                    chunks.append({'text': chunk_text, 'label': f'item:{i}'})
+            else:
+                chunks.append({'text': content, 'label': 'root'})
+        except Exception:
+            # Not valid JSON — treat as generic
+            lines = content.splitlines()
+            for i in range(0, len(lines), 15):
+                block = '\n'.join(lines[i:i+15])
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}'})
+
+    elif content_type == 'log':
+        # Each line is a chunk — group by 5 for efficiency
+        lines = content.splitlines()
+        for i in range(0, len(lines), 5):
+            block = '\n'.join(lines[i:i+5])
+            chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+5, len(lines))}'})
+
+    else:  # generic
+        # Split by paragraph or N-line blocks
+        paragraphs = _re.split(r'\n{2,}', content)
+        if len(paragraphs) > 1:
+            for p in paragraphs:
+                if p.strip():
+                    chunks.append({'text': p, 'label': p[:40].replace('\n', ' ')})
+        else:
+            lines = content.splitlines()
+            for i in range(0, len(lines), 15):
+                block = '\n'.join(lines[i:i+15])
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}'})
+
+    return chunks or [{'text': content, 'label': 'full'}]
+
+
+def _score_chunk(chunk_text: str, keywords: list[str]) -> float:
+    """Keyword overlap score — fraction of keywords found in chunk."""
+    if not keywords:
+        return 0.0
+    lower = chunk_text.lower()
+    hits = sum(1 for kw in keywords if kw in lower)
+    return hits / len(keywords)
+
+
+def _intent_extract(content: str, keywords: list[str]) -> tuple[str, int]:
+    """Extract relevant sections from large content using intent keywords.
+
+    Returns (extracted_text, tokens_saved).
+    Falls through (no compression) if savings < _INTENT_EXTRACT_RATIO.
+    """
+    if len(content) < _INTENT_EXTRACT_MIN or not keywords:
+        return content, 0
+
+    content_type = _detect_content_type(content)
+    chunks       = _chunk_content(content, content_type)
+    orig_tokens  = max(1, len(content.split()) * 4 // 3)
+
+    # Score every chunk
+    scored = [(c, _score_chunk(c['text'], keywords)) for c in chunks]
+
+    # Always keep chunks with any keyword match; if nothing matches keep top 20%
+    relevant = [c for c, s in scored if s > 0]
+    if not relevant:
+        n_keep = max(1, len(chunks) // 5)
+        relevant = [c for c, _ in scored[:n_keep]]
+
+    kept_text   = '\n'.join(c['text'] for c in relevant)
+    kept_tokens = max(1, len(kept_text.split()) * 4 // 3)
+    savings_ratio = 1 - kept_tokens / orig_tokens
+
+    if savings_ratio < _INTENT_EXTRACT_RATIO:
+        return content, 0  # Not worth it
+
+    n_omitted = len(chunks) - len(relevant)
+    kw_str    = ', '.join(keywords[:8])
+    header    = f'[INTENT EXTRACT — matched: {kw_str}]\n'
+    footer    = f'\n[OMITTED: {n_omitted} section(s) — low relevance to current query]' if n_omitted > 0 else ''
+    result    = header + kept_text + footer
+
+    tokens_saved = orig_tokens - max(1, len(result.split()) * 4 // 3)
+    return result, max(0, tokens_saved)
 
 
 def _hash_content(content: str) -> str:
@@ -1394,13 +1568,17 @@ def _make_diff(old: str, new: str) -> str:
     return '\n'.join(parts)
 
 
-def _compress_tool_results(messages: list) -> tuple:
-    """Stateless tool result dedup — processes full message history in one pass.
+def _compress_tool_results(messages: list, intent_keywords: list | None = None) -> tuple:
+    """Stateless tool result dedup + intent extraction — processes full message history in one pass.
 
     Returns (new_messages, total_tokens_saved).
+    First occurrence of large content → intent extraction (if keywords available)
     Exact repeats → [TOOL_CACHE_REF: same as call #N]
     Similar content → [TOOL_CACHE_DIFF from call #N: ...]
     """
+    if intent_keywords is None:
+        intent_keywords = _extract_intent_keywords(messages)
+
     cache: list = []      # {hash, content, idx, msg_idx}
     new_messages: list = []
     total_saved  = 0
@@ -1432,6 +1610,13 @@ def _compress_tool_results(messages: list) -> tuple:
                 tokens_saved = orig_tokens - max(1, len(diff_ref.split()) * 4 // 3)
                 new_content = diff_ref
                 pinned_msg_indices.add(best_match['msg_idx'])
+
+        # First occurrence of large content — try intent extraction
+        if new_content == content and intent_keywords:
+            extracted, ie_saved = _intent_extract(content, intent_keywords)
+            if ie_saved > 0:
+                new_content   = extracted
+                tokens_saved  = ie_saved
 
         cache.append({'hash': h, 'content': content, 'idx': len(cache), 'msg_idx': msg_idx})
         return new_content, tokens_saved
