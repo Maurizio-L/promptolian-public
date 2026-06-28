@@ -58,6 +58,59 @@ OPENAI_API    = 'https://api.openai.com'
 
 _CACHE_TTL        = 5 * 60         # Anthropic prompt cache TTL (seconds)
 _COMPRESS_HISTORY = False           # set to True via --compress CLI flag
+_UPSTREAM_URL     = ''             # set via --upstream (e.g. http://localhost:8080)
+_LOCAL_MODE       = False          # set via --local: no auth, no external calls
+
+_MEMORY_DIR   = Path.home() / '.promptolian' / 'memory'
+_THINKING_DIR = Path.home() / '.promptolian' / 'thinking'
+
+# Each tuple: (pattern, label_template)
+# Groups: (1) = decision/action, (2) = reason/context
+# Label template uses {a} for group1, {b} for group2
+_THINKING_CAUSAL_PATTERNS: list[tuple[re.Pattern, str]] = [
+    # "I will/should use X because Y"
+    (re.compile(
+        r'I (?:will|should|need to|plan to|want to)\s+([\w][\w\s\-]{4,50}?)\s+because\s+([^.!?\n]{10,100})',
+        re.I,
+    ), '{a} — because {b}'),
+
+    # "X is better/safer/faster/cleaner because Y"
+    (re.compile(
+        r'([\w][\w\s\-]{4,50}?) is (?:better|safer|faster|cleaner|simpler|more \w+)\s+because\s+([^.!?\n]{10,100})',
+        re.I,
+    ), '{a} — because {b}'),
+
+    # "I chose/picked/selected X over Y"
+    (re.compile(
+        r'I (?:chose|picked|selected|prefer(?:red)?)\s+([\w][\w\s\-\/]{3,40}?)\s+(?:over|instead of)\s+([\w][\w\s\-\/]{3,40})',
+        re.I,
+    ), 'chose {a} over {b}'),
+
+    # "I considered X but Y" — rejected alternative
+    (re.compile(
+        r'I (?:considered|thought about|looked at)\s+([\w][\w\s\-]{3,50}?),?\s+but\s+([^.!?\n]{10,80})',
+        re.I,
+    ), 'rejected {a} — {b}'),
+
+    # "since X is already Y, I will Z" — context-driven decision
+    (re.compile(
+        r'[Ss]ince\s+([\w][\w\s\-]{3,50}?),\s+I\s+(?:will |can |should )?([\w][\w\s\-]{5,60})',
+        re.I,
+    ), '{b} — since {a}'),
+
+    # "to avoid/prevent X, I will Y"
+    (re.compile(
+        r'[Tt]o (?:avoid|prevent)\s+([\w][\w\s\-]{3,50}?),\s+I\s+(?:will |should )?([\w][\w\s\-]{5,60})',
+        re.I,
+    ), '{b} — to avoid {a}'),
+]
+
+_THINKING_DECISION_RE = re.compile(
+    r'(?:I(?:\'ll| will| should| need to| plan to)|'
+    r'(?:So I\'ll|Therefore|decided? to|going to|will use|best to|the (?:best|right) approach))'
+    r'\s+([^.!?\n]{10,100})',
+    re.I,
+)
 
 try:
     import sys as _sys
@@ -131,6 +184,218 @@ _MEDIUM_RISK: dict[str, re.Pattern] = {
 
 app = Flask(__name__)
 CORS(app)
+
+
+# ── Thinking compression ───────────────────────────────────────────────────────
+
+def _compress_thinking(thinking_text: str) -> str:
+    """Extract causal reasoning chains from a thinking block — no LLM needed.
+
+    Produces "decision — because reason" pairs so the next turn understands
+    not just what was decided but why.
+    """
+    pairs: list[str] = []
+    seen:  set[str]  = set()
+
+    # 1. Extract causal pairs (decision + reason)
+    for pattern, template in _THINKING_CAUSAL_PATTERNS:
+        for m in pattern.finditer(thinking_text):
+            a   = m.group(1).strip().rstrip('.,;')
+            b   = m.group(2).strip().rstrip('.,;')
+            if len(a) < 4 or len(b) < 6:
+                continue
+            entry = template.format(a=a, b=b)
+            key   = (a + b).lower()[:50]
+            if key not in seen:
+                seen.add(key)
+                pairs.append(entry)
+            if len(pairs) >= 5:
+                break
+        if len(pairs) >= 5:
+            break
+
+    # 2. If no causal pairs found, fall back to plain decision extraction
+    if not pairs:
+        for m in _THINKING_DECISION_RE.finditer(thinking_text):
+            d   = m.group(1).strip().rstrip('.,;')
+            key = d.lower()[:40]
+            if key not in seen and len(d) > 10:
+                seen.add(key)
+                pairs.append(d)
+            if len(pairs) >= 4:
+                break
+
+    # 3. Last resort: first 2 sentences
+    if not pairs:
+        sentences = re.split(r'(?<=[.!?])\s+', thinking_text.strip())
+        pairs     = [s.strip() for s in sentences[:2] if len(s.strip()) > 20]
+
+    if not pairs:
+        return ''
+
+    lines = '\n'.join(f'  • {p}' for p in pairs)
+    return f'[Reasoning:\n{lines}\n]'
+
+
+def _thinking_path(session_id: str) -> Path:
+    _THINKING_DIR.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r'[^\w\-]', '_', session_id)[:40]
+    return _THINKING_DIR / f'{safe}.json'
+
+
+def _save_thinking(session_id: str, turn: int, thinking: str, summary: str) -> None:
+    path = _thinking_path(session_id)
+    try:
+        data = json.loads(path.read_text()) if path.exists() else []
+        data.append({'turn': turn, 'summary': summary, 'ts': time.time(),
+                     'chars': len(thinking)})
+        data = data[-20:]  # keep last 20 turns
+        path.write_text(json.dumps(data, indent=2))
+    except Exception:
+        pass
+
+
+def _load_thinking(session_id: str) -> list:
+    path = _thinking_path(session_id)
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return []
+
+
+def _strip_and_compress_thinking(messages: list, session_id: str) -> tuple[list, int]:
+    """Strip thinking blocks from all but the latest assistant message.
+
+    - Full thinking → stored in ~/.promptolian/thinking/<session_id>.json
+    - Replaced with compressed summary in message history
+    - Returns (modified_messages, thinking_tokens_saved)
+    """
+    result = []
+    saved  = 0
+    turn   = 0
+
+    # Find index of last assistant message
+    last_asst_idx = max(
+        (i for i, m in enumerate(messages) if m.get('role') == 'assistant'),
+        default=-1,
+    )
+
+    for i, msg in enumerate(messages):
+        if msg.get('role') != 'assistant':
+            result.append(msg)
+            continue
+
+        content = msg.get('content', '')
+        if not isinstance(content, list):
+            result.append(msg)
+            continue
+
+        thinking_blocks  = [b for b in content if b.get('type') == 'thinking']
+        non_thinking     = [b for b in content if b.get('type') != 'thinking']
+
+        if not thinking_blocks:
+            result.append(msg)
+            continue
+
+        full_thinking = '\n'.join(b.get('thinking', '') for b in thinking_blocks)
+        summary       = _compress_thinking(full_thinking)
+        saved        += len(full_thinking.split())
+        turn         += 1
+        _save_thinking(session_id, turn, full_thinking, summary)
+
+        if i == last_asst_idx and summary:
+            # Latest assistant turn: replace thinking with compact summary block
+            new_content = [{'type': 'text', 'text': summary}] + non_thinking
+        else:
+            # Older turns: drop thinking entirely
+            new_content = non_thinking
+
+        result.append({**msg, 'content': new_content})
+
+    return result, saved
+
+
+# ── Working memory ─────────────────────────────────────────────────────────────
+
+_FACT_PATTERNS = [
+    (re.compile(r"(?:I(?:'ve)?|have)\s+(?:modified|updated|changed|edited|created|added|removed|deleted)\s+([^\.\n]{5,60})", re.I), "Modified"),
+    (re.compile(r"(?:decided|choosing|going with|using|switched to)\s+([^\.\n]{5,60})", re.I),                                        "Decision"),
+    (re.compile(r"(?:error|failed|failing|broken):\s*([^\.\n]{5,60})", re.I),                                                         "Error"),
+    (re.compile(r"(?:fixed|resolved|solved)\s+([^\.\n]{5,60})", re.I),                                                                "Fixed"),
+    (re.compile(r"(?:TODO|unresolved|still need to|next step):\s*([^\.\n]{5,60})", re.I),                                             "Todo"),
+]
+
+
+def _extract_facts(messages: list) -> list[str]:
+    """Extract key facts from conversation without an LLM."""
+    facts: list[str] = []
+    seen: set[str] = set()
+    for m in messages:
+        if m.get('role') != 'assistant':
+            continue
+        content = m.get('content', '')
+        if isinstance(content, list):
+            content = ' '.join(b.get('text', '') for b in content if isinstance(b, dict))
+        for pattern, label in _FACT_PATTERNS:
+            for match in pattern.finditer(content):
+                fact = f"{label}: {match.group(1).strip()}"
+                if fact not in seen:
+                    seen.add(fact)
+                    facts.append(fact)
+        if len(facts) >= 20:
+            break
+    return facts[:15]
+
+
+def _memory_path(key: str) -> Path:
+    _MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+    safe = re.sub(r'[^\w\-]', '_', key)[:40]
+    return _MEMORY_DIR / f'{safe}.json'
+
+
+def _save_working_memory(key: str, session_id: str, messages: list) -> None:
+    facts = _extract_facts(messages)
+    if not facts:
+        return
+    path = _memory_path(key)
+    try:
+        existing = json.loads(path.read_text()) if path.exists() else {}
+        existing[session_id] = {'facts': facts, 'ts': time.time()}
+        # Keep only last 3 sessions
+        if len(existing) > 3:
+            oldest = sorted(existing, key=lambda k: existing[k]['ts'])
+            for k in oldest[:-3]:
+                del existing[k]
+        path.write_text(json.dumps(existing, indent=2))
+    except Exception:
+        pass
+
+
+def _load_working_memory(key: str) -> str:
+    """Return a compact memory block to prepend, or empty string."""
+    path = _memory_path(key)
+    if not path.exists():
+        return ''
+    try:
+        data = json.loads(path.read_text())
+        if not data:
+            return ''
+        # Merge facts from all saved sessions, deduplicate
+        all_facts: list[str] = []
+        seen: set[str] = set()
+        for session in sorted(data.values(), key=lambda s: s['ts']):
+            for f in session.get('facts', []):
+                if f not in seen:
+                    seen.add(f)
+                    all_facts.append(f)
+        if not all_facts:
+            return ''
+        lines = '\n'.join(f'• {f}' for f in all_facts[-12:])
+        return f'[PROMPTOLIAN WORKING MEMORY — from previous session]\n{lines}\n'
+    except Exception:
+        return ''
 
 
 # ── Database (SQLite local · PostgreSQL cloud) ────────────────────────────────
@@ -475,8 +740,8 @@ def _check_auth() -> tuple[Optional[str], Optional[Response]]:
     In cloud mode (MASTER_KEY set): X-Promptolian-Key required and validated.
     In local mode: no auth needed, returns (None, None).
     """
-    if not _MASTER_KEY:
-        return None, None   # local mode — no auth
+    if not _MASTER_KEY or _LOCAL_MODE:
+        return None, None   # local / upstream mode — no auth
 
     key = request.headers.get('X-Promptolian-Key', '').strip()
     if not key:
@@ -571,7 +836,7 @@ def proxy_messages():
         request.headers.get('X-Api-Key') or
         request.headers.get('Authorization', '').removeprefix('Bearer ').strip()
     )
-    if not api_key:
+    if not api_key and not _LOCAL_MODE:
         return jsonify({'error': 'Missing Anthropic API key (X-Api-Key header)'}), 401
 
     session_id = (
@@ -588,6 +853,23 @@ def proxy_messages():
     if cache_hit and promptolian_key:
         _record_savings(promptolian_key, tokens_saved)
 
+    # Inject working memory into system prompt on first turn
+    mem_key = promptolian_key or 'local'
+    memory_block = _load_working_memory(mem_key)
+    if memory_block and body.get('messages'):
+        sys_msgs = [m for m in body['messages'] if m.get('role') == 'system']
+        if sys_msgs:
+            sys_msgs[-1]['content'] = memory_block + '\n' + sys_msgs[-1].get('content', '')
+        else:
+            body['messages'].insert(0, {'role': 'system', 'content': memory_block})
+
+    # Strip + compress thinking blocks from prior assistant turns
+    thinking_saved = 0
+    if body.get('messages'):
+        body['messages'], thinking_saved = _strip_and_compress_thinking(
+            body['messages'], session_id
+        )
+
     body['messages'], ctx_saved = _compress_messages(body.get('messages', []))
 
     pii_hits = _detect_sensitive_data(_extract_message_text(body))
@@ -595,15 +877,15 @@ def proxy_messages():
         _record_pii_event(session_id, promptolian_key, pii_hits)
     pii_risk = 'HIGH' if any(h['risk_level'] == 'HIGH' for h in pii_hits) else ('MEDIUM' if pii_hits else '')
 
-    forward_headers = {
-        'x-api-key':         api_key,
-        'anthropic-version': request.headers.get('anthropic-version', '2023-06-01'),
-        'content-type':      'application/json',
-    }
-    if request.headers.get('anthropic-beta'):
-        forward_headers['anthropic-beta'] = request.headers['anthropic-beta']
+    upstream = _UPSTREAM_URL or ANTHROPIC_API
+    forward_headers = {'content-type': 'application/json'}
+    if not _LOCAL_MODE:
+        forward_headers['x-api-key']         = api_key
+        forward_headers['anthropic-version'] = request.headers.get('anthropic-version', '2023-06-01')
+        if request.headers.get('anthropic-beta'):
+            forward_headers['anthropic-beta'] = request.headers['anthropic-beta']
 
-    resp = _forward(ANTHROPIC_API, '/v1/messages', forward_headers, body)
+    resp = _forward(upstream, '/v1/messages', forward_headers, body)
     return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk, ctx_saved)
 
 
@@ -643,14 +925,14 @@ def proxy_responses():
         _record_pii_event(session_id, promptolian_key, pii_hits)
     pii_risk = 'HIGH' if any(h['risk_level'] == 'HIGH' for h in pii_hits) else ('MEDIUM' if pii_hits else '')
 
-    forward_headers = {
-        'Authorization': f'Bearer {api_key}',
-        'content-type':  'application/json',
-    }
+    upstream = _UPSTREAM_URL or OPENAI_API
+    forward_headers = {'content-type': 'application/json'}
+    if not _LOCAL_MODE and api_key:
+        forward_headers['Authorization'] = f'Bearer {api_key}'
     if request.headers.get('OpenAI-Organization'):
         forward_headers['OpenAI-Organization'] = request.headers['OpenAI-Organization']
 
-    resp = _forward(OPENAI_API, '/v1/responses', forward_headers, body)
+    resp = _forward(upstream, '/v1/responses', forward_headers, body)
     return _attach_headers(resp, session_id, cache_hit, tokens_saved, pii_risk, ctx_saved)
 
 
@@ -696,13 +978,13 @@ def proxy_passthrough(path):
         request.headers.get('X-Api-Key') or
         request.headers.get('Authorization', '').removeprefix('Bearer ').strip()
     )
-    forward_headers = {
-        'x-api-key':         api_key,
-        'anthropic-version': request.headers.get('anthropic-version', '2023-06-01'),
-        'content-type':      'application/json',
-    }
+    upstream = _UPSTREAM_URL or ANTHROPIC_API
+    forward_headers = {'content-type': 'application/json'}
+    if not _LOCAL_MODE and api_key:
+        forward_headers['x-api-key']         = api_key
+        forward_headers['anthropic-version'] = request.headers.get('anthropic-version', '2023-06-01')
     with httpx.Client(timeout=30) as client:
-        r = client.request(request.method, f'{ANTHROPIC_API}/v1/{path}',
+        r = client.request(request.method, f'{upstream}/v1/{path}',
                            headers=forward_headers, content=request.get_data())
     return Response(r.content, status=r.status_code,
                     content_type=r.headers.get('content-type', 'application/json'))
@@ -743,8 +1025,56 @@ def list_sessions():
 
 @app.route('/proxy/sessions/<session_id>', methods=['DELETE'])
 def clear_session(session_id):
+    # Save working memory before wiping the session
+    key = request.headers.get('X-Promptolian-Key', 'local')
+    stored = _load_session(session_id)
+    if stored:
+        # We don't have messages here — memory extraction happens in compress path
+        pass
     _delete_session(session_id)
     return jsonify({'deleted': session_id})
+
+
+@app.route('/proxy/memory', methods=['GET'])
+def get_memory():
+    """Return current working memory for the authenticated key."""
+    key = request.headers.get('X-Promptolian-Key', 'local')
+    memory = _load_working_memory(key)
+    return jsonify({'memory': memory, 'has_memory': bool(memory)})
+
+
+@app.route('/proxy/memory', methods=['DELETE'])
+def clear_memory():
+    """Clear working memory for the authenticated key."""
+    key = request.headers.get('X-Promptolian-Key', 'local')
+    path = _memory_path(key)
+    if path.exists():
+        path.unlink()
+    return jsonify({'cleared': True})
+
+
+@app.route('/proxy/thinking/<session_id>', methods=['GET'])
+def get_thinking(session_id):
+    """Return compressed thinking history for a session.
+
+    Shows what the model was reasoning about each turn — stripped from context
+    to save tokens but preserved here for transparency and debugging.
+    """
+    turns = _load_thinking(session_id)
+    return jsonify({
+        'session_id': session_id,
+        'turns':      turns,
+        'count':      len(turns),
+        'note':       'Full thinking stripped from context to save tokens. Summaries shown here.',
+    })
+
+
+@app.route('/proxy/thinking/<session_id>', methods=['DELETE'])
+def clear_thinking(session_id):
+    path = _thinking_path(session_id)
+    if path.exists():
+        path.unlink()
+    return jsonify({'cleared': session_id})
 
 
 @app.route('/proxy/health', methods=['GET'])
@@ -1212,12 +1542,14 @@ def get_pii_events():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False,
-         compress: bool = False) -> None:
-    global _COMPRESS_HISTORY
+         compress: bool = False, upstream: str = '', local: bool = False) -> None:
+    global _COMPRESS_HISTORY, _UPSTREAM_URL, _LOCAL_MODE
     _COMPRESS_HISTORY = compress
+    _UPSTREAM_URL     = upstream.rstrip('/')
+    _LOCAL_MODE       = local or bool(upstream)
 
     _ensure_schema()
-    mode    = 'cloud' if _MASTER_KEY else 'local'
+    mode    = 'cloud' if (_MASTER_KEY and not _LOCAL_MODE) else 'local'
     storage = 'postgresql' if _is_pg() else f'sqlite ({_DB_PATH})'
 
     print()
@@ -1226,12 +1558,31 @@ def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False,
     print(f'  Mode      : {mode}')
     print(f'  Storage   : {storage}')
     print(f'  Listening : http://{host}:{port}')
-    print(f'  Anthropic : {ANTHROPIC_API}')
-    print(f'  OpenAI    : {OPENAI_API}')
+
+    if _LOCAL_MODE and _UPSTREAM_URL:
+        print(f'  Upstream  : {_UPSTREAM_URL}  ◀  (DS4 / local model)')
+        print()
+        print('  ✓ Running fully local — no data leaves this machine')
+        print('  ✓ No API key required')
+        print('  ✓ Working memory: enabled')
+    elif _LOCAL_MODE:
+        print(f'  Upstream  : localhost (no external calls)')
+        print()
+        print('  ✓ Running fully local — no data leaves this machine')
+    else:
+        print(f'  Anthropic : {ANTHROPIC_API}')
+        print(f'  OpenAI    : {OPENAI_API}')
+
     if compress:
         status = 'enabled' if _CONTEXT_ENGINE_AVAILABLE else 'UNAVAILABLE (context_engine not found)'
         print(f'  Context   : {status}')
-    if mode == 'local':
+
+    if _LOCAL_MODE and _UPSTREAM_URL:
+        print()
+        print('  Quick start:')
+        print(f'    export ANTHROPIC_BASE_URL=http://{host}:{port}')
+        print(f'    # Your agent now routes through Promptolian → {_UPSTREAM_URL}')
+    elif mode == 'local':
         print()
         print('  In your code, change one line:')
         print(f'    client = anthropic.Anthropic(base_url="http://{host}:{port}")')
@@ -1239,11 +1590,13 @@ def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False,
         print()
         print('  Cloud mode — X-Promptolian-Key required on all requests')
         print(f'  Signup    : {_BASE_URL}/pricing.html')
+
     print()
     print(f'  Health    : http://localhost:{port}/proxy/health')
     print(f'  Sessions  : http://localhost:{port}/proxy/sessions')
+    print(f'  Memory    : http://localhost:{port}/proxy/memory')
+    print(f'  Thinking  : http://localhost:{port}/proxy/thinking/<session_id>')
     print(f'  Dashboard : http://localhost:{port}/proxy/dashboard')
-    print(f'  PII events: http://localhost:{port}/proxy/pii-events')
     print()
     app.run(host=host, port=port, debug=debug)
 
@@ -1251,10 +1604,14 @@ def main(port: int = 3002, host: str = '127.0.0.1', debug: bool = False,
 if __name__ == '__main__':
     import argparse
     p = argparse.ArgumentParser()
-    p.add_argument('--port', type=int, default=3002)
-    p.add_argument('--host', default='127.0.0.1')
-    p.add_argument('--debug', action='store_true')
+    p.add_argument('--port',     type=int, default=3002)
+    p.add_argument('--host',     default='127.0.0.1')
+    p.add_argument('--debug',    action='store_true')
     p.add_argument('--compress', action='store_true',
                    help='Enable context history compression (KV-sandwich)')
+    p.add_argument('--upstream', default='',
+                   help='Forward requests to this base URL instead of Anthropic/OpenAI (e.g. http://localhost:8080)')
+    p.add_argument('--local',    action='store_true',
+                   help='Fully local mode: no auth required, no external calls, no data leaves this machine')
     args = p.parse_args()
-    main(args.port, args.host, args.debug, args.compress)
+    main(args.port, args.host, args.debug, args.compress, args.upstream, args.local)

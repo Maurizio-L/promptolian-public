@@ -1117,6 +1117,34 @@
   <!-- Problem 4 -->
   <div class="problem-block">
     <div class="problem-tag">Problem 4</div>
+    <h3 class="problem-title">Local inference (DS4 / DeepSeek) burns context fast</h3>
+    <p class="problem-desc">Running DS4 locally is free — but a 284B model at 26 tokens/sec hits the 128K context wall in ~15 agentic turns. Thinking tokens from DeepSeek's reasoning mode accumulate silently, eating 2000+ tokens per turn. And when the session dies, the agent forgets everything.</p>
+
+    <div class="code-visual">
+<span class="cv-dim">Without Promptolian — turn 10 context breakdown:</span>
+<span class="cv-line"><span class="cv-wasted">Thinking tokens (accumulated):  18,000 tok  ← reasoning scratch work, useless now</span></span>
+<span class="cv-line"><span class="cv-normal">Actual conversation:             2,000 tok</span></span>
+<span class="cv-line"><span class="cv-wasted">Repeated file reads:            12,000 tok  ← same file read 6 times</span></span></div>
+
+    <div class="fix-label">Fix: <code class="inline-code">--upstream</code> + thinking compression + working memory</div>
+
+    <div class="code-visual">
+<span class="cv-dim">With Promptolian (--upstream http://localhost:8080):</span>
+<span class="cv-line"><span class="cv-saved">Thinking → compressed:             180 tok  ✓  "[Thinking: using RS256 · callback URL must match]"</span></span>
+<span class="cv-line"><span class="cv-saved">Conversation:                    2,000 tok  ✓</span></span>
+<span class="cv-line"><span class="cv-saved">File reads → deduplicated:          60 tok  ✓  [TOOL_CACHE_REF: same as call #1]</span></span>
+<span class="cv-line"><span class="cv-saved">Working memory (next session):      80 tok  ✓  "Fixed: token bug · Todo: migration script"</span></span></div>
+
+    <div class="problem-stat">
+      <span class="pstat"><strong>96%</strong> compression on code search</span>
+      <span class="pstat"><strong>99%</strong> compression on logs</span>
+      <span class="pstat"><strong>100% local</strong> — no data leaves your machine</span>
+    </div>
+  </div>
+
+  <!-- Problem 5 -->
+  <div class="problem-block">
+    <div class="problem-tag">Problem 5</div>
     <h3 class="problem-title">Over-paying for model capacity</h3>
     <p class="problem-desc">Most agent calls don't need Claude Opus. Simple lookups and drafting tasks get routed to the same expensive model as your hardest reasoning problems. And when you want cheaper alternatives like DeepSeek, switching SDKs breaks your whole stack.</p>
 
@@ -1295,6 +1323,9 @@
       <ul class="pricing-features">
         <li>Tool result dedup (34.6% savings)</li>
         <li>Tool schema caching (~90% savings)</li>
+        <li>DS4 / local model support (<code class="inline-code">--upstream</code>)</li>
+        <li>Working memory across sessions</li>
+        <li>Thinking compression + transparency</li>
         <li>SQLite sessions</li>
         <li>Claude + OpenAI compatible</li>
       </ul>

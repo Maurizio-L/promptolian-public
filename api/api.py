@@ -1439,25 +1439,48 @@ def _detect_content_type(content: str) -> str:
 
 
 def _chunk_content(content: str, content_type: str) -> list[dict]:
-    """Split content into meaningful chunks. Returns [{text, label}]."""
+    """Split content into meaningful chunks. Returns [{text, label, signature}].
+
+    Python chunks include a `signature` key (first few lines of a def/class)
+    so low-relevance functions can be kept as skeletons rather than dropped entirely.
+    """
     import re as _re
     chunks = []
 
     if content_type == 'python':
-        # Split at top-level def/class boundaries
-        pattern = _re.compile(r'(?=^(?:def |class |async def |\w.*=.*lambda))', _re.MULTILINE)
+        pattern = _re.compile(r'(?=^(?:async def |def |class ))', _re.MULTILINE)
         parts = pattern.split(content)
         if len(parts) <= 1:
-            # Fall back to N-line blocks
             lines = content.splitlines()
             for i in range(0, len(lines), 20):
                 block = '\n'.join(lines[i:i+20])
-                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+20, len(lines))}'})
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+20, len(lines))}', 'signature': ''})
         else:
             for p in parts:
-                if p.strip():
-                    first_line = p.splitlines()[0][:60] if p.splitlines() else ''
-                    chunks.append({'text': p, 'label': first_line})
+                if not p.strip():
+                    continue
+                lines = p.splitlines()
+                first_line = lines[0][:80] if lines else ''
+                # Extract signature: def line + decorators + docstring (up to 6 lines)
+                sig_lines = []
+                in_docstring = False
+                for j, line in enumerate(lines[:8]):
+                    sig_lines.append(line)
+                    stripped = line.strip()
+                    if j == 0:
+                        continue
+                    if '"""' in stripped or "'''" in stripped:
+                        if in_docstring:
+                            break  # closing quote
+                        in_docstring = True
+                        if stripped.count('"""') >= 2 or stripped.count("'''") >= 2:
+                            break  # single-line docstring
+                    elif in_docstring:
+                        continue
+                    elif stripped and not stripped.startswith('#'):
+                        break
+                signature = '\n'.join(sig_lines) + ('\n    ...' if len(lines) > len(sig_lines) else '')
+                chunks.append({'text': p, 'label': first_line, 'signature': signature})
 
     elif content_type == 'json':
         try:
@@ -1466,54 +1489,74 @@ def _chunk_content(content: str, content_type: str) -> list[dict]:
             if isinstance(data, dict):
                 for k, v in data.items():
                     chunk_text = _json.dumps({k: v}, indent=2)
-                    chunks.append({'text': chunk_text, 'label': f'key:{k}'})
+                    chunks.append({'text': chunk_text, 'label': f'key:{k}', 'signature': ''})
             elif isinstance(data, list):
                 for i, item in enumerate(data):
                     chunk_text = _json.dumps(item, indent=2)
-                    chunks.append({'text': chunk_text, 'label': f'item:{i}'})
+                    chunks.append({'text': chunk_text, 'label': f'item:{i}', 'signature': ''})
             else:
-                chunks.append({'text': content, 'label': 'root'})
+                chunks.append({'text': content, 'label': 'root', 'signature': ''})
         except Exception:
-            # Not valid JSON — treat as generic
             lines = content.splitlines()
             for i in range(0, len(lines), 15):
                 block = '\n'.join(lines[i:i+15])
-                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}'})
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}', 'signature': ''})
 
     elif content_type == 'log':
-        # Each line is a chunk — group by 5 for efficiency
         lines = content.splitlines()
         for i in range(0, len(lines), 5):
             block = '\n'.join(lines[i:i+5])
-            chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+5, len(lines))}'})
+            chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+5, len(lines))}', 'signature': ''})
 
     else:  # generic
-        # Split by paragraph or N-line blocks
         paragraphs = _re.split(r'\n{2,}', content)
         if len(paragraphs) > 1:
             for p in paragraphs:
                 if p.strip():
-                    chunks.append({'text': p, 'label': p[:40].replace('\n', ' ')})
+                    chunks.append({'text': p, 'label': p[:40].replace('\n', ' '), 'signature': ''})
         else:
             lines = content.splitlines()
             for i in range(0, len(lines), 15):
                 block = '\n'.join(lines[i:i+15])
-                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}'})
+                chunks.append({'text': block, 'label': f'lines {i+1}-{min(i+15, len(lines))}', 'signature': ''})
 
-    return chunks or [{'text': content, 'label': 'full'}]
+    return chunks or [{'text': content, 'label': 'full', 'signature': ''}]
 
 
-def _score_chunk(chunk_text: str, keywords: list[str]) -> float:
-    """Keyword overlap score — fraction of keywords found in chunk."""
+def _compute_idf(chunks: list[dict], keywords: list[str]) -> dict[str, float]:
+    """IDF weight per keyword: high for rare keywords, near-zero for ubiquitous ones."""
+    import math as _math
+    n = len(chunks)
+    if n == 0:
+        return {kw: 1.0 for kw in keywords}
+    idf = {}
+    for kw in keywords:
+        df = sum(1 for c in chunks if kw in c['text'].lower())
+        # +1 smoothing; penalise words found in >half the chunks
+        idf[kw] = _math.log((n + 1) / (df + 1))
+    return idf
+
+
+def _score_chunk(chunk_text: str, keywords: list[str], idf: dict[str, float] | None = None) -> float:
+    """IDF-weighted keyword score. Falls back to uniform weighting when idf is absent."""
     if not keywords:
         return 0.0
     lower = chunk_text.lower()
+    if idf:
+        score = sum(idf[kw] for kw in keywords if kw in lower)
+        max_score = sum(idf.values()) or 1.0
+        return score / max_score
     hits = sum(1 for kw in keywords if kw in lower)
     return hits / len(keywords)
 
 
 def _intent_extract(content: str, keywords: list[str]) -> tuple[str, int]:
     """Extract relevant sections from large content using intent keywords.
+
+    Tiered output:
+      - high relevance  → full chunk
+      - low relevance   → signature/skeleton only (Python) or dropped (other)
+      - zero relevance  → dropped
 
     Returns (extracted_text, tokens_saved).
     Falls through (no compression) if savings < _INTENT_EXTRACT_RATIO.
@@ -1525,27 +1568,52 @@ def _intent_extract(content: str, keywords: list[str]) -> tuple[str, int]:
     chunks       = _chunk_content(content, content_type)
     orig_tokens  = max(1, len(content.split()) * 4 // 3)
 
-    # Score every chunk
-    scored = [(c, _score_chunk(c['text'], keywords)) for c in chunks]
+    idf    = _compute_idf(chunks, keywords)
+    scored = [(c, _score_chunk(c['text'], keywords, idf)) for c in chunks]
 
-    # Always keep chunks with any keyword match; if nothing matches keep top 20%
-    relevant = [c for c, s in scored if s > 0]
-    if not relevant:
+    if not scored:
+        return content, 0
+
+    max_score = max(s for _, s in scored) or 1.0
+    high_threshold = max_score * 0.40   # top 40% of max → full
+    low_threshold  = max_score * 0.10   # 10-40% → skeleton
+
+    output_parts: list[str] = []
+    n_full = n_skeleton = n_omitted = 0
+
+    for c, score in scored:
+        if score >= high_threshold:
+            output_parts.append(c['text'])
+            n_full += 1
+        elif score >= low_threshold and c.get('signature'):
+            output_parts.append(c['signature'])
+            n_skeleton += 1
+        else:
+            n_omitted += 1
+
+    # If nothing scored above threshold, keep top 20% by score
+    if n_full == 0 and n_skeleton == 0:
         n_keep = max(1, len(chunks) // 5)
-        relevant = [c for c, _ in scored[:n_keep]]
+        top = sorted(scored, key=lambda x: x[1], reverse=True)[:n_keep]
+        output_parts = [c['text'] for c, _ in top]
+        n_omitted = len(chunks) - n_keep
 
-    kept_text   = '\n'.join(c['text'] for c in relevant)
-    kept_tokens = max(1, len(kept_text.split()) * 4 // 3)
+    kept_text     = '\n'.join(output_parts)
+    kept_tokens   = max(1, len(kept_text.split()) * 4 // 3)
     savings_ratio = 1 - kept_tokens / orig_tokens
 
     if savings_ratio < _INTENT_EXTRACT_RATIO:
-        return content, 0  # Not worth it
+        return content, 0
 
-    n_omitted = len(chunks) - len(relevant)
-    kw_str    = ', '.join(keywords[:8])
-    header    = f'[INTENT EXTRACT — matched: {kw_str}]\n'
-    footer    = f'\n[OMITTED: {n_omitted} section(s) — low relevance to current query]' if n_omitted > 0 else ''
-    result    = header + kept_text + footer
+    kw_str = ', '.join(keywords[:8])
+    header = f'[INTENT EXTRACT — matched: {kw_str}]\n'
+    notes  = []
+    if n_skeleton:
+        notes.append(f'{n_skeleton} section(s) as skeleton only')
+    if n_omitted:
+        notes.append(f'{n_omitted} section(s) omitted — low relevance')
+    footer = f'\n[{" | ".join(notes)}]' if notes else ''
+    result = header + kept_text + footer
 
     tokens_saved = orig_tokens - max(1, len(result.split()) * 4 // 3)
     return result, max(0, tokens_saved)
