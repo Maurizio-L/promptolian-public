@@ -222,6 +222,10 @@ class CompressionRepository:
             )
         """)
         cur.execute("""
+            ALTER TABLE website_events
+                ALTER COLUMN created_at SET DEFAULT NOW()
+        """)
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS context_events (
                 id SERIAL PRIMARY KEY,
                 api_key TEXT, mode TEXT,
@@ -334,12 +338,20 @@ class CompressionRepository:
         try:
             p = self._placeholder()
             conn = self._connect()
-            sql = (
-                f'INSERT INTO website_events '
-                f'(session_id, user_id, page, event_type, element, duration_sec, scroll_pct, '
-                f'country, region, referrer, device_type) '
-                f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p},{p})'
-            )
+            if self._is_pg():
+                sql = (
+                    f'INSERT INTO website_events '
+                    f'(session_id, user_id, page, event_type, element, duration_sec, scroll_pct, '
+                    f'country, region, referrer, device_type, created_at) '
+                    f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p},{p},NOW())'
+                )
+            else:
+                sql = (
+                    f'INSERT INTO website_events '
+                    f'(session_id, user_id, page, event_type, element, duration_sec, scroll_pct, '
+                    f'country, region, referrer, device_type) '
+                    f'VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p},{p})'
+                )
             vals = (session_id, user_id, page, event_type, element, duration_sec, scroll_pct,
                     country, region, referrer, device_type)
             if self._is_pg():
