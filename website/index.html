@@ -1015,11 +1015,11 @@
 <section id="how-it-works" class="section section-sep">
   <div class="hiw-header">
     <div class="hiw-label-col">
-      <div class="section-label">Four problems,<br>one proxy</div>
+      <div class="section-label">Six problems,<br>one proxy</div>
     </div>
     <div>
       <h2 class="section-title">How Promptolian works</h2>
-      <p class="section-sub" style="margin-bottom:0">Four persistent, expensive problems. Fixed transparently, with no code changes required in your agent.</p>
+      <p class="section-sub" style="margin-bottom:0">Six persistent, expensive problems. Fixed transparently, with no code changes required in your agent.</p>
     </div>
   </div>
 
@@ -1145,6 +1145,35 @@
   <!-- Problem 5 -->
   <div class="problem-block">
     <div class="problem-tag">Problem 5</div>
+    <h3 class="problem-title">Agents stuck in loops waste turns and hit the context wall</h3>
+    <p class="problem-desc">An agent that cannot find a file will try again. And again. And again. Each failed attempt costs tokens, pollutes the context, and brings you closer to the context wall — without making any progress. Most frameworks have no mechanism to detect or break this.</p>
+
+    <div class="code-visual">
+<span class="cv-dim">Without Promptolian:</span>
+<span class="cv-line"><span class="cv-normal">Turn 4:</span>  read_file("config.json")  <span class="cv-wasted">→ file not found  ← retried</span></span>
+<span class="cv-line"><span class="cv-normal">Turn 5:</span>  read_file("config.json")  <span class="cv-wasted">→ file not found  ← retried</span></span>
+<span class="cv-line"><span class="cv-normal">Turn 6:</span>  read_file("config.json")  <span class="cv-wasted">→ file not found  ← retried</span></span></div>
+
+    <div class="fix-label">Fix: Stuck-loop detection + ranked recovery strategies (no LLM)</div>
+
+    <div class="code-visual">
+<span class="cv-dim">With Promptolian — after 3 identical calls:</span>
+<span class="cv-line"><span class="cv-saved">[STUCK DETECTION: "read_file" called 3 times with identical inputs]</span></span>
+<span class="cv-line"><span class="cv-saved">Suggested strategies:</span></span>
+<span class="cv-line"><span class="cv-saved">  80%  list the directory to see what files actually exist</span></span>
+<span class="cv-line"><span class="cv-saved">  65%  check if a previous step was supposed to create this file</span></span>
+<span class="cv-line"><span class="cv-saved">  55%  search for a similar name (.yml, .toml, .env)</span></span></div>
+
+    <div class="problem-stat">
+      <span class="pstat"><strong>Rule-based</strong> — zero LLM cost</span>
+      <span class="pstat"><strong>7 error categories</strong> covered</span>
+      <span class="pstat"><strong>Free</strong> — no API key needed</span>
+    </div>
+  </div>
+
+  <!-- Problem 6 -->
+  <div class="problem-block">
+    <div class="problem-tag">Problem 6</div>
     <h3 class="problem-title">Over-paying for model capacity</h3>
     <p class="problem-desc">Most agent calls don't need Claude Opus. Simple lookups and drafting tasks get routed to the same expensive model as your hardest reasoning problems. And when you want cheaper alternatives like DeepSeek, switching SDKs breaks your whole stack.</p>
 
@@ -1342,7 +1371,7 @@
         <li>Everything in Free</li>
         <li>KV-sandwich compression (4.26/5)</li>
         <li>Session reset, no context wall</li>
-        <li>Stuck-loop detection + blocking</li>
+        <li>Stuck-loop detection + ranked recovery strategies</li>
         <li>Complexity routing, Haiku to Opus</li>
         <li>Multi-provider gateway (DeepSeek, GLM)</li>
         <li>Task tracking + savings dashboard</li>

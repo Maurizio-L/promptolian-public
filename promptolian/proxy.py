@@ -328,6 +328,116 @@ _FACT_PATTERNS = [
 ]
 
 
+# ── Stuck loop detection ─────────────────────────────────────────────────────
+
+_STUCK_THRESHOLD = 3
+_TOOL_HISTORY: dict[str, list] = {}   # session_id -> [(tool_name, input_hash, error_text)]
+
+_STUCK_STRATEGIES: list[tuple[str, list[tuple[float, str]]]] = [
+    (r'file not found|no such file|does not exist|cannot find|not found', [
+        (0.80, 'list the directory to see what files actually exist'),
+        (0.65, 'check if a previous step was supposed to create this file'),
+        (0.55, 'search for a file with a similar name (.yml, .toml, .env, .example)'),
+        (0.30, 'use a hardcoded default and continue'),
+    ]),
+    (r'permission denied|access denied|not permitted|unauthorized|forbidden', [
+        (0.75, 'check file permissions and ownership'),
+        (0.60, 'try an alternative path with the correct access level'),
+        (0.45, 'check if the process needs elevated privileges'),
+    ]),
+    (r'timeout|timed out|connection reset|connection refused|unreachable', [
+        (0.80, 'retry after a short wait'),
+        (0.65, 'check if the service or endpoint is reachable'),
+        (0.45, 'use a cached result if available'),
+        (0.30, 'skip this step and continue with what is already known'),
+    ]),
+    (r'syntax error|parse error|invalid syntax|unexpected token|json.*invalid', [
+        (0.85, 'print the exact line and column causing the error'),
+        (0.70, 'validate the input format before passing it'),
+        (0.50, 'check for encoding or whitespace issues'),
+    ]),
+    (r'keyerror|key error|indexerror|index error|attributeerror|attribute error', [
+        (0.80, 'print the full object to inspect its actual structure'),
+        (0.70, 'add a guard to check if the key exists before accessing it'),
+        (0.55, 'check if the data shape changed between steps'),
+    ]),
+    (r'importerror|import error|module not found|no module named', [
+        (0.85, 'check if the package is installed in the current environment'),
+        (0.70, 'verify the import path and module name spelling'),
+        (0.50, 'check if a local file shadows a stdlib module'),
+    ]),
+    (r'rate limit|too many requests|429|quota exceeded', [
+        (0.90, 'wait before retrying'),
+        (0.60, 'reduce concurrent requests'),
+        (0.40, 'switch to a different key or endpoint'),
+    ]),
+]
+
+_STUCK_FALLBACK: list[tuple[float, str]] = [
+    (0.70, 'print the full error traceback for more context'),
+    (0.55, 'simplify the inputs and test with a minimal example'),
+    (0.40, 'skip this step and try a completely different approach'),
+    (0.25, 'check recent changes that might have broken this'),
+]
+
+
+def _match_stuck_strategies(error_text: str) -> list[tuple[float, str]]:
+    if not error_text:
+        return _STUCK_FALLBACK
+    el = error_text.lower()
+    for pattern, strategies in _STUCK_STRATEGIES:
+        if re.search(pattern, el):
+            return strategies
+    return _STUCK_FALLBACK
+
+
+def _extract_tool_calls(messages: list) -> list[tuple[str, str, str]]:
+    import hashlib
+    result_map: dict[str, str] = {}
+    for msg in messages:
+        if msg.get('role') != 'user':
+            continue
+        for block in (msg.get('content') if isinstance(msg.get('content'), list) else []):
+            if isinstance(block, dict) and block.get('type') == 'tool_result':
+                c = block.get('content', '')
+                if isinstance(c, list):
+                    c = ' '.join(b.get('text', '') for b in c if isinstance(b, dict))
+                result_map[block.get('tool_use_id', '')] = str(c)
+    calls = []
+    for msg in messages:
+        if msg.get('role') != 'assistant':
+            continue
+        for block in (msg.get('content') if isinstance(msg.get('content'), list) else []):
+            if isinstance(block, dict) and block.get('type') == 'tool_use':
+                inp = json.dumps(block.get('input', {}), sort_keys=True)
+                inp_hash = hashlib.md5(inp.encode()).hexdigest()[:8]
+                calls.append((block.get('name', ''), inp_hash, result_map.get(block.get('id', ''), '')))
+    return calls
+
+
+def _detect_stuck_loop(session_id: str, messages: list) -> Optional[str]:
+    calls = _extract_tool_calls(messages)
+    _TOOL_HISTORY[session_id] = calls
+    if len(calls) < _STUCK_THRESHOLD:
+        return None
+    last = calls[-_STUCK_THRESHOLD:]
+    if len(set(c[0] for c in last)) != 1 or len(set(c[1] for c in last)) != 1:
+        return None
+    tool_name = last[0][0]
+    error_text = last[-1][2]
+    strategies = _match_stuck_strategies(error_text)
+    lines = [
+        f'[STUCK DETECTION: "{tool_name}" called {_STUCK_THRESHOLD} times with identical inputs]',
+        f'Last result: {error_text[:120]}' if error_text else 'Last result: no error but no progress made',
+        '',
+        'Suggested strategies (ranked by estimated success rate):',
+    ]
+    for prob, desc in strategies:
+        lines.append(f'  {int(prob * 100)}%  {desc}')
+    lines.append('\nDo not retry the same call. Choose the highest-ranked strategy and proceed.')
+    return '\n'.join(lines)
+
+
 def _extract_facts(messages: list) -> list[str]:
     """Extract key facts from conversation without an LLM."""
     facts: list[str] = []
@@ -869,6 +979,11 @@ def proxy_messages():
         body['messages'], thinking_saved = _strip_and_compress_thinking(
             body['messages'], session_id
         )
+
+    # Stuck loop detection: inject strategy hint if agent is repeating the same call
+    stuck_hint = _detect_stuck_loop(session_id, body.get('messages', []))
+    if stuck_hint and body.get('messages'):
+        body['messages'].append({'role': 'user', 'content': stuck_hint})
 
     body['messages'], ctx_saved = _compress_messages(body.get('messages', []))
 
