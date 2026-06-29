@@ -8,7 +8,7 @@ A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK
 
 ---
 
-## Three problems, one proxy
+## Six problems, one proxy
 
 **Problem 1 — Tool outputs repeat across turns.**
 Agentic workflows read the same files, run the same bash commands, get the same API responses, turn after turn. Each repeat costs full tokens.
@@ -169,6 +169,29 @@ Run the benchmark yourself:
 python3 tools/scripts/benchmark_tool_compression.py
 python3 tools/scripts/benchmark_tool_compression.py --verbose
 ```
+
+---
+
+## Stuck-loop detection
+
+Triggers when the same tool is called with identical inputs 3 times in a row, or keeps returning an error without changing strategy.
+
+Promptolian compresses the repeated turns and injects a ranked list of recovery strategies based on the error type:
+
+```
+[STUCK DETECTION: "read_file" called 3 times with identical inputs]
+Last result: file not found: config.json
+
+Suggested strategies (ranked by estimated success rate):
+  80%  list the directory to see what files actually exist
+  65%  check if a previous step was supposed to create this file
+  55%  search for a file with a similar name (.yml, .toml, .env)
+  30%  use a hardcoded default and continue
+
+Do not retry the same call. Choose the highest-ranked strategy and proceed.
+```
+
+No LLM involved. Error patterns are matched against a rule-based table covering file errors, permission errors, timeouts, syntax errors, key errors, import errors, and rate limits. Zero latency, works fully offline with DS4.
 
 ---
 
