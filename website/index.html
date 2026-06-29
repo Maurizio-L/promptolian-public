@@ -235,18 +235,41 @@
       background: var(--bg-surface);
     }
 
+    .stats-row-label {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 32px 0;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
     .stats-inner {
       max-width: 1100px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       padding: 0 32px;
     }
 
+    .stats-inner-live {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      padding: 0 32px;
+      border-top: 1px solid var(--border);
+    }
+
     .stat-cell {
-      padding: 28px 24px;
+      padding: 22px 24px;
       border-right: 1px solid var(--border);
       text-align: center;
+      position: relative;
+      cursor: default;
     }
     .stat-cell:last-child { border-right: none; }
 
@@ -269,6 +292,36 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+
+    .stat-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.5;
+      white-space: nowrap;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      pointer-events: none;
+      text-align: left;
+    }
+    .stat-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--border);
+    }
+    .stat-cell:hover .stat-tooltip { display: block; }
 
     /* SECTION LAYOUT */
     .section {
@@ -902,10 +955,14 @@
         grid-template-columns: repeat(2, 1fr);
         padding: 0 20px;
       }
+      .stats-inner-live {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 0 20px;
+      }
+      .stats-row-label { padding: 10px 20px 0; }
       .stat-cell:nth-child(2) { border-right: none; }
       .stat-cell:nth-child(4) { border-right: none; }
-      .stat-cell:nth-child(6) { border-right: none; }
-      .stat-cell:nth-child(7) { border-right: none; }
+      .stat-tooltip { display: none !important; }
 
       .section { padding: 56px 20px; }
 
@@ -979,36 +1036,50 @@
 
 <!-- STATS BAR -->
 <div class="stats-bar">
+
+  <div class="stats-row-label">Benchmark results</div>
   <div class="stats-inner">
     <div class="stat-cell">
       <div class="stat-value">4.26/5</div>
       <div class="stat-label">Context quality score</div>
+      <div class="stat-tooltip">Measured across 25 sessions using Factory.ai's 6-dimension probe methodology. Anthropic built-in scores 3.44/5. Promptolian keeps 78% of tokens vs 1.3% for native compression.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">34.6%</div>
       <div class="stat-label">Tool output savings</div>
+      <div class="stat-tooltip">Average token reduction on tool results across 9 agentic sessions (49 tool calls). Exact repeats become a 5-token reference. Similar content becomes a compact diff.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">~90%</div>
       <div class="stat-label">Schema savings</div>
+      <div class="stat-tooltip">Tool schemas are re-sent on every API call by default. Promptolian adds Anthropic cache headers so they are billed at 10% of normal price after the first call.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">21x</div>
       <div class="stat-label">DeepSeek vs Opus</div>
+      <div class="stat-tooltip">Cost ratio between DeepSeek V4 Flash ($0.07/1M tokens) and Claude Opus ($15/1M tokens). Promptolian routes to DS4 or any local model with one flag — no SDK change needed.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">99%</div>
       <div class="stat-label">Fact retention</div>
+      <div class="stat-tooltip">Percentage of facts preserved after tool result compression. Measured against ground truth across 49 tool results. Native compression typically retains under 50% of specific facts.</div>
     </div>
+  </div>
+
+  <div class="stats-row-label">Live</div>
+  <div class="stats-inner-live">
     <div class="stat-cell">
       <div class="stat-value" id="stat-gh-stars">—</div>
       <div class="stat-label">GitHub stars</div>
+      <div class="stat-tooltip">Stars on github.com/Maurizio-L/promptolian-public. Updated live from the GitHub API.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value" id="stat-visits">—</div>
       <div class="stat-label">Developer visits</div>
+      <div class="stat-tooltip">Total unique developer sessions recorded on promptolian.com. Tracked via anonymous session IDs, no personal data stored.</div>
     </div>
   </div>
+
 </div>
 
 <!-- HOW IT WORKS -->
