@@ -12,16 +12,21 @@ A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK
 
 - [Six problems, one proxy](#six-problems-one-proxy)
 - [Savings](#savings)
-- [Cost impact — tool schema caching](#cost-impact--tool-schema-caching)
+- [Cost impact: tool schema caching](#cost-impact-tool-schema-caching)
 - [Quickstart](#quickstart)
+  - [Option A: Transparent proxy](#option-a-transparent-proxy-any-language)
+  - [Option B: Python SDK wrapper](#option-b-python-sdk-wrapper)
+  - [Option C: Claude Code MCP](#option-c-claude-code-mcp)
 - [Local model support (DS4, Ollama, llama.cpp)](#local-model-support-ds4-ollama-llamacpp)
 - [Cloud proxy](#cloud-proxy)
-- [Tool result compression](#tool-result-compression)
-- [Thinking token compression](#thinking-token-compression)
-- [Working memory](#working-memory)
-- [Stuck-loop detection](#stuck-loop-detection)
-- [Session reset](#session-reset)
-- [Sensitive data detection](#sensitive-data-detection)
+- Features (all free, no key required)
+  - [Tool result compression](#tool-result-compression)
+  - [Thinking token compression](#thinking-token-compression)
+  - [Working memory](#working-memory)
+  - [Stuck-loop detection](#stuck-loop-detection)
+- Features (require API key)
+  - [Session reset](#session-reset)
+  - [Sensitive data detection](#sensitive-data-detection)
 - [Response headers](#response-headers)
 - [Self-hosting](#self-hosting)
 - [Benchmarks](#benchmarks)
@@ -32,22 +37,22 @@ A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK
 
 ## Six problems, one proxy
 
-**Problem 1 — Tool outputs repeat across turns.**
+**Problem 1: Tool outputs repeat across turns.**
 Agentic workflows read the same files, run the same bash commands, get the same API responses, turn after turn. Each repeat costs full tokens.
 
-**Problem 2 — Tool schemas re-sent on every call.**
+**Problem 2: Tool schemas re-sent on every call.**
 Every API call re-sends the full tool schema JSON even if nothing changed. 5 tools ≈ 600 tokens wasted per call, silently, forever.
 
-**Problem 3 — Context window fills up and quality collapses.**
-Built-in compression (Anthropic, OpenAI) removes 98–99% of context tokens. Specific facts — config values, file paths, exact numbers — disappear. The agent hallucinates or asks you to repeat yourself.
+**Problem 3: Context window fills up and quality collapses.**
+Built-in compression (Anthropic, OpenAI) removes 98–99% of context tokens. Specific facts (config values, file paths, exact numbers) disappear. The agent hallucinates or asks you to repeat yourself.
 
-**Problem 4 — Local inference burns context fast.**
+**Problem 4: Local inference burns context fast.**
 Running DS4 or DeepSeek locally is free, but thinking tokens from DeepSeek's reasoning mode accumulate silently (2,000+ tokens per turn). Repeated file reads pile on top. Sessions die at the context wall and the agent forgets everything on reset.
 
-**Problem 5 — Agents get stuck in loops.**
+**Problem 5: Agents get stuck in loops.**
 An agent that cannot find a file will try again. And again. Each failed retry costs tokens, pollutes the context, and brings you closer to the context wall without making progress. Most frameworks have no mechanism to detect or break this.
 
-**Problem 6 — Over-paying for model capacity.**
+**Problem 6: Over-paying for model capacity.**
 Most agent calls do not need Claude Opus. Simple lookups and drafting tasks get routed to the same expensive model as your hardest reasoning problems, with no way to change this without rewriting your stack.
 
 Promptolian fixes all six. Problems 1, 2, 4, and 5 are free. Problems 3 and 6 require an API key.
@@ -85,7 +90,7 @@ Tool compression benchmark (9 synthetic agentic sessions, 49 tool results):
 
 ---
 
-## Cost impact — tool schema caching
+## Cost impact: tool schema caching
 
 For an agent making **500 calls/day** with **5 tools**:
 
@@ -100,7 +105,7 @@ Monthly saving        : $24.30  (Claude Sonnet 4 pricing, $3/1M tokens)
 
 ## Quickstart
 
-### Option A — Transparent proxy (any language)
+### Option A: Transparent proxy (any language)
 
 ```bash
 pip install "promptolian[proxy]"
@@ -117,7 +122,7 @@ client = anthropic.Anthropic(base_url="http://localhost:3002")
 
 Tool result dedup and schema caching are automatic with no key. Session reset + KV-sandwich require `PROMPTOLIAN_API_KEY`.
 
-### Option B — Python SDK wrapper
+### Option B: Python SDK wrapper
 
 ```bash
 pip install promptolian
@@ -125,13 +130,13 @@ pip install promptolian
 
 ```python
 from promptolian import patch_anthropic
-patch_anthropic()   # call once at startup — all clients patched globally
+patch_anthropic()   # call once at startup: all clients patched globally
 
 import anthropic
 client = anthropic.Anthropic()  # unchanged
 ```
 
-### Option C — Claude Code MCP
+### Option C: Claude Code MCP
 
 ```bash
 pip install "promptolian[mcp]"
@@ -193,7 +198,7 @@ client = anthropic.Anthropic(
 
 | Plan | Price | API keys | Sessions | KV-sandwich |
 |---|---|---|---|---|
-| **Free** | $0 | — | SQLite · self-hosted | — |
+| **Free** | $0 | none | SQLite · self-hosted | none |
 | **Solo** | $9/mo | 1 | PostgreSQL · always-on | Yes |
 | **Team** | $49/mo | Up to 10 | PostgreSQL · per-project | Yes |
 
@@ -205,10 +210,10 @@ client = anthropic.Anthropic(
 
 In agentic workflows, the same files get read repeatedly, bash outputs recur, search results repeat. The proxy deduplicates automatically before forwarding to the provider:
 
-- **Exact repeat** → `[TOOL_CACHE_REF: same as call #N]` — ~5 tokens instead of thousands
+- **Exact repeat** → `[TOOL_CACHE_REF: same as call #N]`: ~5 tokens instead of thousands
 - **Similar content** → compact diff showing only changed lines
 
-Works for both Anthropic (`type=tool_result`) and OpenAI (`role=tool`) formats. No configuration needed — fires automatically on every request.
+Works for both Anthropic (`type=tool_result`) and OpenAI (`role=tool`) formats. No configuration needed: fires automatically on every request.
 
 Run the benchmark yourself:
 
@@ -278,7 +283,7 @@ No LLM involved. Error patterns are matched against a rule-based table covering 
 
 ## Session reset
 
-The proxy tracks cumulative token usage per session. When usage approaches the model's context window limit, it compresses history and starts a fresh session — injecting the compressed context as a system prompt.
+The proxy tracks cumulative token usage per session. When usage approaches the model's context window limit, it compresses history and starts a fresh session: injecting the compressed context as a system prompt.
 
 ```bash
 PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70
@@ -338,7 +343,7 @@ python -m promptolian.proxy  # transparent proxy on :3002
 | Env var | Required | Description |
 |---|---|---|
 | `PROMPTOLIAN_API_KEY` | No | Key for cloud KV-sandwich compression on session reset |
-| `DATABASE_URL` | No | PostgreSQL URL — defaults to SQLite |
+| `DATABASE_URL` | No | PostgreSQL URL: defaults to SQLite |
 | `PROMPTOLIAN_MASTER_KEY` | Cloud only | Activates API key auth |
 | `STRIPE_SECRET_KEY` | Cloud only | Billing |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Cloud only | API key delivery emails |
@@ -362,7 +367,7 @@ Context quality measured across 25 sessions, 5 task domains, Factory.ai 6-dimens
 
 ## Further reading
 
-- **Article**: [Everyone compresses their agent's context. Nobody measures what it forgets.](https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3) — Dev.to
+- **Article**: [Everyone compresses their agent's context. Nobody measures what it forgets.](https://dev.to/mauriziol/everyone-compresses-their-agents-context-nobody-measures-what-it-forgets-5gp3): Dev.to
 - **Interactive cost chart**: [promptolian.com/ucurve.html](https://promptolian.com/ucurve.html)
 - **Full benchmarks**: [promptolian.com/benchmarks.html](https://promptolian.com/benchmarks.html)
 

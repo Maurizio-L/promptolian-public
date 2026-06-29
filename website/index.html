@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Promptolian — Context Reliability Proxy for AI Agents</title>
+  <title>Promptolian: Context Reliability Proxy for AI Agents</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1057,7 +1057,7 @@
     <div class="stat-cell">
       <div class="stat-value">21x</div>
       <div class="stat-label">DeepSeek vs Opus</div>
-      <div class="stat-tooltip">Cost ratio between DeepSeek V4 Flash ($0.07/1M tokens) and Claude Opus ($15/1M tokens). Promptolian routes to DS4 or any local model with one flag — no SDK change needed.</div>
+      <div class="stat-tooltip">Cost ratio between DeepSeek V4 Flash ($0.07/1M tokens) and Claude Opus ($15/1M tokens). Promptolian routes to DS4 or any local model with one flag: no SDK change needed.</div>
     </div>
     <div class="stat-cell">
       <div class="stat-value">99%</div>
@@ -1122,7 +1122,7 @@
   <div class="problem-block">
     <div class="problem-tag">Problem 2</div>
     <h3 class="problem-title">Context quality loss</h3>
-    <p class="problem-desc">Built-in compression (Anthropic/OpenAI) scores 3.44/5 — it loses facts to save tokens. LLM summarisers write "database connection was discussed" instead of keeping <code style="font-family:var(--font-mono);font-size:12px;color:var(--accent);background:var(--bg-card);padding:1px 5px;border-radius:3px">postgres://db.prod/main</code>.</p>
+    <p class="problem-desc">Built-in compression (Anthropic/OpenAI) scores 3.44/5: it loses facts to save tokens. LLM summarisers write "database connection was discussed" instead of keeping <code style="font-family:var(--font-mono);font-size:12px;color:var(--accent);background:var(--bg-card);padding:1px 5px;border-radius:3px">postgres://db.prod/main</code>.</p>
 
     <div class="fix-label">Fix: KV-sandwich architecture</div>
 
@@ -1181,7 +1181,7 @@
     <div class="problem-stat">
       <span class="pstat"><strong>34.6%</strong> token savings on tool outputs</span>
       <span class="pstat"><strong>99%</strong> fact retention</span>
-      <span class="pstat"><strong>Free</strong> — no API key needed</span>
+      <span class="pstat"><strong>Free</strong>: no API key needed</span>
     </div>
   </div>
 
@@ -1189,10 +1189,10 @@
   <div class="problem-block">
     <div class="problem-tag">Problem 4</div>
     <h3 class="problem-title">Local inference (DS4 / DeepSeek) burns context fast</h3>
-    <p class="problem-desc">Running DS4 locally is free — but a 284B model at 26 tokens/sec hits the 128K context wall in ~15 agentic turns. Thinking tokens from DeepSeek's reasoning mode accumulate silently, eating 2000+ tokens per turn. And when the session dies, the agent forgets everything.</p>
+    <p class="problem-desc">Running DS4 locally is free: but a 284B model at 26 tokens/sec hits the 128K context wall in ~15 agentic turns. Thinking tokens from DeepSeek's reasoning mode accumulate silently, eating 2000+ tokens per turn. And when the session dies, the agent forgets everything.</p>
 
     <div class="code-visual">
-<span class="cv-dim">Without Promptolian — turn 10 context breakdown:</span>
+<span class="cv-dim">Without Promptolian: turn 10 context breakdown:</span>
 <span class="cv-line"><span class="cv-wasted">Thinking tokens (accumulated):  18,000 tok  ← reasoning scratch work, useless now</span></span>
 <span class="cv-line"><span class="cv-normal">Actual conversation:             2,000 tok</span></span>
 <span class="cv-line"><span class="cv-wasted">Repeated file reads:            12,000 tok  ← same file read 6 times</span></span></div>
@@ -1209,7 +1209,7 @@
     <div class="problem-stat">
       <span class="pstat"><strong>96%</strong> compression on code search</span>
       <span class="pstat"><strong>99%</strong> compression on logs</span>
-      <span class="pstat"><strong>100% local</strong> — no data leaves your machine</span>
+      <span class="pstat"><strong>100% local</strong>: no data leaves your machine</span>
     </div>
   </div>
 
@@ -1217,7 +1217,7 @@
   <div class="problem-block">
     <div class="problem-tag">Problem 5</div>
     <h3 class="problem-title">Agents stuck in loops waste turns and hit the context wall</h3>
-    <p class="problem-desc">An agent that cannot find a file will try again. And again. And again. Each failed attempt costs tokens, pollutes the context, and brings you closer to the context wall — without making any progress. Most frameworks have no mechanism to detect or break this.</p>
+    <p class="problem-desc">An agent that cannot find a file will try again. And again. And again. Each failed attempt costs tokens, pollutes the context, and brings you closer to the context wall: without making any progress. Most frameworks have no mechanism to detect or break this.</p>
 
     <div class="code-visual">
 <span class="cv-dim">Without Promptolian:</span>
@@ -1228,7 +1228,7 @@
     <div class="fix-label">Fix: Stuck-loop detection + ranked recovery strategies (no LLM)</div>
 
     <div class="code-visual">
-<span class="cv-dim">With Promptolian — after 3 identical calls:</span>
+<span class="cv-dim">With Promptolian: after 3 identical calls:</span>
 <span class="cv-line"><span class="cv-saved">[STUCK DETECTION: "read_file" called 3 times with identical inputs]</span></span>
 <span class="cv-line"><span class="cv-saved">Suggested strategies:</span></span>
 <span class="cv-line"><span class="cv-saved">  80%  list the directory to see what files actually exist</span></span>
@@ -1236,9 +1236,9 @@
 <span class="cv-line"><span class="cv-saved">  55%  search for a similar name (.yml, .toml, .env)</span></span></div>
 
     <div class="problem-stat">
-      <span class="pstat"><strong>Rule-based</strong> — zero LLM cost</span>
+      <span class="pstat"><strong>Rule-based</strong>: zero LLM cost</span>
       <span class="pstat"><strong>7 error categories</strong> covered</span>
-      <span class="pstat"><strong>Free</strong> — no API key needed</span>
+      <span class="pstat"><strong>Free</strong>: no API key needed</span>
     </div>
   </div>
 
@@ -1264,7 +1264,7 @@
 
     <div class="problem-stat">
       <span class="pstat"><strong>21x</strong> cheaper with DeepSeek vs Opus</span>
-      <span class="pstat"><strong>No SDK change</strong> — just swap the model name</span>
+      <span class="pstat"><strong>No SDK change</strong>: just swap the model name</span>
     </div>
   </div>
 </section>
@@ -1337,12 +1337,12 @@
 
 <!-- DEMO -->
 <section id="demo" class="section section-sep">
-  <div class="section-label">Tool schema caching — interactive</div>
+  <div class="section-label">Tool schema caching: interactive</div>
   <h2 class="section-title">See what happens on each call</h2>
 
   <div class="demo-tabs">
-    <button class="tab-btn active" onclick="setTab(0)">Turn 1 — first call</button>
-    <button class="tab-btn" onclick="setTab(1)">Turn 2+ — cached</button>
+    <button class="tab-btn active" onclick="setTab(0)">Turn 1: first call</button>
+    <button class="tab-btn" onclick="setTab(1)">Turn 2+: cached</button>
   </div>
 
   <!-- Tab 1 -->
@@ -1350,7 +1350,7 @@
     <div class="demo-grid">
       <div class="demo-panel">
         <div class="demo-panel-header">
-          <span class="demo-panel-title">Before — raw JSON schema</span>
+          <span class="demo-panel-title">Before: raw JSON schema</span>
         </div>
         <div class="demo-code">{
   "name": "get_weather",
@@ -1373,7 +1373,7 @@
       </div>
       <div class="demo-panel">
         <div class="demo-panel-header">
-          <span class="demo-panel-title">After — Promptolian DSL</span>
+          <span class="demo-panel-title">After: Promptolian DSL</span>
           <span class="demo-badge">69% fewer tokens</span>
         </div>
         <div class="demo-code">FN get_weather: "Get current weather for a city"
@@ -1388,9 +1388,9 @@
     <div class="demo-grid">
       <div class="demo-panel">
         <div class="demo-panel-header">
-          <span class="demo-panel-title">Before — re-sent every call</span>
+          <span class="demo-panel-title">Before: re-sent every call</span>
         </div>
-        <div class="demo-code"><span class="demo-dim">(already sent this session — re-sending full JSON again)</span>
+        <div class="demo-code"><span class="demo-dim">(already sent this session: re-sending full JSON again)</span>
 
 {
   "name": "get_weather",
@@ -1399,7 +1399,7 @@
       </div>
       <div class="demo-panel">
         <div class="demo-panel-header">
-          <span class="demo-panel-title">After — cached reference</span>
+          <span class="demo-panel-title">After: cached reference</span>
           <span class="demo-badge">~90% session average</span>
         </div>
         <div class="demo-code">TOOLS:[get_weather]</div>
@@ -1522,7 +1522,7 @@
       <div class="code-block-body"><span class="cc"># Before</span>
 <span class="ck">client</span> = anthropic.Anthropic()
 
-<span class="cc"># After — one line change</span>
+<span class="cc"># After: one line change</span>
 <span class="ck">client</span> = anthropic.Anthropic(
     base_url=<span class="cs">"http://localhost:3002"</span>
 )
