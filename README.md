@@ -8,6 +8,28 @@ A local proxy that sits between your code and the Anthropic / OpenAI API. No SDK
 
 ---
 
+## Index
+
+- [Six problems, one proxy](#six-problems-one-proxy)
+- [Savings](#savings)
+- [Cost impact — tool schema caching](#cost-impact--tool-schema-caching)
+- [Quickstart](#quickstart)
+- [Local model support (DS4, Ollama, llama.cpp)](#local-model-support-ds4-ollama-llamacpp)
+- [Cloud proxy](#cloud-proxy)
+- [Tool result compression](#tool-result-compression)
+- [Thinking token compression](#thinking-token-compression)
+- [Working memory](#working-memory)
+- [Stuck-loop detection](#stuck-loop-detection)
+- [Session reset](#session-reset)
+- [Sensitive data detection](#sensitive-data-detection)
+- [Response headers](#response-headers)
+- [Self-hosting](#self-hosting)
+- [Benchmarks](#benchmarks)
+- [Further reading](#further-reading)
+- [Repo structure](#repo-structure)
+
+---
+
 ## Six problems, one proxy
 
 **Problem 1 — Tool outputs repeat across turns.**
@@ -19,24 +41,16 @@ Every API call re-sends the full tool schema JSON even if nothing changed. 5 too
 **Problem 3 — Context window fills up and quality collapses.**
 Built-in compression (Anthropic, OpenAI) removes 98–99% of context tokens. Specific facts — config values, file paths, exact numbers — disappear. The agent hallucinates or asks you to repeat yourself.
 
-Promptolian fixes all three. The first two are free. The third requires an API key.
+**Problem 4 — Local inference burns context fast.**
+Running DS4 or DeepSeek locally is free, but thinking tokens from DeepSeek's reasoning mode accumulate silently (2,000+ tokens per turn). Repeated file reads pile on top. Sessions die at the context wall and the agent forgets everything on reset.
 
----
+**Problem 5 — Agents get stuck in loops.**
+An agent that cannot find a file will try again. And again. Each failed retry costs tokens, pollutes the context, and brings you closer to the context wall without making progress. Most frameworks have no mechanism to detect or break this.
 
-## How it works
+**Problem 6 — Over-paying for model capacity.**
+Most agent calls do not need Claude Opus. Simple lookups and drafting tasks get routed to the same expensive model as your hardest reasoning problems, with no way to change this without rewriting your stack.
 
-```mermaid
-sequenceDiagram
-    participant A as Your agent
-    participant P as Promptolian proxy
-    participant C as Anthropic API
-
-    A->>P: POST /v1/messages (tools + messages)
-    P->>P: Dedup tool results · cache schemas · check token count
-    P->>C: Forward (cache_control on schemas)
-    C-->>P: Response
-    P-->>A: Response + X-Promptolian-Tokens-Saved: 1240
-```
+Promptolian fixes all six. Problems 1, 2, 4, and 5 are free. Problems 3 and 6 require an API key.
 
 ---
 
@@ -46,8 +60,12 @@ sequenceDiagram
 |---|---|---|
 | Tool result dedup (REF + DIFF) | **34.6%** on tool output tokens · 99% fact retention | Yes |
 | Tool schema caching | **~90%** session average | Yes |
+| Thinking token compression | strips 2,000+ tok/turn to ~180 tok causal summary | Yes |
+| Working memory across sessions | facts survive resets without an LLM | Yes |
+| Stuck-loop detection | blocks wasted turns, injects ranked recovery | Yes |
 | KV-sandwich context compression | **4.26/5** quality score · 22% tokens removed | Paid (API key) |
-| Session reset | Never hit the context wall | Paid (API key) |
+| Session reset | never hit the context wall | Paid (API key) |
+| Model routing | right model per task, same SDK | Paid (API key) |
 
 Context quality benchmark (25 sessions, Factory.ai 6-dimension scoring):
 
@@ -86,8 +104,8 @@ Monthly saving        : $24.30  (Claude Sonnet 4 pricing, $3/1M tokens)
 
 ```bash
 pip install "promptolian[proxy]"
-python -m promptolian.proxy                                     # localhost:3002
-PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70  # + KV-sandwich
+python -m promptolian.proxy                                                   # localhost:3002
+PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70     # + KV-sandwich
 ```
 
 ```python
@@ -120,6 +138,7 @@ pip install "promptolian[mcp]"
 ```
 
 Add to `~/.claude/settings.json`:
+
 ```json
 {
   "mcpServers": {
@@ -131,6 +150,33 @@ Add to `~/.claude/settings.json`:
 ```
 
 Restart Claude Code. Adds `compress_prompt`, `compress_tools_schema`, `compression_stats` tools.
+
+---
+
+## Local model support (DS4, Ollama, llama.cpp)
+
+```bash
+python -m promptolian.proxy --upstream http://localhost:8080
+```
+
+Routes all requests to a local inference server instead of Anthropic. No API key needed, nothing leaves the machine.
+
+Full local stack with antirez's DS4:
+
+```bash
+./ds4-server --model deepseek-v4-flash.bin      # DS4 on :8080
+python -m promptolian.proxy --upstream http://localhost:8080   # Promptolian on :3002
+export ANTHROPIC_BASE_URL=http://localhost:3002
+```
+
+DS4 runs at ~26 tokens/sec. Promptolian's compression keeps the KV cache small, which matters when inference time is the bottleneck instead of API cost.
+
+Large content compression on Headroom's benchmark scenarios:
+
+| Scenario | Promptolian | Headroom |
+|---|---|---|
+| Code search (100 results) | **96%** | 92% |
+| SRE incident logs | **99%** | 92% |
 
 ---
 
@@ -165,10 +211,45 @@ In agentic workflows, the same files get read repeatedly, bash outputs recur, se
 Works for both Anthropic (`type=tool_result`) and OpenAI (`role=tool`) formats. No configuration needed — fires automatically on every request.
 
 Run the benchmark yourself:
+
 ```bash
 python3 tools/scripts/benchmark_tool_compression.py
 python3 tools/scripts/benchmark_tool_compression.py --verbose
 ```
+
+---
+
+## Thinking token compression
+
+DeepSeek and Claude extended thinking produce reasoning chains before each answer. They accumulate in context and become noise after the answer is produced.
+
+Promptolian strips thinking blocks from older turns and keeps a causal summary of what was decided and why:
+
+```
+[Reasoning:
+  - use RS256: more secure for distributed systems
+  - rejected HS256: requires sharing the secret across services
+  - add state parameter: to avoid CSRF attacks
+]
+```
+
+Full thinking history is inspectable at `GET /proxy/thinking/<session_id>`. Useful for debugging wrong decisions.
+
+---
+
+## Working memory
+
+When a session resets, the agent forgets everything. Promptolian watches assistant messages for facts and saves them locally. The next session starts with them injected:
+
+```
+[PROMPTOLIAN WORKING MEMORY - from previous session]
+- Modified: auth.py (added JWT validation)
+- Decision: RS256 algorithm
+- Fixed: token expiry bug
+- Todo: update the migration script
+```
+
+Pattern matching on Modified / Decision / Fixed / Error / Todo signals. No LLM call, no external service.
 
 ---
 
@@ -204,6 +285,7 @@ PROMPTOLIAN_API_KEY=your_key python -m promptolian.proxy --reset-at 0.70
 ```
 
 Startup shows which compression mode is active:
+
 ```
 Session reset : at 70% · compression: cloud (https://api.promptolian.com)
 ```
@@ -249,7 +331,7 @@ X-Promptolian-Sensitive: HIGH
 
 ```bash
 pip install -r requirements-selfhost.txt
-python api/api.py          # REST API on :3001
+python api/api.py            # REST API on :3001
 python -m promptolian.proxy  # transparent proxy on :3002
 ```
 
